@@ -1,0 +1,22 @@
+[package]
+name = "risk5"
+version = "0.1.0"
+authors = ["Shane Gibbs <shane@hands.net.nz>"]
+build = "build.rs"
+
+[dependencies]
+elf = "0.0.10"
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
+pretty_env_logger = "0.2"
+# wasm-bindgen = "0.2"
+
+[build-dependencies]
+regex = "1"
+
+[[bin]]
+name = "risk5"
+path = "bin/risk5.rs"
+
+[[bin]]
+name = "u1"
+path = "bin/u1.rs"
