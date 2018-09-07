@@ -1,7 +1,4 @@
-use std::collections::HashMap;
-
 pub struct Memory {
-    data: HashMap<usize, u8>,
     blocks: Vec<(usize, Vec<u8>)>,
 }
 
@@ -9,10 +6,7 @@ impl Memory {
     pub fn new(_mb: usize) -> Self {
         // let mem_size = mb << 20; // 15 MB
         // let mem = vec![0; mem_size];
-        Memory {
-            data: HashMap::new(),
-            blocks: vec![],
-        }
+        Memory { blocks: vec![] }
     }
 
     pub fn add_block(&mut self, offset: usize, size: usize) {
@@ -51,7 +45,7 @@ impl Memory {
         return self.blocks[block].1[block_offset];
     }
 
-    pub fn read_d(&self, offset: u64) -> u64 {
+    pub fn read_d(&self, _offset: u64) -> u64 {
         0
     }
 

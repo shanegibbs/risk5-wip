@@ -12,13 +12,13 @@ use std::fs::File;
 use std::io::Read;
 
 pub use insn::Instruction;
+pub use opcodes::*;
 
-pub fn main() {
+pub fn risk5_main() {
 	pretty_env_logger::init();
 
     let mut mem = mmu::Memory::new(15);
 
-    // file offset, mem offset, size
     let (entry, sections) = elf_loader::read_program_segments();
 
     let mut elf = File::open("../bins/bbl/bbl").unwrap();
@@ -43,6 +43,13 @@ pub fn main() {
     // let mem = vec![
     //     0x00000297, 0x02028593, 0xf1402573, 0x0182b283, 0x00028067, 0x2000006f, 0x00000093,
     // ];
+
+    // mem.add_block(0, 10);
+    // // 00e00513
+    // mem.write_b(0, 0x00);
+    // mem.write_b(1, 0xe0);
+    // mem.write_b(2, 0x05);
+    // mem.write_b(3, 0x13);
 
     let mut csrs = csrs::Csrs::new();
     let mut cpu = opcodes::Processor::new(entry);

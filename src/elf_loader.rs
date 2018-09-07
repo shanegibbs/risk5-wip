@@ -10,7 +10,7 @@ pub fn read_program_segments() -> (u64, Vec<(u64, u64, u64)>) {
         Err(e) => panic!("Error: {:?}", e),
     };
 
-    let text_scn = match file.get_section(".text") {
+    let _text_scn = match file.get_section(".text") {
         Some(s) => s,
         None => panic!("Failed to look up .text section"),
     };
