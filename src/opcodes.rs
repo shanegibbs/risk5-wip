@@ -1,10 +1,31 @@
-use mmu::Memory;
+use mmu::*;
 use csrs::Csrs;
-use insn::Instruction;
+use std::fmt;
 
-static _REG_NAMES: &'static [&str] = &["zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0/fp",
-                                       "s1"];
+pub struct Matcher<M: Memory> {
+    mask: u32,
+    mtch: u32,
+    exec: fn(&mut Processor<M>, u32),
+}
 
+impl<M: Memory> Matcher<M> {
+    pub fn new(mask: u32, mtch: u32, exec: fn(&mut Processor<M>, u32)) -> Self {
+        Self { mask, mtch, exec }
+    }
+}
+
+impl<M: fmt::Debug + Memory> fmt::Debug for Matcher<M> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Matcher")
+    }
+}
+
+static _REG_NAMES: &'static [&str] = &["zero", "ra", "s0", "s1", "s2", "s3", "s4", "s5", "s6",
+                                       "s7", "s8", "s9", "sA", "sB", "sp", "tp", "v0", "v1", "a0",
+                                       "a1", "a2", "a3", "a4", "a5", "a6", "a7", "t0", "t1", "t2",
+                                       "t3", "t4", "gp"];
+
+#[derive(Debug)]
 pub struct Regs {
     regs: [u64; 32],
 }
@@ -15,10 +36,10 @@ impl Regs {
     }
 
     #[inline(always)]
-    pub fn get<T: Into<u64>>(&self, i: T) -> u64 {
+    pub fn get<T: Into<usize>>(&self, i: T) -> u64 {
         let i = i.into();
-        let v = self.regs[i as usize];
-        debug!("Getting reg 0x{:x} 0x{:x}", i, v);
+        let v = self.regs[i];
+        // trace!("Getting reg 0x{:x} 0x{:x}", i, v);
         v
     }
 
@@ -28,33 +49,51 @@ impl Regs {
         if i == 0 {
             return;
         }
-        debug!("Setting reg 0x{:x} 0x{:x}", i, v);
+        trace!("Setting reg 0x{:x} 0x{:x}", i, v);
         self.regs[i] = v;
     }
 }
 
-pub struct Processor {
+#[derive(Debug)]
+pub struct Processor<M> {
     pc: u64,
     pub regs: Regs,
-    insns: Vec<(u32, u32, fn(&mut Processor, u32), &'static str)>,
+    pub csrs: Csrs,
+    mem: M,
 }
 
-impl Processor {
-    pub fn new(pc: u64) -> Self {
-        let mut insns: Vec<(u32, u32, fn(&mut Processor, u32), &'static str)> = vec![];
-        include!(concat!(env!("OUT_DIR",), "/insns.rs"));
+impl Processor<FakeMemory> {
+    pub fn get_mem(&mut self) -> &mut FakeMemory {
+        &mut self.mem
+    }
+}
 
+impl<M> Processor<M> {
+    pub fn new(pc: u64, mem: M) -> Self {
         Processor {
             pc: pc,
             regs: Regs::new(),
-            insns: insns,
+            csrs: Csrs::new(),
+            mem,
         }
     }
 
-    pub fn step(&mut self, csrs: &mut Csrs, mem: &mut Memory) {
-        let insn = mem.read_w(self.pc);
+    pub fn mem(&mut self) -> &M {
+        &self.mem
+    }
+
+    pub fn step(&mut self, matchers: &[Matcher<M>])
+        where M: Memory
+    {
+        let insn = self.mem.read_w(self.pc);
         trace!("0x{:x} inst 0x{:x}", self.pc, insn);
-        self.handle_inst(insn, csrs, mem)
+        for matcher in matchers {
+            if insn & matcher.mask == matcher.mtch {
+                (matcher.exec)(self, insn);
+                return;
+            }
+        }
+        panic!(format!("Unmatched instruction: 0x{:x}", insn));
     }
 
     #[inline(always)]
@@ -64,22 +103,17 @@ impl Processor {
 
     #[inline(always)]
     pub fn set_pc(&mut self, pc: u64) {
-        debug!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
+        trace!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
         self.pc = pc;
     }
 
-    fn handle_inst(&mut self, insn: u32, _csrs: &mut Csrs, mut _m: &mut Memory) {
+    #[inline(always)]
+    pub fn pc(&self) -> u64 {
+        self.pc
+    }
 
-        let mut f = None;
-        for (mask, mtch, func, name) in &self.insns {
-            if insn & mask == *mtch {
-                trace!("{}", name);
-                f = Some(func.to_owned());
-                break;
-            }
-        }
-        f.expect("unmatched insn")(self, insn);
-
+    fn _handle_inst(&mut self, insn: u32, _csrs: &mut Csrs, mut _m: &mut Memory) {
+        panic!(format!("Unmatched instruction: 0x{:x}", insn));
 
         /*
         macro_rules! unmatched_insn {() => (panic!(format!("No inst match 0x{:x}", insn)))}
@@ -99,20 +133,4 @@ impl Processor {
         include!(concat!(env!("OUT_DIR"), "/insns.rs"));
         */
     }
-}
-
-pub fn unimplemented(p: &mut Processor, _i: u32) {
-    p.advance_pc();
-}
-
-#[inline(always)]
-pub fn addi(p: &mut Processor, i: u32) {
-    let rd = i.rd();
-    let rs1 = i.rs1();
-    let imm = i.imm20() as u64;
-    trace!("addi {},{},{}", rd, rs1, imm);
-
-    let v = p.regs.get(rs1) + imm;
-    p.regs.set(rd, v);
-    p.advance_pc();
 }

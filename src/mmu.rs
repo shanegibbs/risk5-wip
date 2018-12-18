@@ -1,12 +1,27 @@
-pub struct Memory {
+use std::fmt;
+
+pub trait Memory {
+    fn write_b(&mut self, offset: usize, value: u8);
+    fn read_b(&self, offset: usize) -> u8;
+    fn read_d(&self, _offset: u64) -> u64;
+    fn read_w(&self, offset: u64) -> u32;
+}
+
+pub struct BlockMemory {
     blocks: Vec<(usize, Vec<u8>)>,
 }
 
-impl Memory {
+impl fmt::Debug for BlockMemory {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "BlockMemory")
+    }
+}
+
+impl BlockMemory {
     pub fn new(_mb: usize) -> Self {
         // let mem_size = mb << 20; // 15 MB
         // let mem = vec![0; mem_size];
-        Memory { blocks: vec![] }
+        Self { blocks: vec![] }
     }
 
     pub fn add_block(&mut self, offset: usize, size: usize) {
@@ -30,26 +45,28 @@ impl Memory {
             }
             c -= 1;
         }
-        unreachable!()
+        panic!("Unable to find memory block")
     }
+}
 
-    pub fn write_b(&mut self, offset: usize, value: u8) {
+impl Memory for BlockMemory {
+    fn write_b(&mut self, offset: usize, value: u8) {
         let block = self.find_block_for(offset);
         let block_offset = offset - self.blocks[block].0;
         self.blocks[block].1[block_offset] = value;
     }
 
-    pub fn read_b(&self, offset: usize) -> u8 {
+    fn read_b(&self, offset: usize) -> u8 {
         let block = self.find_block_for(offset);
         let block_offset = offset - self.blocks[block].0;
         return self.blocks[block].1[block_offset];
     }
 
-    pub fn read_d(&self, _offset: u64) -> u64 {
+    fn read_d(&self, _offset: u64) -> u64 {
         0
     }
 
-    pub fn read_w(&self, offset: u64) -> u32 {
+    fn read_w(&self, offset: u64) -> u32 {
         trace!("Reading word at 0x{:x}", offset);
 
         let offset = offset as usize;
@@ -70,6 +87,57 @@ impl Memory {
     }
 }
 
+#[derive(Debug)]
+enum FakeMemoryItem {
+    Word(u32),
+    Double(u64),
+}
+
+use std::cell::RefCell;
+pub struct FakeMemory {
+    next: RefCell<Vec<FakeMemoryItem>>,
+}
+
+impl fmt::Debug for FakeMemory {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "FakeMemory")
+    }
+}
+
+impl FakeMemory {
+    pub fn new() -> Self {
+        Self { next: RefCell::new(vec![]) }
+    }
+    pub fn push_word(&mut self, n: u32) {
+        self.next.borrow_mut().push(FakeMemoryItem::Word(n))
+    }
+    pub fn push_double(&mut self, n: u64) {
+        self.next.borrow_mut().push(FakeMemoryItem::Double(n))
+    }
+    pub fn queue_size(&self) -> usize {
+        self.next.borrow().len()
+    }
+}
+
+impl Memory for FakeMemory {
+    fn write_b(&mut self, _offset: usize, _value: u8) {}
+    fn read_b(&self, _offset: usize) -> u8 {
+        0
+    }
+    fn read_d(&self, _offset: u64) -> u64 {
+        match self.next.borrow_mut().pop() {
+            Some(FakeMemoryItem::Double(n)) => n,
+            n => panic!("Expected read fake word, but was: {:?}", n),
+        }
+    }
+    fn read_w(&self, _offset: u64) -> u32 {
+        match self.next.borrow_mut().pop() {
+            Some(FakeMemoryItem::Word(n)) => n,
+            n => panic!("Expected read fake word, but was: {:?}", n),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -78,7 +146,7 @@ mod tests {
     #[test]
     fn it_memory() {
         let _ = pretty_env_logger::try_init();
-        let mut m = Memory::new(15);
+        let mut m = BlockMemory::new(15);
         m.add_block(0x10, 0x5);
         m.add_block(0x20, 0x6);
 

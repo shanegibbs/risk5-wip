@@ -2,17 +2,12 @@ use std::path::PathBuf;
 
 use elf;
 
-pub fn read_program_segments() -> (u64, Vec<(u64, u64, u64)>) {
+pub fn read_program_segments(filename: &str) -> (u64, Vec<(u64, u64, u64)>) {
     let mut r = vec![];
-    let path = PathBuf::from("../bins/bbl/bbl");
+    let path = PathBuf::from(filename);
     let file = match elf::File::open_path(&path) {
         Ok(f) => f,
         Err(e) => panic!("Error: {:?}", e),
-    };
-
-    let _text_scn = match file.get_section(".text") {
-        Some(s) => s,
-        None => panic!("Failed to look up .text section"),
     };
 
     debug!("ep 0x{:x}", file.ehdr.entry);

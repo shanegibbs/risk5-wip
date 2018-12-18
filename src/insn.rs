@@ -3,7 +3,7 @@ pub trait Instruction {
     fn u_imm(&self) -> i64;
     fn i_imm(&self) -> i64;
 
-    fn rs1(&self) -> u32 {
+    fn rs1(&self) -> usize {
         unimplemented!()
     }
     fn rs2(&self) -> u32 {
@@ -53,6 +53,8 @@ pub trait Instruction {
     fn shamtw(&self) -> u32 {
         unimplemented!()
     }
+
+    fn sign_extend(&self, len: u8) -> i32;
 }
 
 #[inline(always)]
@@ -69,13 +71,19 @@ fn sign_extend<T: Into<i64>>(i: T, len: u8) -> i64 {
 
 impl Instruction for u32 {
     #[inline(always)]
+    fn sign_extend(&self, len: u8) -> i32 {
+        let extend = 64 - len;
+        (*self as i32) << extend >> extend
+    }
+
+    #[inline(always)]
     fn rd(&self) -> usize {
         x(*self as u64, 7, 5) as usize
     }
 
     #[inline(always)]
-    fn rs1(&self) -> u32 {
-        x(*self as u64, 15, 5) as u32
+    fn rs1(&self) -> usize {
+        x(*self as u64, 15, 5) as usize
     }
     #[inline(always)]
     fn rs2(&self) -> u32 {
@@ -113,11 +121,20 @@ impl Instruction for u32 {
 
     #[inline(always)]
     fn bimm12lo(&self) -> u32 {
-        0
+        let s = *self as u64;
+        let mut unsigned = 0;
+        unsigned |= x(s, 8, 4);
+        unsigned |= x(s, 7, 1) << 11;
+        unsigned as u32
     }
+
     #[inline(always)]
     fn bimm12hi(&self) -> u32 {
-        0
+        let s = *self as u64;
+        let mut unsigned = 0;
+        unsigned |= x(s, 31, 1) << 12;
+        unsigned |= x(s, 25, 5) << 5;
+        unsigned as u32
     }
 
     #[inline(always)]
