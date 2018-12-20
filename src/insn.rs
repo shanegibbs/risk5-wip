@@ -64,7 +64,7 @@ fn x(i: u64, low: u8, len: u8) -> u64 {
 
 // extend bits up to the sign bit and then back down again
 #[inline(always)]
-fn sign_extend<T: Into<i64>>(i: T, len: u8) -> i64 {
+pub fn sign_extend<T: Into<i64>>(i: T, len: u8) -> i64 {
     let extend = 64 - len;
     (i.into()) << extend >> extend
 }

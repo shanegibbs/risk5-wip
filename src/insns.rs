@@ -1,5 +1,6 @@
 use derive_insn::*;
 use encoding::*;
+use insn::sign_extend;
 use *;
 
 #[insn(kind=J,mask=0x6f,match=0x7f)]
@@ -21,8 +22,8 @@ pub fn beq<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, hig
     if p.regs.get(rs1) != p.regs.get(rs2) {
         return p.advance_pc();
     }
-    let offset = (lo & high).sign_extend(64) as i64;
-    let new_pc = p.pc() as i64 + offset;
+    let offset = (lo | high).sign_extend(64) as i64;
+    let new_pc = p.pc() as i64 + (offset * 2);
     p.set_pc(new_pc as u64);
 }
 
@@ -31,26 +32,43 @@ pub fn bne<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, hig
     if p.regs.get(rs1) == p.regs.get(rs2) {
         return p.advance_pc();
     }
-    let offset = (lo & high).sign_extend(64) as i64;
-    let new_pc = p.pc() as i64 + offset;
+    let offset = (lo | high).sign_extend(64) as i64;
+    let new_pc = p.pc() as i64 + (offset * 2);
+    p.set_pc(new_pc as u64);
+}
+
+#[insn(kind=B,mask=0x6f,match=0x7f)]
+pub fn bge<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, high: u32) {
+    if p.regs.get(rs1) < p.regs.get(rs2) {
+        return p.advance_pc();
+    }
+    let offset = (lo | high).sign_extend(64) as i64;
+    let new_pc = p.pc() as i64 + (offset * 2);
+    p.set_pc(new_pc as u64);
+}
+
+#[insn(kind=B,mask=0x6f,match=0x7f)]
+pub fn blt<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, high: u32) {
+    if p.regs.get(rs1) >= p.regs.get(rs2) {
+        return p.advance_pc();
+    }
+    let offset = (lo | high).sign_extend(64) as i64;
+    let new_pc = p.pc() as i64 + (offset * 2);
     p.set_pc(new_pc as u64);
 }
 
 #[insn(kind=U,mask=0x110,match=0x100)]
 pub fn auipc<M: Memory>(p: &mut Processor<M>, rd: usize, imm: u32) {
-    let v = p.pc() + imm as u64;
-    p.regs.set(rd, v);
+    let offset = sign_extend(imm, 32) as i64;
+    let v = p.pc() as i64 + offset;
+    p.regs.set(rd, v as u64);
     p.advance_pc();
 }
 
-fn sign_extend(i: u32, len: u8) -> i64 {
-    let extend = 64 - len;
-    (i as i64) << extend >> extend
-}
 
-#[insn(kind=I,mask=0x110,match=0x100)]
-pub fn addi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let v = p.regs.get(rs) as i64 + sign_extend(imm, 12);
+#[insn(kind=U,mask=0x110,match=0x100)]
+pub fn lui<M: Memory>(p: &mut Processor<M>, rd: usize, imm: u32) {
+    let v = insn::sign_extend(imm, 32) as i64;
     p.regs.set(rd, v as u64);
     p.advance_pc();
 }
@@ -131,5 +149,23 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) 
 pub fn ld<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
     let v = p.mem().read_d(rs as u64 + imm as u64);
     p.regs.set(rd, v);
+    p.advance_pc();
+}
+
+// Integer Computational Instructions
+
+#[insn(kind=I,mask=0x110,match=0x100)]
+pub fn addi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
+    let v = p.regs.get(rs) as i64 + sign_extend(imm, 12);
+    p.regs.set(rd, v as u64);
+    p.advance_pc();
+}
+
+#[insn(kind=I,mask=0xfc00707f,match=0x1013)]
+pub fn slli<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
+    let shmat = imm & 0x3F;
+    let v = p.regs.get(rs);
+    let v = v << shmat;
+    p.regs.set(rd, v as u64);
     p.advance_pc();
 }

@@ -2,7 +2,7 @@
 name = "risk5"
 version = "0.1.0"
 authors = ["Shane Gibbs <shane@hands.net.nz>"]
-build = "build.rs"
+# build = "build.rs"
 
 [dependencies]
 derive_insn = { path = "derive-insn" }

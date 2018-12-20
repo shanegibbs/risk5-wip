@@ -1,4 +1,3 @@
-#![feature(use_extern_macros)]
 #[macro_use] extern crate log;
 extern crate pretty_env_logger;
 extern crate elf;
@@ -221,16 +220,16 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
     vec![
         Matcher::new(0x707f, 0x63, beq_exec),
         Matcher::new(0x707f, 0x1063, bne_exec),
-        Matcher::new(0x707f, 0x4063, |p,_| panic!(format!("Unimplemented insn 'blt' at {:x}", p.pc()))),
-        Matcher::new(0x707f, 0x5063, |p,_| panic!(format!("Unimplemented insn 'bge' at {:x}", p.pc()))),
+        Matcher::new(0x707f, 0x4063, blt_exec),
+        Matcher::new(0x707f, 0x5063, bge_exec),
         Matcher::new(0x707f, 0x6063, |p,_| panic!(format!("Unimplemented insn 'bltu' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x7063, |p,_| panic!(format!("Unimplemented insn 'bgeu' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x67, jalr_exec),
         Matcher::new(0x7f, 0x6f, jal_exec),
-        Matcher::new(0x7f, 0x37, |p,_| panic!(format!("Unimplemented insn 'lui' at {:x}", p.pc()))),
+        Matcher::new(0x7f, 0x37, lui_exec),
         Matcher::new(0x7f, 0x17, auipc_exec),
         Matcher::new(0x707f, 0x13, addi_exec),
-        Matcher::new(0xfc00707f, 0x1013, |p,_| panic!(format!("Unimplemented insn 'slli' at {:x}", p.pc()))),
+        Matcher::new(0xfc00707f, 0x1013, slli_exec),
         Matcher::new(0x707f, 0x2013, |p,_| panic!(format!("Unimplemented insn 'slti' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x3013, |p,_| panic!(format!("Unimplemented insn 'sltiu' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x4013, |p,_| panic!(format!("Unimplemented insn 'xori' at {:x}", p.pc()))),

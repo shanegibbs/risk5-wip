@@ -2,7 +2,6 @@ use mmu::*;
 use opcodes;
 use pretty_env_logger;
 use serde_json;
-use std::fs::File;
 use std::io;
 use std::io::BufRead;
 use std::io::BufReader;
@@ -46,13 +45,12 @@ struct Load {
 
 struct LogLineIterator {
     had_first_state: bool,
-    lines: Lines<BufReader<File>>,
+    lines: Lines<BufReader<io::Stdin>>,
 }
 
 impl LogLineIterator {
     fn new() -> Result<Self, io::Error> {
-        let f = try!(File::open("addiw.json.log"));
-        let reader = BufReader::new(f);
+        let reader = BufReader::new(io::stdin());
         Ok(LogLineIterator {
             had_first_state: false,
             lines: reader.lines(),
@@ -167,8 +165,11 @@ fn run_err() -> Result<(), io::Error> {
 
         for (i, reg_str) in state.xregs.iter().enumerate() {
             let val = u64::from_str_radix(&reg_str[2..], 16).expect("xreg");
-            if val != cpu.regs.get(i) {
-                return Err(io::Error::new(io::ErrorKind::Other, "Fail reg check"));
+            let actual = cpu.regs.get(i);
+            if val != actual {
+                let msg = format!("Fail reg check on 0x{:02x} ({})\nWas:      0x{:016x} {:064b} \nExpected: 0x{:016x} {:064b}",
+                    i, opcodes::REG_NAMES[i], actual, actual, val, val);
+                return Err(io::Error::new(io::ErrorKind::Other, msg));
             }
         }
 

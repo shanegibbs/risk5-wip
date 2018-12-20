@@ -239,7 +239,7 @@ fn insn_field_name_map(kind: &str, name: &str) -> (&'static str, &'static str) {
         ("J", "rd") => ("rd", "usize"),
         ("J", "imm") => ("imm20", "u32"),
         ("U", "rd") => ("rd", "usize"),
-        ("U", "imm") => ("imm20", "u32"),
+        ("U", "imm") => ("u_imm", "u32"),
         ("B", "rs1") => ("rs1", "usize"),
         ("B", "rs2") => ("rs2", "usize"),
         ("B", "lo") => ("bimm12lo", "u32"),
