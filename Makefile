@@ -11,3 +11,6 @@ expand:
 
 test:
 	cargo test -- --nocapture --color=always --test-threads=1
+
+clean:
+	cargo clean
