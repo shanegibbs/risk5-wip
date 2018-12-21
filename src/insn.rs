@@ -68,9 +68,10 @@ fn x(i: u64, low: u8, len: u8) -> u64 {
 
 // extend bits up to the sign bit and then back down again
 #[inline(always)]
-pub fn sign_extend<T: Into<i64>>(i: T, len: u8) -> i64 {
+pub fn sign_extend<T: Into<u64>>(i: T, len: u8) -> i64 {
     let extend = 64 - len;
-    (i.into()) << extend >> extend
+    let v: u64 = (i.into()) << extend >> extend;
+    v as i64
 }
 
 impl Instruction for u32 {
@@ -110,7 +111,7 @@ impl Instruction for u32 {
         let mut unsigned: u64 = 0;
         unsigned |= x(s, 7, 5);
         unsigned |= x(s, 26, 7) << 5;
-        sign_extend(unsigned as i64, 32)
+        sign_extend(unsigned, 32)
     }
 
     #[inline(always)]
@@ -158,7 +159,7 @@ impl Instruction for u32 {
         unsigned |= x(s, 20, 1) << 11;
         unsigned |= x(s, 12, 8) << 12;
         unsigned |= x(s, 31, 1) << 20;
-        sign_extend(unsigned as i64, 20)
+        sign_extend(unsigned, 20)
     }
 
     // shift amount
