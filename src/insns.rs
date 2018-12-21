@@ -145,6 +145,14 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) 
     p.advance_pc();
 }
 
+#[insn(kind=I,mask=0x1073,match=0x707f)]
+pub fn mret<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
+    error!("mret not implemented");
+    p.advance_pc();
+}
+
+// Load and Store
+
 #[insn(kind=I,mask=0x110,match=0x100)]
 pub fn ld<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
     let v = p.mem().read_d(rs as u64 + imm as u64);
@@ -156,6 +164,13 @@ pub fn ld<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
 
 #[insn(kind=I,mask=0x110,match=0x100)]
 pub fn addi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
+    let v = p.regs.get(rs) as i64 + sign_extend(imm, 12);
+    p.regs.set(rd, v as u64);
+    p.advance_pc();
+}
+
+#[insn(kind=I,mask=0x110,match=0x100)]
+pub fn addiw<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
     let v = p.regs.get(rs) as i64 + sign_extend(imm, 12);
     p.regs.set(rd, v as u64);
     p.advance_pc();

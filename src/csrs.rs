@@ -50,7 +50,7 @@ impl Csrs {
                 panic!("unimplemented set SATP to 0x{:x}", v)
             }
         } else {
-            warn!("unimplemented Csrs.set 0x{:x}", i)
+            error!("unimplemented Csrs.set 0x{:x}", i)
         }
     }
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, ()> {
@@ -73,7 +73,7 @@ impl Csrs {
         } else if i == MTVAL {
             self.mtval
         } else {
-            warn!("unimplemented Csrs.get 0x{:x}", i);
+            error!("unimplemented Csrs.get 0x{:x}", i);
             return Err(());
         });
     }
