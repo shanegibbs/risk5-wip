@@ -165,7 +165,7 @@ pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
     let rv1 = p.regs.get(rs1) as i64;
     let rv2 = p.regs.get(rs2) as i64;
     let offset = rv1 + imm as i64;
-    p.get_mem().write_w(offset as u64, rv2 as u32);
+    p.mem_mut().write_w(offset as u64, rv2 as u32);
 
     p.advance_pc();
 }

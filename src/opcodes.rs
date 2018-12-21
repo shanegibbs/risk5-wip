@@ -84,6 +84,10 @@ impl<M> Processor<M> {
         &self.mem
     }
 
+    pub fn mem_mut(&mut self) -> &mut M {
+        &mut self.mem
+    }
+
     pub fn step(&mut self, matchers: &[Matcher<M>])
         where M: Memory
     {
