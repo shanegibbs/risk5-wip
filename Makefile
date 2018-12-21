@@ -20,3 +20,6 @@ save:
 	git commit -m'save'
 	git push
 	git st
+
+load:
+	git pull
