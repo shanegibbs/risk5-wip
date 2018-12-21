@@ -160,6 +160,15 @@ pub fn ld<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
     p.advance_pc();
 }
 
+#[insn(kind=S,mask=0x110,match=0x100)]
+pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
+    let rv1 = p.regs.get(rs1) as i64;
+    let rv2 = p.regs.get(rs2) as i64;
+    let offset = rv1 + imm as i64;
+    p.get_mem().write_w(offset as u64, rv2 as u32);
+
+    p.advance_pc();
+}
 // Integer Computational Instructions
 
 #[insn(kind=I,mask=0x110,match=0x100)]

@@ -3,6 +3,10 @@ pub trait Instruction {
     fn u_imm(&self) -> i64;
     fn i_imm(&self) -> i64;
 
+    fn s_imm(&self) -> i64 {
+        unimplemented!()
+    }
+
     fn rs1(&self) -> usize {
         unimplemented!()
     }
@@ -98,6 +102,15 @@ impl Instruction for u32 {
     #[inline(always)]
     fn i_imm(&self) -> i64 {
         return *self as i64 >> 20;
+    }
+
+    #[inline(always)]
+    fn s_imm(&self) -> i64 {
+        let s = *self as u64;
+        let mut unsigned: u64 = 0;
+        unsigned |= x(s, 7, 5);
+        unsigned |= x(s, 26, 7) << 5;
+        sign_extend(unsigned as i64, 32)
     }
 
     #[inline(always)]

@@ -16,7 +16,7 @@ clean:
 	cargo clean
 
 save:
-	git add Makefile Cargo.* src
+	git add Makefile Cargo.* src derive-insn
 	git commit -m'save'
 	git push
 	git st

@@ -244,6 +244,9 @@ fn insn_field_name_map(kind: &str, name: &str) -> (&'static str, &'static str) {
         ("B", "rs2") => ("rs2", "usize"),
         ("B", "lo") => ("bimm12lo", "u32"),
         ("B", "high") => ("bimm12hi", "u32"),
+        ("S", "rs1") => ("rs1", "usize"),
+        ("S", "rs2") => ("rs2", "usize"),
+        ("S", "imm") => ("s_imm", "i32"),
         _ => {
             panic!(format!("Unmatched insn field name '{}' for insn type '{}'",
                            name,
