@@ -169,6 +169,7 @@ pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
 
     p.advance_pc();
 }
+
 // Integer Computational Instructions
 
 #[insn(kind=I,mask=0x110,match=0x100)]

@@ -2,18 +2,21 @@ use std::fmt;
 
 pub trait Memory {
     fn write_b(&mut self, offset: usize, value: u8) {
-        unimplemented!()
+        warn!("Memory write_b not implemented")
     }
     fn write_w(&mut self, offset: u64, value: u32) {
-        unimplemented!()
+        warn!("Memory write_w not implemented")
     }
     fn read_b(&self, offset: usize) -> u8 {
+        warn!("Memory read_b not implemented");
         unimplemented!()
     }
     fn read_w(&self, offset: u64) -> u32 {
+        warn!("Memory read_w not implemented");
         unimplemented!()
     }
     fn read_d(&self, _offset: u64) -> u64 {
+        warn!("Memory read_d not implemented");
         unimplemented!()
     }
 }
