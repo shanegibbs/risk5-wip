@@ -181,8 +181,9 @@ pub fn addi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
 
 #[insn(kind=I,mask=0x110,match=0x100)]
 pub fn addiw<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let v = p.regs.get(rs) as i64 + sign_extend(imm, 12);
-    p.regs.set(rd, v as u64);
+    let a = (p.regs.get(rs) as i64).wrapping_add(sign_extend(imm, 12));
+    let b = a << 32 >> 32;
+    p.regs.set(rd, b as u64);
     p.advance_pc();
 }
 
