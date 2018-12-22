@@ -70,8 +70,7 @@ fn x(i: u64, low: u8, len: u8) -> u64 {
 #[inline(always)]
 pub fn sign_extend<T: Into<u64>>(i: T, len: u8) -> i64 {
     let extend = 64 - len;
-    let v: u64 = (i.into()) << extend >> extend;
-    v as i64
+    (Into::<u64>::into(i) as i64) << extend >> extend
 }
 
 impl Instruction for u32 {
