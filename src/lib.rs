@@ -11,7 +11,7 @@ extern crate serde_derive;
 pub mod log_runner;
 mod insn;
 mod insns;
-pub mod insns2;
+mod itypes;
 mod opcodes;
 mod elf_loader;
 mod mmu;
@@ -218,6 +218,8 @@ pub fn risk5_main() {
 }
 
 fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
+    macro_rules! wrap { ($f:ident) => ( |p, i| $f(p, i.into())) }
+
     vec![
         Matcher::new(0x707f, 0x63, beq_exec),
         Matcher::new(0x707f, 0x1063, bne_exec),
@@ -229,7 +231,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x7f, 0x6f, jal_exec),
         Matcher::new(0x7f, 0x37, lui_exec),
         Matcher::new(0x7f, 0x17, auipc_exec),
-        Matcher::new(0x707f, 0x13, addi_exec),
+        Matcher::new(0x707f, 0x13, wrap!(addi2)),
         Matcher::new(0xfc00707f, 0x1013, slli_exec),
         Matcher::new(0x707f, 0x2013, |p,_| panic!(format!("Unimplemented insn 'slti' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x3013, |p,_| panic!(format!("Unimplemented insn 'sltiu' at {:x}", p.pc()))),

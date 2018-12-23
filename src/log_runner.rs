@@ -177,6 +177,11 @@ fn run_err() -> Result<(), io::Error> {
             return Err(io::Error::new(io::ErrorKind::Other, format!("Fail pc check. Was: 0x{:016x}, expected: {}", cpu.pc(), state.pc)));
         }
 
+        // ratchet
+        if step > 143 {
+            break;
+        }
+
         // load up transactions
 
         info!("Begin step {}", step);

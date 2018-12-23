@@ -2,6 +2,7 @@ use derive_insn::*;
 use encoding::*;
 use insn::sign_extend;
 use *;
+use itypes::*;
 
 #[insn(kind=J,mask=0x6f,match=0x7f)]
 pub fn jal<M: Memory>(p: &mut Processor<M>, imm: u32) {
@@ -173,10 +174,9 @@ pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
 
 // Integer Computational Instructions
 
-#[insn(kind=I,mask=0x110,match=0x100)]
-pub fn addi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let v = (p.regs.get(rs) as i64).wrapping_add(sign_extend(imm, 12));
-    p.regs.set(rd, v as u64);
+pub fn addi2<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1()).wrapping_add(i.imm());
+    p.regs.seti(i.rd(), v);
     p.advance_pc();
 }
 

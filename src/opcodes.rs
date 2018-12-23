@@ -1,11 +1,12 @@
 use mmu::*;
 use csrs::Csrs;
 use std::fmt;
+use itypes;
 
 pub struct Matcher<M: Memory> {
     mask: u32,
     mtch: u32,
-    exec: fn(&mut Processor<M>, u32),
+    pub exec: fn(&mut Processor<M>, u32),
 }
 
 impl<M: Memory> Matcher<M> {
@@ -46,13 +47,27 @@ impl Regs {
     }
 
     #[inline(always)]
-    pub fn set(&mut self, i: usize, v: u64) {
+    pub fn geti<T: Into<usize>>(&self, i: T) -> i64 {
+        let i = i.into();
+        let v = self.regs[i];
+        // trace!("Getting reg 0x{:x} 0x{:x}", i, v);
+        v as i64
+    }
+
+    #[inline(always)]
+    pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
+        let i = i.into();
         // reg 0 is a black hole
         if i == 0 {
             return;
         }
         trace!("Setting reg 0x{:x} 0x{:x}", i, v);
         self.regs[i] = v;
+    }
+
+    #[inline(always)]
+    pub fn seti<T: Into<usize>>(&mut self, i: T, v: i64) {
+        self.set(i, v as u64)
     }
 }
 
@@ -88,6 +103,7 @@ impl<M> Processor<M> {
         &mut self.mem
     }
 
+    #[inline(never)]
     pub fn step(&mut self, matchers: &[Matcher<M>])
         where M: Memory
     {
