@@ -147,9 +147,10 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) 
 
 #[insn(kind=I,mask=0x1073,match=0x707f)]
 pub fn mret<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    error!("mret not implemented");
+    error!("mret not implemented. Input {} {} {}", rd, rs, csr);
     p.advance_pc();
 }
+
 
 // Load and Store
 

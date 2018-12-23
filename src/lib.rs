@@ -11,6 +11,7 @@ extern crate serde_derive;
 pub mod log_runner;
 mod insn;
 mod insns;
+pub mod insns2;
 mod opcodes;
 mod elf_loader;
 mod mmu;
