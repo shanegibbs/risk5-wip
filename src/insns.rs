@@ -152,6 +152,9 @@ pub fn mret<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
     p.advance_pc();
 }
 
+pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
+    do_trap(p)
+}
 
 // Load and Store
 
@@ -174,7 +177,7 @@ pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
 
 // Integer Computational Instructions
 
-pub fn addi2<M: Memory>(p: &mut Processor<M>, i: Itype) {
+pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let v = p.regs.geti(i.rs1()).wrapping_add(i.imm());
     p.regs.seti(i.rd(), v);
     p.advance_pc();

@@ -31,6 +31,8 @@ struct State {
     id: usize,
     pc: String,
     prv: String,
+    mstatus: String,
+    mepc: String,
     xregs: Vec<String>,
     fregs: Vec<String>,
 }
@@ -145,6 +147,10 @@ impl Iterator for LogTupleIterator {
     }
 }
 
+fn format_diff(expected: u64, actual: u64) -> String {
+    format!("Was:      0x{:016x} {:064b}\nExpected: 0x{:016x} {:064b}", actual, actual, expected, expected)
+}
+
 fn run_err() -> Result<(), io::Error> {
     pretty_env_logger::init();
 
@@ -153,8 +159,12 @@ fn run_err() -> Result<(), io::Error> {
     let mem = FakeMemory::new();
     let mut cpu = opcodes::Processor::new(0x1000, mem);
 
+    info!("Initial checks");
+
     for (step, (state, insn, load)) in try!(LogTupleIterator::new()).enumerate() {
         // trace!("{:?}", state);
+
+        let mut fail = false;
 
         /* for i in 0..8 {
             let offset = (i * 4) as usize;
@@ -163,28 +173,57 @@ fn run_err() -> Result<(), io::Error> {
 
         // validate current state
 
+        macro_rules! fail_on {
+            ($name:expr, $expected:expr, $actual:expr) => {
+                let val = u64::from_str_radix(&$expected[2..], 16).expect($name);
+                if val != $actual {
+                    error!("Fail check on {}.\n{}", $name, format_diff(val, $actual));
+                    fail = true;
+                }
+            }
+        }
+
+        macro_rules! warn_on {
+            ($name:expr, $expected:expr, $actual:expr) => {
+                let val = u64::from_str_radix(&$expected[2..], 16).expect($name);
+                if val != $actual {
+                    warn!("Fail {} check. Was: 0x{:016x}, expected: {}", $name, $actual, $expected);
+                }
+            }
+        }
+
+        if cpu.pc() != u64::from_str_radix(&state.pc[2..], 16).expect("pc") {
+            error!("Fail pc check. Was: 0x{:016x}, expected: {}", cpu.pc(), state.pc);
+            fail = true;
+        }
+
+        fail_on!("prv", state.prv, cpu.csrs.prv);
+        fail_on!("mstatus", state.mstatus, cpu.csrs.mstatus);
+        warn_on!("mepc", state.mepc, cpu.csrs.mepc);
+
         for (i, reg_str) in state.xregs.iter().enumerate() {
             let val = u64::from_str_radix(&reg_str[2..], 16).expect("xreg");
             let actual = cpu.regs.get(i);
             if val != actual {
                 let msg = format!("Fail reg check on 0x{:02x} ({})\nWas:      0x{:016x} {:064b} \nExpected: 0x{:016x} {:064b}",
                     i, opcodes::REG_NAMES[i], actual, actual, val, val);
-                return Err(io::Error::new(io::ErrorKind::Other, msg));
+                error!("{}", msg);
+                fail = true;
             }
         }
 
-        if cpu.pc() != u64::from_str_radix(&state.pc[2..], 16).expect("pc") {
-            return Err(io::Error::new(io::ErrorKind::Other, format!("Fail pc check. Was: 0x{:016x}, expected: {}", cpu.pc(), state.pc)));
+        if fail {
+            return Err(io::Error::new(io::ErrorKind::Other, format!("Failed checks")));
         }
 
         // ratchet
-        if step > 143 {
-            break;
+        if step > 144 {
+            // break;
         }
 
         // load up transactions
 
-        info!("Begin step {}", step);
+        info!("--- Begin step {} ---", step);
 
         debug!("{:?}", insn);
         trace!("Load {:?}", load);
