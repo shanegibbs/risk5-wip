@@ -12,6 +12,7 @@ pub mod log_runner;
 mod insn;
 mod insns;
 mod itypes;
+mod mstatus;
 mod opcodes;
 mod elf_loader;
 mod mmu;

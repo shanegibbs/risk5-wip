@@ -1,9 +1,10 @@
 use std::fmt;
+use mstatus::Mstatus;
 
 pub struct Csrs {
     pub prv: u64,
     pub satp: u64,
-    pub mstatus: u64,
+    pub mstatus: Mstatus,
     pub medeleg: u64,
     pub mideleg: u64,
     pub mtvec: u64,
@@ -29,10 +30,14 @@ const MTVAL: usize = 0x343;
 
 impl Csrs {
     pub fn new() -> Self {
+        let mut mstatus = Mstatus::new();
+        mstatus.set_supervisor_xlen(2);
+        mstatus.set_user_xlen(2);
+
         Csrs {
             prv: 3,
             satp: 0,
-            mstatus: 0,
+            mstatus: mstatus,
             medeleg: 0,
             mideleg: 0,
             mtvec: 0,
@@ -59,7 +64,7 @@ impl Csrs {
         return Ok(if i == MHARTID {
             0
         } else if i == MSTATUS {
-            self.mstatus
+            self.mstatus.val()
         } else if i == MEDELEG {
             self.medeleg
         } else if i == MIDELEG {

@@ -90,19 +90,18 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
     p.csrs.mepc = p.pc();
     p.set_pc(mtvec & !0x3);
 
-    let mstatus = p.csrs.mstatus;
+    {
+        let m = &mut p.csrs.mstatus;
 
-    // interrupt-enable
-    let mie = mstatus >> 3 & 0x1;
+        // move xIE to xPIE
+        m.move_machine_interrupt_enabled_to_prior();
+        // set xIE to zero
+        m.set_machine_interrupt_enabled(0);
+        // set xPP to y
+        //let mstatus = (mstatus & !MSTATUS_MPP) & (p.csrs.prv << 11 & MSTATUS_MPP);
 
-    // move xIE to xPIE
-    let mstatus = (mstatus & !MSTATUS_MPIE) & (mie << 7 & MSTATUS_MPIE);
-    // set xIE to zero
-    let mstatus = mstatus & !MSTATUS_MIE;
-    // set xPP to y
-    let mstatus = (mstatus & !MSTATUS_MPP) & (p.csrs.prv << 11 & MSTATUS_MPP);
+    }
 
-    p.csrs.mstatus = mstatus;
     p.csrs.prv = 3;
 }
 

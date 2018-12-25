@@ -198,7 +198,7 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         fail_on!("prv", state.prv, cpu.csrs.prv);
-        fail_on!("mstatus", state.mstatus, cpu.csrs.mstatus);
+        fail_on!("mstatus", state.mstatus, cpu.csrs.mstatus.val());
         warn_on!("mepc", state.mepc, cpu.csrs.mepc);
 
         for (i, reg_str) in state.xregs.iter().enumerate() {
