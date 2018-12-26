@@ -93,12 +93,11 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
     {
         let m = &mut p.csrs.mstatus;
 
-        // move xIE to xPIE
+        // move xIE to xPIE and set xIE to 0
         m.move_machine_interrupt_enabled_to_prior();
-        // set xIE to zero
         m.set_machine_interrupt_enabled(0);
-        // set xPP to y
-        //let mstatus = (mstatus & !MSTATUS_MPP) & (p.csrs.prv << 11 & MSTATUS_MPP);
+        // set xPP to prv
+        m.set_machine_previous_privilege(p.csrs.prv);
 
     }
 
