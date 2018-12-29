@@ -198,8 +198,18 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         fail_on!("prv", state.prv, cpu.csrs.prv);
-        fail_on!("mstatus", state.mstatus, cpu.csrs.mstatus.val());
         warn_on!("mepc", state.mepc, cpu.csrs.mepc);
+
+        {
+            let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
+            if val != cpu.csrs.mstatus.val() {
+                use mstatus::Mstatus;
+                let mstatus_expected = Mstatus::new_with_val(val);
+                error!("Fail check on {}.\n{}\nWas:      {:?}\nExpected: {:?}", "mstatus",
+                       format_diff(val, cpu.csrs.mstatus.val()), cpu.csrs.mstatus, mstatus_expected);
+                fail = true;
+            }
+        }
 
         for (i, reg_str) in state.xregs.iter().enumerate() {
             let val = u64::from_str_radix(&reg_str[2..], 16).expect("xreg");

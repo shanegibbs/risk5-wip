@@ -45,6 +45,7 @@ impl Csrs {
             mtval: 0,
         }
     }
+
     pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
         let i = i.into();
         debug!("Setting CSR 0x{:x} to 0x{:x}", i, v);
@@ -54,10 +55,17 @@ impl Csrs {
             if v != 0 {
                 panic!("unimplemented set SATP to 0x{:x}", v)
             }
+        } else if i == MSTATUS {
+            debug!("Setting mstatus to 0x{:x}", v);
+            let mut mstatus = Mstatus::new_with_val(v);
+            mstatus.set_supervisor_xlen(2);
+            mstatus.set_user_xlen(2);
+            self.mstatus = mstatus;
         } else {
             error!("unimplemented Csrs.set 0x{:x}", i)
         }
     }
+
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, ()> {
         let i = i.into();
         trace!("Getting CSR 0x{:x}", i);

@@ -80,6 +80,10 @@ impl Mstatus {
         Mstatus(BitField::new(0))
     }
 
+    pub fn new_with_val(i: u64) -> Self {
+        Mstatus(BitField::new(i))
+    }
+
     #[inline(always)]
     pub fn val(&self) -> u64 {
         self.0.val()
