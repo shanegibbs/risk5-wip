@@ -205,7 +205,7 @@ fn run_err() -> Result<(), io::Error> {
             if val != cpu.csrs.mstatus.val() {
                 use mstatus::Mstatus;
                 let mstatus_expected = Mstatus::new_with_val(val);
-                error!("Fail check on {}.\n{}\nWas:      {:?}\nExpected: {:?}", "mstatus",
+                error!("Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
                        format_diff(val, cpu.csrs.mstatus.val()), cpu.csrs.mstatus, mstatus_expected);
                 fail = true;
             }

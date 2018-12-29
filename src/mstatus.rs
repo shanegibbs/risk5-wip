@@ -104,8 +104,8 @@ impl Mstatus {
     // sie
 
     #[inline(always)]
-    pub fn supervisor_interrupt_enabled(&self) -> bool {
-       self.0.bool_field(1)
+    pub fn supervisor_interrupt_enabled(&self) -> u64 {
+       self.0.field(1, 1)
     }
 
     #[inline(always)]
@@ -116,8 +116,8 @@ impl Mstatus {
     // uie
 
     #[inline(always)]
-    pub fn user_interrupt_enabled(&self) -> bool {
-       self.0.bool_field(0)
+    pub fn user_interrupt_enabled(&self) -> u64 {
+       self.0.field(0, 1)
     }
 
     #[inline(always)]
@@ -128,8 +128,8 @@ impl Mstatus {
     // mpie
 
     #[inline(always)]
-    pub fn machine_prior_interrupt_enabled(&self) -> bool {
-       self.0.bool_field(7)
+    pub fn machine_prior_interrupt_enabled(&self) -> u64 {
+       self.0.field(7, 1)
     }
 
     #[inline(always)]
@@ -146,13 +146,13 @@ impl Mstatus {
     // spie
 
     #[inline(always)]
-    pub fn supervisor_prior_interrupt_enabled(&self) -> bool {
-       self.0.bool_field(5)
+    pub fn supervisor_prior_interrupt_enabled(&self) -> u64 {
+       self.0.field(5, 1)
     }
 
     #[inline(always)]
-    pub fn user_prior_interrupt_enabled(&self) -> bool {
-       self.0.bool_field(4)
+    pub fn user_prior_interrupt_enabled(&self) -> u64 {
+       self.0.field(4, 1)
     }
 
     // sxl
