@@ -146,10 +146,9 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
 
 // Load and Store
 
-#[insn(kind=I,mask=0x110,match=0x100)]
-pub fn ld<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let v = p.mem().read_d(rs as u64 + imm as u64);
-    p.regs.set(rd, v);
+pub fn ld<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.mem().read_d((i.rs1() as i64 + i.imm()) as u64);
+    p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }
 
