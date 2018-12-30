@@ -230,7 +230,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x67, wrap!(jalr)),
         Matcher::new(0x7f, 0x6f, wrap!(jal)),
         Matcher::new(0x7f, 0x37, lui_exec),
-        Matcher::new(0x7f, 0x17, auipc_exec),
+        Matcher::new(0x7f, 0x17, wrap!(auipc)),
         Matcher::new(0x707f, 0x13, wrap!(addi)),
         Matcher::new(0xfc00707f, 0x1013, wrap!(slli)),
         Matcher::new(0x707f, 0x2013, |p,_| panic!(format!("Unimplemented insn 'slti' at {:x}", p.pc()))),

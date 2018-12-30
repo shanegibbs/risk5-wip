@@ -1,5 +1,4 @@
 use derive_insn::*;
-use insn::sign_extend;
 use *;
 use itypes::*;
 
@@ -43,11 +42,9 @@ pub fn blt<M: Memory>(p: &mut Processor<M>, i: Btype) {
     i.jump(p);
 }
 
-#[insn(kind=U,mask=0x110,match=0x100)]
-pub fn auipc<M: Memory>(p: &mut Processor<M>, rd: usize, imm: u32) {
-    let offset = sign_extend(imm, 32) as i64;
-    let v = p.pc() as i64 + offset;
-    p.regs.set(rd, v as u64);
+pub fn auipc<M: Memory>(p: &mut Processor<M>, i: Utype) {
+    let v = p.pc() as i64 + i.imm();
+    p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }
 

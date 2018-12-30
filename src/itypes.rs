@@ -140,6 +140,34 @@ impl Into<Itype> for u32 {
 }
 
 
+// U Instruction Type
+
+pub struct Utype(u32);
+
+impl Base for Utype {
+    #[inline(always)]
+    fn val(&self) -> u32 {
+        self.0
+    }
+}
+
+impl FieldRd for Utype {}
+
+impl Utype {
+    #[inline(always)]
+    pub fn imm(&self) -> i64 {
+        let i  = (self.val() as i32) >> 12 << 12;
+        i as i64
+    }
+}
+
+impl Into<Utype> for u32 {
+    fn into(self) -> Utype {
+        Utype(self)
+    }
+}
+
+
 // J Instruction Type
 
 pub struct Jtype(u32);
