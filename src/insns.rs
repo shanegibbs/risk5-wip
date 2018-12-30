@@ -147,7 +147,13 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) 
 
 #[insn(kind=I,mask=0x1073,match=0x707f)]
 pub fn mret<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    error!("mret not implemented. Input {} {} {}", rd, rs, csr);
+    error!("mret not fully implemented. Input {} {} {}", rd, rs, csr);
+    let mpie = p.csrs.mstatus.machine_prior_interrupt_enabled();
+
+    p.csrs.mstatus.set_machine_interrupt_enabled(mpie);
+    p.csrs.mstatus.set_machine_prior_interrupt_enabled(1);
+    p.csrs.mstatus.set_machine_previous_privilege(0);
+
     p.advance_pc();
 }
 
