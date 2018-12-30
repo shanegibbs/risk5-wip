@@ -140,6 +140,38 @@ impl Into<Itype> for u32 {
 }
 
 
+// S Instruction Type
+
+pub struct Stype(u32);
+
+impl Base for Stype {
+    #[inline(always)]
+    fn val(&self) -> u32 {
+        self.0
+    }
+}
+
+impl FieldRd for Stype {}
+impl FieldRs1 for Stype {}
+impl FieldRs2 for Stype {}
+
+impl Stype {
+    #[inline(always)]
+    pub fn imm(&self) -> i64 {
+        let mut i: u32 = 0;
+        i |= self.field(7, 5);
+        i |= self.field(25, 7) << 5;
+        sign_extend(i as u64, 12)
+    }
+}
+
+impl Into<Stype> for u32 {
+    fn into(self) -> Stype {
+        Stype(self)
+    }
+}
+
+
 // U Instruction Type
 
 pub struct Utype(u32);

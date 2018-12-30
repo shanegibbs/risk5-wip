@@ -1,4 +1,3 @@
-use derive_insn::*;
 use *;
 use itypes::*;
 
@@ -147,12 +146,11 @@ pub fn ld<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
-#[insn(kind=S,mask=0x110,match=0x100)]
-pub fn sw<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, imm: i32) {
-    let rv1 = p.regs.get(rs1) as i64;
-    let rv2 = p.regs.get(rs2) as i64;
-    let offset = rv1 + imm as i64;
-    p.mem_mut().write_w(offset as u64, rv2 as u32);
+pub fn sw<M: Memory>(p: &mut Processor<M>, i: Stype) {
+    let rs1 = p.regs.get(i.rs1() as usize) as i64;
+    let rs2 = p.regs.get(i.rs2() as usize) as i64;
+    let offset = rs1 + i.imm();
+    p.mem_mut().write_w(offset as u64, rs2 as u32);
 
     p.advance_pc();
 }
