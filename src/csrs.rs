@@ -10,6 +10,7 @@ pub struct Csrs {
     pub mtvec: u64,
     pub mepc: u64,
     pub mtval: u64,
+    pub mcause: u64,
 }
 
 // Supervisor Protection and Translation
@@ -23,6 +24,7 @@ const MSTATUS: usize = 0x300;
 const MEDELEG: usize = 0x302;
 const MIDELEG: usize = 0x303;
 const MTVEC: usize = 0x305;
+const MCAUSE: usize = 0x342;
 
 // Machine Trap Handling
 const MEPC: usize = 0x341;
@@ -43,6 +45,7 @@ impl Csrs {
             mtvec: 0,
             mepc: 0,
             mtval: 0,
+            mcause: 0,
         }
     }
 
@@ -66,7 +69,7 @@ impl Csrs {
         }
     }
 
-    pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, ()> {
+    pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, u64> {
         let i = i.into();
         trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);
         return Ok(if i == MHARTID {
@@ -85,9 +88,11 @@ impl Csrs {
             self.mepc
         } else if i == MTVAL {
             self.mtval
+        } else if i == MCAUSE {
+            self.mcause
         } else {
             error!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
-            return Err(());
+            return Err(2); // Illegal instruction
         });
     }
 }

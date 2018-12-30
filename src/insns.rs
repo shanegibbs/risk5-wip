@@ -107,7 +107,8 @@ macro_rules! handle_trap {
     ($p:expr, $val:expr) => {
         match $val {
             Ok(n) => n,
-            Err(_) => {
+            Err(cause) => {
+                $p.csrs.mcause = cause;
                 do_trap($p);
                 return;
             }
@@ -117,8 +118,6 @@ macro_rules! handle_trap {
 
 #[insn(kind=I,mask=0x1073,match=0x707f)]
 pub fn csrrw<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    let _priv_lvl = (csr >> 7) & 0x3;
-    let _ro = (csr >> 9) & 0x3 == 0x3;
     let old = handle_trap!(p, p.csrs.get(csr));
     p.regs.set(rd, old);
     p.csrs.set(csr, p.regs.get(rs));
@@ -155,6 +154,10 @@ pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
+    if p.csrs.prv != 3 {
+        panic!("Unimplemented prv level");
+    }
+    p.csrs.mcause = 0xb; // env call from M mode
     do_trap(p)
 }
 
