@@ -170,11 +170,10 @@ pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
-#[insn(kind=I,mask=0x110,match=0x100)]
-pub fn addiw<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let a = (p.regs.get(rs) as i64).wrapping_add(sign_extend(imm, 12));
+pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
     let b = a << 32 >> 32;
-    p.regs.set(rd, b as u64);
+    p.regs.set(i.rd() as usize, b as u64);
     p.advance_pc();
 }
 
