@@ -102,30 +102,27 @@ macro_rules! handle_trap {
     };
 }
 
-#[insn(kind=I,mask=0x1073,match=0x707f)]
-pub fn csrrw<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    let old = handle_trap!(p, p.csrs.get(csr));
-    p.regs.set(rd, old);
-    p.csrs.set(csr, p.regs.get(rs));
+pub fn csrrw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let old = handle_trap!(p, p.csrs.get(i.u_imm() as usize));
+    p.regs.set(i.rd() as usize, old);
+    p.csrs.set(i.u_imm() as usize, p.regs.get(i.rs1() as usize));
     p.advance_pc();
 }
 
-#[insn(kind=I,mask=0x1073,match=0x707f)]
-pub fn csrrwi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    let old = handle_trap!(p, p.csrs.get(csr));
-    p.csrs.set(csr, rs as u64);
-    p.regs.set(rd, old);
+pub fn csrrwi<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let old = handle_trap!(p, p.csrs.get(i.u_imm() as usize));
+    p.csrs.set(i.u_imm() as usize, i.rs1() as u64);
+    p.regs.set(i.rd() as usize, old);
     p.advance_pc();
 }
 
-#[insn(kind=I,mask=0x1073,match=0x707f)]
-pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    let old = handle_trap!(p, p.csrs.get(csr));
-    if rs != 0 {
-        let rs1 = p.regs.get(rs);
-        p.csrs.set(csr, old | rs1);
+pub fn csrrs<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let old = handle_trap!(p, p.csrs.get(i.u_imm() as usize));
+    if i.rs1() != 0 {
+        let rs1 = p.regs.get(i.rs1() as usize);
+        p.csrs.set(i.u_imm() as usize, old | rs1);
     }
-    p.regs.set(rd, old);
+    p.regs.set(i.rd() as usize, old);
     p.advance_pc();
 }
 

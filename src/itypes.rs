@@ -121,6 +121,12 @@ impl FieldRd for Itype {}
 impl FieldRs1 for Itype {}
 
 impl Itype {
+
+    #[inline(always)]
+    pub fn u_imm(&self) -> u64 {
+        self.field(20, 12) as u64
+    }
+
     #[inline(always)]
     pub fn imm(&self) -> i64 {
         self.signed_field(20, 12)
