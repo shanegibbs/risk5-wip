@@ -58,10 +58,10 @@ impl Btype {
     #[inline(always)]
     pub fn imm(&self) -> i64 {
         let mut i: u32 = 0;
-        i |= self.field(31, 1) << 12;
-        i |= self.field(25, 6) << 5;
         i |= self.field(8, 4) << 1;
+        i |= self.field(25, 6) << 5;
         i |= self.field(7, 1) << 11;
+        i |= self.field(31, 1) << 12;
         sign_extend(i as u64, 12)
     }
 }
@@ -121,5 +121,37 @@ impl Itype {
 impl Into<Itype> for u32 {
     fn into(self) -> Itype {
         Itype(self)
+    }
+}
+
+
+// J Instruction Type
+
+pub struct Jtype(u32);
+
+impl Base for Jtype {
+    #[inline(always)]
+    fn val(&self) -> u32 {
+        self.0
+    }
+}
+
+impl FieldRd for Jtype {}
+
+impl Jtype {
+    #[inline(always)]
+    pub fn imm(&self) -> i64 {
+        let mut i: u32 = 0;
+        i |= self.field(21, 10) << 1;
+        i |= self.field(20, 1) << 11;
+        i |= self.field(12, 8) << 12;
+        i |= self.field(31, 1) << 20;
+        sign_extend(i as u64, 20)
+    }
+}
+
+impl Into<Jtype> for u32 {
+    fn into(self) -> Jtype {
+        Jtype(self)
     }
 }

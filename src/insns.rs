@@ -3,10 +3,9 @@ use insn::sign_extend;
 use *;
 use itypes::*;
 
-#[insn(kind=J,mask=0x6f,match=0x7f)]
-pub fn jal<M: Memory>(p: &mut Processor<M>, imm: u32) {
-    let new_pc = p.pc() + imm as u64;
-    p.set_pc(new_pc);
+pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
+    let new_pc = p.pc() as i64 + i.imm();
+    p.set_pc(new_pc as u64);
 }
 
 #[insn(kind=I,mask=0x6f,match=0x7f)]
