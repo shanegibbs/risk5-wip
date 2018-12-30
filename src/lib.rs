@@ -221,7 +221,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
     macro_rules! wrap { ($f:ident) => ( |p, i| $f(p, i.into())) }
 
     vec![
-        Matcher::new(0x707f, 0x63, beq_exec),
+        Matcher::new(0x707f, 0x63, wrap!(beq)),
         Matcher::new(0x707f, 0x1063, bne_exec),
         Matcher::new(0x707f, 0x4063, blt_exec),
         Matcher::new(0x707f, 0x5063, bge_exec),
