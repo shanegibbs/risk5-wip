@@ -4,7 +4,6 @@ version = "0.1.0"
 authors = ["Shane Gibbs <shane@hands.net.nz>"]
 
 [dependencies]
-derive_insn = { path = "derive-insn" }
 
 elf = "0.0.10"
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }

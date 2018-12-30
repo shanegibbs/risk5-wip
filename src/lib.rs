@@ -1,7 +1,6 @@
 #[macro_use] extern crate log;
 extern crate pretty_env_logger;
 extern crate elf;
-extern crate derive_insn;
 
 extern crate serde;
 extern crate serde_json;
@@ -9,7 +8,6 @@ extern crate serde_json;
 extern crate serde_derive;
 
 pub mod log_runner;
-mod insn;
 mod insns;
 mod itypes;
 mod mstatus;
@@ -20,154 +18,9 @@ mod csrs;
 use std::fs::File;
 use std::io::Read;
 
-pub use insn::Instruction;
 pub use opcodes::*;
 pub use insns::*;
 use mmu::*;
-
-#[derive(Debug)]
-struct InsnLog {
-    pc: u64,
-    insn: u32,
-    name: String,
-    args: Vec<String>,
-    target_type_value: Option<(usize, String, u64)>,
-    load: Option<InsnLogLoad>,
-}
-
-#[derive(Debug)]
-struct InsnLogLoad {
-    addr: u64,
-    value: u64,
-}
-
-use std::fmt;
-impl fmt::Display for InsnLog {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let target = match self.target_type_value.as_ref() {
-            None => String::new(),
-            Some((target, typ, value)) => {
-                format!(" target={} type={} value=0x{:x}", target, typ, value)
-            }
-        };
-
-        let load = match self.load.as_ref() {
-            None => String::new(),
-            Some(l) => {
-                format!(" ld_addr=0x{:x} ld_value=0x{:x}", l.addr, l.value)
-            }
-        };
-
-        write!(f, "pc=0x{:x} insn=0x{:x} name={} args={:?}{}{}", self.pc, self.insn, self.name, self.args, target, load)
-    }
-}
-
-pub fn run_spike_log() {
-    use std::io::BufReader;
-    use std::io::prelude::*;
-
-	pretty_env_logger::init();
-
-    let mut file = BufReader::new(File::open("ADDIW.elf.log").unwrap());
-
-    let mut line = String::new();
-    file.read_line(&mut line).unwrap();
-    info!("{}", line.trim());
-
-    let mut line = String::new();
-    file.read_line(&mut line).unwrap();
-    info!("{}", line.trim());
-
-    let mut line = String::new();
-    file.read_line(&mut line).unwrap();
-    info!("{}", line.trim());
-
-    let matchers = build_matchers();
-
-    let mem = FakeMemory::new();
-    let mut cpu = opcodes::Processor::new(0x1000, mem);
-
-    let mut step = 0;
-    loop {
-        step += 1;
-        trace!("Begin step {}", step);
-
-        let mut line1 = String::new();
-        let mut line2 = String::new();
-        let mut line_ld = String::new();
-        let mut line_csr = String::new();
-
-        file.read_line(&mut line1).unwrap();
-        file.read_line(&mut line2).unwrap();
-        if line2.starts_with("load") {
-            line_ld = line2;
-            line2 = String::new();
-            file.read_line(&mut line2).unwrap();
-        } else if line2.starts_with("csr") {
-            line_csr = line2;
-            line2 = String::new();
-            file.read_line(&mut line2).unwrap();
-        }
-
-        let line2 = line2.replace("x ", "x");
-        let splits1 = line1.trim().split(" ").filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        let splits2 = line2.trim().split(" ").filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        let splits_ld = line_ld.trim().split(" ").filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        let splits_csr = line_csr.trim().split(" ").filter(|s| !s.is_empty()).collect::<Vec<_>>();
-
-        trace!("split1 {:?}", splits1);
-        trace!("split2 {:?}", splits2);
-        trace!("split_ld {:?}", splits_ld);
-        trace!("split_csr {:?}", splits_csr);
-
-        assert_eq!(splits1[0], "core");
-        let pc = u64::from_str_radix(&splits1[2][2..], 16).expect("log pc");
-        let insn = u32::from_str_radix(&splits1[3][3..splits1[3].len()-1], 16).expect("log insn");
-        let name = splits1[4].to_owned();
-
-        let args = splits1[5..].iter().map(|s| {
-            let a = s.replace(",", "").to_owned();
-            a
-        }).collect::<Vec<_>>();
-
-        let target_type_value = match splits2.len() {
-            5 => {
-                let target: usize = splits2[3][1..].to_owned().parse().expect("target");
-                let target_type = splits2[3][0..1].to_owned();
-                let target_value = u64::from_str_radix(&splits2[4][2..], 16).expect("log value");
-                Some((target, target_type, target_value))
-            }
-            3 => None,
-            6 => None,
-            i => panic!("Unmatched split2 len {}", i)
-        };
-
-        let mut load = None;
-        if splits_ld.len() > 0 {
-            assert_eq!(splits_ld[0], "load");
-            let addr = u64::from_str_radix(&splits_ld[2][2..], 16).expect("load addr");
-            let value = u64::from_str_radix(&splits_ld[3][2..], 16).expect("load value");
-            load = Some(InsnLogLoad {addr, value})
-        }
-
-        let i = InsnLog { pc, insn, name, args, target_type_value, load };
-
-        info!("{}: InsnLog {}", step, i);
-        if let Some(load) = i.load.as_ref() {
-            cpu.get_mem().push_double(load.value);
-        }
-        cpu.get_mem().push_word(insn);
-
-        cpu.step(&matchers);
-
-        if let Some((target, _typ, value)) = i.target_type_value.as_ref() {
-            assert_eq!(cpu.regs.get(*target), *value, "reg has wrong value");
-            info!("Reg {} has correct value 0x{:x}", target, value);
-        }
-
-        assert_eq!(cpu.get_mem().queue_size(), 0);
-    }
-}
 
 pub fn risk5_main() {
 	pretty_env_logger::init();
@@ -175,7 +28,7 @@ pub fn risk5_main() {
     let mut mem = BlockMemory::new(15);
 
 	use std::env;
-	let filename = env::var("BIN").unwrap_or("../bins/bbl/bbl".into());
+	let filename = env::var("BIN").unwrap_or("assets/bbl".into());
 
     let (entry, sections) = elf_loader::read_program_segments(&filename);
     let mut elf = File::open(&filename).unwrap();

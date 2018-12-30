@@ -133,25 +133,4 @@ impl<M> Processor<M> {
         self.pc
     }
 
-    fn _handle_inst(&mut self, insn: u32, _csrs: &mut Csrs, mut _m: &mut Memory) {
-        panic!(format!("Unmatched instruction: 0x{:x}", insn));
-
-        /*
-        macro_rules! unmatched_insn {() => (panic!(format!("No inst match 0x{:x}", insn)))}
-        macro_rules! unimplemented_insn {($name:expr) => ( panic!("No impl for {}", $name))}
-
-        // macro_rules! ld_inst {() => (self.regs[i.rd()] = m.read_d(i.rs1() as u64 + i.i_imm() as u64))}
-        macro_rules! auipc_insn {($id:expr,$imm:expr) => (self.regs.set($id, self.pc + $imm as u64); self.advance_pc())}
-        // macro_rules! addi_insn {($rd:expr,$rs1:expr,$imm:expr) => (let v = self.regs.get($rs1) + $imm as u64; self.regs.set($rd, v); self.advance_pc())}
-        macro_rules! addi_insn {($rd:expr,$rs1:expr,$imm:expr) => (addi_1(self, $rd, $rs1, $imm))}
-        macro_rules! jal_insn {($rd:expr,$imm:expr) => (let new_pc = (self.pc as i64 + $imm) as u64; self.set_pc(new_pc))}
-
-        macro_rules! bne_insn {($immhi:expr,$rs1:expr,$rs2:expr,$immlo:expr) => (if self.regs.get($rs1) != self.regs.get($rs2) {let new_pc = self.pc + ($immhi | $immlo) as u64; self.set_pc(new_pc)} else {self.advance_pc()} )}
-
-        macro_rules! csrrw_insn {($rd:expr,$rs1:expr,$csr:expr) => (self.regs.set($rd, csrs.get($csr)); csrs.set($csr, self.regs.get($rs1)); self.advance_pc();)}
-        macro_rules! csrrs_insn {($rd:expr,$rs1:expr,$csr:expr) => (self.regs.set($rd, csrs.get($csr) | $rs1 as u64); self.advance_pc();)}
-
-        include!(concat!(env!("OUT_DIR"), "/insns.rs"));
-        */
-    }
 }
