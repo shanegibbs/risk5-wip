@@ -1,7 +1,6 @@
 use mmu::*;
 use csrs::Csrs;
 use std::fmt;
-use itypes;
 
 pub struct Matcher<M: Memory> {
     mask: u32,

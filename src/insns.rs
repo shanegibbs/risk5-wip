@@ -1,5 +1,4 @@
 use derive_insn::*;
-use encoding::*;
 use insn::sign_extend;
 use *;
 use itypes::*;
@@ -145,9 +144,7 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) 
     p.advance_pc();
 }
 
-#[insn(kind=I,mask=0x1073,match=0x707f)]
-pub fn mret<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
-    error!("mret not fully implemented. Input {} {} {}", rd, rs, csr);
+pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
     let mpie = p.csrs.mstatus.machine_prior_interrupt_enabled();
 
     p.csrs.mstatus.set_machine_interrupt_enabled(mpie);

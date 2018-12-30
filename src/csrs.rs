@@ -48,7 +48,7 @@ impl Csrs {
 
     pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
         let i = i.into();
-        debug!("Setting CSR 0x{:x} to 0x{:x}", i, v);
+        debug!("Setting CSR 0x{:x} to 0x{:x} with prv {}", i, v, self.prv);
         if i == MTVEC {
             self.mtvec = v
         } else if i == SATP {
@@ -68,7 +68,7 @@ impl Csrs {
 
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, ()> {
         let i = i.into();
-        trace!("Getting CSR 0x{:x}", i);
+        trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);
         return Ok(if i == MHARTID {
             0
         } else if i == MSTATUS {
@@ -86,7 +86,7 @@ impl Csrs {
         } else if i == MTVAL {
             self.mtval
         } else {
-            error!("unimplemented Csrs.get 0x{:x}", i);
+            error!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
             return Err(());
         });
     }

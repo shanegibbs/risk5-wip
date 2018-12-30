@@ -44,7 +44,7 @@ impl BitField {
         self.0
     }
     #[inline(always)]
-    fn bool_field(&self, offset: u8) -> bool {
+    fn _bool_field(&self, offset: u8) -> bool {
         self.field(offset, 1) == 1
     }
     #[inline(always)]

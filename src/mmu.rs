@@ -1,17 +1,17 @@
 use std::fmt;
 
 pub trait Memory {
-    fn write_b(&mut self, offset: usize, value: u8) {
+    fn write_b(&mut self, _offset: usize, _value: u8) {
         warn!("Memory write_b not implemented")
     }
-    fn write_w(&mut self, offset: u64, value: u32) {
+    fn write_w(&mut self, _offset: u64, _value: u32) {
         warn!("Memory write_w not implemented")
     }
-    fn read_b(&self, offset: usize) -> u8 {
+    fn read_b(&self, _offset: usize) -> u8 {
         warn!("Memory read_b not implemented");
         unimplemented!()
     }
-    fn read_w(&self, offset: u64) -> u32 {
+    fn read_w(&self, _offset: u64) -> u32 {
         warn!("Memory read_w not implemented");
         unimplemented!()
     }

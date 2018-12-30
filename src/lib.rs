@@ -17,7 +17,6 @@ mod opcodes;
 mod elf_loader;
 mod mmu;
 mod csrs;
-mod encoding;
 use std::fs::File;
 use std::io::Read;
 
@@ -312,7 +311,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xffffffff, 0x100073, |p,_| panic!(format!("Unimplemented insn 'ebreak' at {:x}", p.pc()))),
         Matcher::new(0xffffffff, 0x200073, |p,_| panic!(format!("Unimplemented insn 'uret' at {:x}", p.pc()))),
         Matcher::new(0xffffffff, 0x10200073, |p,_| panic!(format!("Unimplemented insn 'sret' at {:x}", p.pc()))),
-        Matcher::new(0xffffffff, 0x30200073, mret_exec),
+        Matcher::new(0xffffffff, 0x30200073, wrap!(mret)),
         Matcher::new(0xffffffff, 0x7b200073, |p,_| panic!(format!("Unimplemented insn 'dret' at {:x}", p.pc()))),
         Matcher::new(0xfe007fff, 0x12000073, |p,_| panic!(format!("Unimplemented insn 'sfence.vma' at {:x}", p.pc()))),
         Matcher::new(0xffffffff, 0x10500073, |p,_| panic!(format!("Unimplemented insn 'wfi' at {:x}", p.pc()))),
