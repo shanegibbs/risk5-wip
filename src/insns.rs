@@ -49,10 +49,8 @@ pub fn auipc<M: Memory>(p: &mut Processor<M>, i: Utype) {
 }
 
 
-#[insn(kind=U,mask=0x110,match=0x100)]
-pub fn lui<M: Memory>(p: &mut Processor<M>, rd: usize, imm: u32) {
-    let v = insn::sign_extend(imm, 32) as i64;
-    p.regs.set(rd, v as u64);
+pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
+    p.regs.set(i.rd() as usize, i.imm() as u64);
     p.advance_pc();
 }
 
