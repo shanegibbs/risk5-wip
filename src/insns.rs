@@ -177,11 +177,10 @@ pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
-#[insn(kind=I,mask=0xfc00707f,match=0x1013)]
-pub fn slli<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, imm: u32) {
-    let shmat = imm & 0x3F;
-    let v = p.regs.get(rs);
+pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let shmat = i.imm() & 0x3F;
+    let v = p.regs.get(i.rs1() as usize);
     let v = v << shmat;
-    p.regs.set(rd, v as u64);
+    p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }
