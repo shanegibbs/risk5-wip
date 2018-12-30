@@ -222,12 +222,12 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
 
     vec![
         Matcher::new(0x707f, 0x63, wrap!(beq)),
-        Matcher::new(0x707f, 0x1063, bne_exec),
-        Matcher::new(0x707f, 0x4063, blt_exec),
-        Matcher::new(0x707f, 0x5063, bge_exec),
+        Matcher::new(0x707f, 0x1063, wrap!(bne)),
+        Matcher::new(0x707f, 0x4063, wrap!(blt)),
+        Matcher::new(0x707f, 0x5063, wrap!(bge)),
         Matcher::new(0x707f, 0x6063, |p,_| panic!(format!("Unimplemented insn 'bltu' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x7063, |p,_| panic!(format!("Unimplemented insn 'bgeu' at {:x}", p.pc()))),
-        Matcher::new(0x707f, 0x67, jalr_exec),
+        Matcher::new(0x707f, 0x67, wrap!(jalr)),
         Matcher::new(0x7f, 0x6f, wrap!(jal)),
         Matcher::new(0x7f, 0x37, lui_exec),
         Matcher::new(0x7f, 0x17, auipc_exec),

@@ -1,3 +1,5 @@
+use opcodes::Processor;
+
 pub type Regi = u32;
 
 #[inline(always)]
@@ -55,6 +57,7 @@ impl Base for Btype {
 }
 
 impl Btype {
+
     #[inline(always)]
     pub fn imm(&self) -> i64 {
         let mut i: u32 = 0;
@@ -63,6 +66,12 @@ impl Btype {
         i |= self.field(7, 1) << 11;
         i |= self.field(31, 1) << 12;
         sign_extend(i as u64, 12)
+    }
+
+    #[inline(always)]
+    pub fn jump<M>(&self, p: &mut Processor<M>) {
+        let new_pc = p.pc() as i64 + self.imm();
+        p.set_pc(new_pc as u64);
     }
 }
 

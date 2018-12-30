@@ -8,11 +8,10 @@ pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
     p.set_pc(new_pc as u64);
 }
 
-#[insn(kind=I,mask=0x6f,match=0x7f)]
-pub fn jalr<M: Memory>(p: &mut Processor<M>, rs: usize, rd: usize, imm: u32) {
+pub fn jalr<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let next_pc = p.pc() + 4;
-    p.regs.set(rd, next_pc);
-    let target = (p.regs.get(rs) as i64 + imm as i64) & !1;
+    p.regs.set(i.rd() as usize, next_pc);
+    let target = (p.regs.get(i.rs1() as usize) as i64 + i.imm()) & !1;
     p.set_pc(target as u64);
 }
 
@@ -20,40 +19,28 @@ pub fn beq<M: Memory>(p: &mut Processor<M>, i: Btype) {
     if p.regs.get(i.rs1() as usize) != p.regs.get(i.rs2() as usize) {
         return p.advance_pc();
     }
-    let offset = i.imm();
-    debug!("jump offst {}", offset);
-    let new_pc = p.pc() as i64 + offset;
-    p.set_pc(new_pc as u64);
+    i.jump(p);
 }
 
-#[insn(kind=B,mask=0x6f,match=0x7f)]
-pub fn bne<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, high: u32) {
-    if p.regs.get(rs1) == p.regs.get(rs2) {
+pub fn bne<M: Memory>(p: &mut Processor<M>, i: Btype) {
+    if p.regs.get(i.rs1() as usize) == p.regs.get(i.rs2() as usize) {
         return p.advance_pc();
     }
-    let offset = (lo | high).sign_extend(64) as i64;
-    let new_pc = p.pc() as i64 + (offset * 2);
-    p.set_pc(new_pc as u64);
+    i.jump(p);
 }
 
-#[insn(kind=B,mask=0x6f,match=0x7f)]
-pub fn bge<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, high: u32) {
-    if p.regs.get(rs1) < p.regs.get(rs2) {
+pub fn bge<M: Memory>(p: &mut Processor<M>, i: Btype) {
+    if p.regs.get(i.rs1() as usize) < p.regs.get(i.rs2() as usize) {
         return p.advance_pc();
     }
-    let offset = (lo | high).sign_extend(64) as i64;
-    let new_pc = p.pc() as i64 + (offset * 2);
-    p.set_pc(new_pc as u64);
+    i.jump(p);
 }
 
-#[insn(kind=B,mask=0x6f,match=0x7f)]
-pub fn blt<M: Memory>(p: &mut Processor<M>, rs1: usize, rs2: usize, lo: u32, high: u32) {
-    if p.regs.get(rs1) >= p.regs.get(rs2) {
+pub fn blt<M: Memory>(p: &mut Processor<M>, i: Btype) {
+    if p.regs.get(i.rs1() as usize) >= p.regs.get(i.rs2() as usize) {
         return p.advance_pc();
     }
-    let offset = (lo | high).sign_extend(64) as i64;
-    let new_pc = p.pc() as i64 + (offset * 2);
-    p.set_pc(new_pc as u64);
+    i.jump(p);
 }
 
 #[insn(kind=U,mask=0x110,match=0x100)]
