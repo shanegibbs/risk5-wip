@@ -138,7 +138,8 @@ pub fn csrrwi<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize)
 pub fn csrrs<M: Memory>(p: &mut Processor<M>, rd: usize, rs: usize, csr: usize) {
     let old = handle_trap!(p, p.csrs.get(csr));
     if rs != 0 {
-        p.csrs.set(csr, old | rs as u64);
+        let rs1 = p.regs.get(rs);
+        p.csrs.set(csr, old | rs1);
     }
     p.regs.set(rd, old);
     p.advance_pc();
