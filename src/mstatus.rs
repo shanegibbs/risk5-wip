@@ -191,18 +191,48 @@ impl Mstatus {
         self.0.set_field(11, 2, n)
     }
 
+    // spp
+
+    #[inline(always)]
+    pub fn supervisor_previous_privilege(&self) -> u64 {
+        self.0.field(8, 2)
+    }
+
+    #[inline(always)]
+    pub fn set_supervisor_previous_privilege(&mut self, n: u64) {
+        self.0.set_field(8, 2, n)
+    }
+
+    // fs
+
+    #[inline(always)]
+    pub fn floating_point_state(&self) -> u64 {
+        self.0.field(13, 2)
+    }
+
+    // xs
+
+    #[inline(always)]
+    pub fn extensions_state(&self) -> u64 {
+        self.0.field(15, 2)
+    }
+
 }
 
 use std::fmt;
 impl fmt::Debug for Mstatus {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} sxl={} uxl={}",
+        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={}",
                self.machine_interrupt_enabled(),
                self.supervisor_interrupt_enabled(),
                self.user_interrupt_enabled(),
                self.machine_prior_interrupt_enabled(),
                self.supervisor_prior_interrupt_enabled(),
                self.user_prior_interrupt_enabled(),
+               self.machine_previous_privilege(),
+               self.supervisor_previous_privilege(),
+               self.floating_point_state(),
+               self.extensions_state(),
                self.supervisor_xlen(),
                self.user_xlen(),
                )
