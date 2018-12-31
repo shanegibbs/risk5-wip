@@ -133,18 +133,14 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x3033, |p, _| {
             panic!(format!("Unimplemented insn 'sltu' at {:x}", p.pc()))
         }),
-        Matcher::new(0xfe00707f, 0x4033, |p, _| {
-            panic!(format!("Unimplemented insn 'xor' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x4033, wrap!(xor)),
         Matcher::new(0xfe00707f, 0x5033, |p, _| {
             panic!(format!("Unimplemented insn 'srl' at {:x}", p.pc()))
         }),
         Matcher::new(0xfe00707f, 0x40005033, |p, _| {
             panic!(format!("Unimplemented insn 'sra' at {:x}", p.pc()))
         }),
-        Matcher::new(0xfe00707f, 0x6033, |p, _| {
-            panic!(format!("Unimplemented insn 'or' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x6033, wrap!(or)),
         Matcher::new(0xfe00707f, 0x7033, wrap!(and)),
         Matcher::new(0x707f, 0x1b, wrap!(addiw)),
         Matcher::new(0xfe00707f, 0x101b, wrap!(slliw)),
