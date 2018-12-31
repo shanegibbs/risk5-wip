@@ -1,5 +1,5 @@
-use *;
 use itypes::*;
+use *;
 
 pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
     let old_pc = p.pc();
@@ -49,7 +49,6 @@ pub fn auipc<M: Memory>(p: &mut Processor<M>, i: Utype) {
     p.advance_pc();
 }
 
-
 pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
     p.regs.set(i.rd() as usize, i.imm() as u64);
     p.advance_pc();
@@ -79,7 +78,6 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
         m.set_machine_interrupt_enabled(0);
         // set xPP to prv
         m.set_machine_previous_privilege(p.csrs.prv);
-
     }
 
     p.csrs.prv = 3;
@@ -174,7 +172,10 @@ pub fn sd<M: Memory>(p: &mut Processor<M>, i: Stype) {
 // Integer Computational Instructions
 
 pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
-    let v = p.regs.geti(i.rs1() as usize).wrapping_add(p.regs.geti(i.rs2() as usize));
+    let v = p
+        .regs
+        .geti(i.rs1() as usize)
+        .wrapping_add(p.regs.geti(i.rs2() as usize));
     p.regs.seti(i.rd() as usize, v);
     p.advance_pc();
 }
@@ -200,9 +201,17 @@ pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn slliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let shmat = i.imm() & 0xf;
+    let v = p.regs.get(i.rs1() as usize) as u32;
+    let v = (((v << shmat) as i32) as i64) << 32 >> 32;
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
 pub fn srliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let shmat = i.imm() & 0xf;
-    let v = p.regs.get(i.rs1() as usize);
+    let v = p.regs.get(i.rs1() as usize) as u32;
     let v = v >> shmat;
     p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();

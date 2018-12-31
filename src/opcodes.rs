@@ -1,5 +1,5 @@
-use mmu::*;
 use csrs::Csrs;
+use mmu::*;
 use std::fmt;
 
 pub struct Matcher<M: Memory> {
@@ -20,12 +20,11 @@ impl<M: fmt::Debug + Memory> fmt::Debug for Matcher<M> {
     }
 }
 
-pub static REG_NAMES: &'static [&str] = &["zero", "ra", "sp", "gp", "tp",
-                                        "t0", "t1", "t2",
-                                        "s0", "s1",
-                                        "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7",
-                                        "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "sA", "sB",
-                                        "t3", "t4", "t5", "t6"];
+pub static REG_NAMES: &'static [&str] = &[
+    "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4",
+    "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "sA", "sB", "t3", "t4", "t5",
+    "t6",
+];
 
 #[derive(Debug)]
 pub struct Regs {
@@ -104,7 +103,8 @@ impl<M> Processor<M> {
 
     #[inline(never)]
     pub fn step(&mut self, matchers: &[Matcher<M>])
-        where M: Memory
+    where
+        M: Memory,
     {
         let insn = self.mem.read_w(self.pc);
         trace!("0x{:x} inst 0x{:x}", self.pc, insn);
@@ -132,5 +132,4 @@ impl<M> Processor<M> {
     pub fn pc(&self) -> u64 {
         self.pc
     }
-
 }
