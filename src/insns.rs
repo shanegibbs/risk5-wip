@@ -2,8 +2,10 @@ use *;
 use itypes::*;
 
 pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
-    let new_pc = p.pc() as i64 + i.imm();
-    p.set_pc(new_pc as u64);
+    let old_pc = p.pc();
+    let new_pc = (old_pc as i64 + i.imm()) as u64;
+    p.set_pc(new_pc);
+    p.regs.set(i.rd() as usize, old_pc + 4);
 }
 
 pub fn jalr<M: Memory>(p: &mut Processor<M>, i: Itype) {
