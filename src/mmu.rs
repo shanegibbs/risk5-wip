@@ -7,6 +7,9 @@ pub trait Memory {
     fn write_w(&mut self, _offset: u64, _value: u32) {
         warn!("Memory write_w not implemented")
     }
+    fn write_d(&mut self, _offset: u64, _value: u64) {
+        warn!("Memory write_d not implemented")
+    }
     fn read_b(&self, _offset: usize) -> u8 {
         warn!("Memory read_b not implemented");
         unimplemented!()
