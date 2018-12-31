@@ -38,9 +38,9 @@ pub fn risk5_main() {
 
     debug!("Loading ELF");
     for (f_offset, m_offset, size) in sections {
-        mem.add_block(m_offset as usize, size as usize);
+        mem.add_block(m_offset, size);
         for i in 0..size {
-            mem.write_b((m_offset + i) as usize, file_bytes[(f_offset + i) as usize]);
+            mem.write_b(m_offset + i, file_bytes[(f_offset + i) as usize]);
         }
     }
 
@@ -159,9 +159,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         }),
         Matcher::new(0x707f, 0x2003, wrap!(lw)),
         Matcher::new(0x707f, 0x3003, wrap!(ld)),
-        Matcher::new(0x707f, 0x4003, |p, _| {
-            panic!(format!("Unimplemented insn 'lbu' at {:x}", p.pc()))
-        }),
+        Matcher::new(0x707f, 0x4003, wrap!(lbu)),
         Matcher::new(0x707f, 0x5003, |p, _| {
             panic!(format!("Unimplemented insn 'lhu' at {:x}", p.pc()))
         }),

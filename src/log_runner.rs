@@ -260,6 +260,8 @@ fn run_err() -> Result<(), io::Error> {
                 cpu.get_mem().push_double(load_val);
             } else if load.kind == "int32" {
                 cpu.get_mem().push_word(load_val as u32);
+            } else if load.kind == "uint8" {
+                cpu.get_mem().push_byte(load_val as u8);
             } else {
                 unimplemented!("load fake val");
             }

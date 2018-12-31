@@ -1,7 +1,7 @@
 use std::fmt;
 
 pub trait Memory {
-    fn write_b(&mut self, _offset: usize, _value: u8) {
+    fn write_b(&mut self, _offset: u64, _value: u8) {
         warn!("Memory write_b not implemented")
     }
     fn write_w(&mut self, _offset: u64, _value: u32) {
@@ -10,7 +10,7 @@ pub trait Memory {
     fn write_d(&mut self, _offset: u64, _value: u64) {
         warn!("Memory write_d not implemented")
     }
-    fn read_b(&self, _offset: usize) -> u8 {
+    fn read_b(&self, _offset: u64) -> u8 {
         warn!("Memory read_b not implemented");
         unimplemented!()
     }
@@ -25,7 +25,7 @@ pub trait Memory {
 }
 
 pub struct BlockMemory {
-    blocks: Vec<(usize, Vec<u8>)>,
+    blocks: Vec<(u64, Vec<u8>)>,
 }
 
 impl fmt::Debug for BlockMemory {
@@ -35,30 +35,32 @@ impl fmt::Debug for BlockMemory {
 }
 
 impl BlockMemory {
-    pub fn new(_mb: usize) -> Self {
+    pub fn new(_mb: u64) -> Self {
         // let mem_size = mb << 20; // 15 MB
         // let mem = vec![0; mem_size];
         Self { blocks: vec![] }
     }
 
-    pub fn add_block(&mut self, offset: usize, size: usize) {
-        trace!("Adding memory block at 0x{:x} of size 0x{:x} as index {}",
-               offset,
-               size,
-               self.blocks.len());
-        let mem = vec![0; size];
+    pub fn add_block(&mut self, offset: u64, size: u64) {
+        trace!(
+            "Adding memory block at 0x{:x} of size 0x{:x} as index {}",
+            offset,
+            size,
+            self.blocks.len()
+        );
+        let mem = vec![0; size as usize];
         self.blocks.push((offset, mem));
     }
 
-    fn find_block_for(&self, offset: usize) -> usize {
+    fn find_block_for(&self, offset: u64) -> u64 {
         let mut c = self.blocks.len();
         while c != 0 {
             let i = c - 1;
             if offset >= self.blocks[i].0 {
-                if offset > self.blocks[i].0 + self.blocks[i].1.len() {
+                if offset > self.blocks[i].0 + self.blocks[i].1.len() as u64 {
                     panic!("Memory out of range. Unable to read 0x{:x}", offset);
                 }
-                return i;
+                return i as u64;
             }
             c -= 1;
         }
@@ -67,16 +69,16 @@ impl BlockMemory {
 }
 
 impl Memory for BlockMemory {
-    fn write_b(&mut self, offset: usize, value: u8) {
-        let block = self.find_block_for(offset);
+    fn write_b(&mut self, offset: u64, value: u8) {
+        let block = self.find_block_for(offset) as usize;
         let block_offset = offset - self.blocks[block].0;
-        self.blocks[block].1[block_offset] = value;
+        self.blocks[block].1[block_offset as usize] = value;
     }
 
-    fn read_b(&self, offset: usize) -> u8 {
-        let block = self.find_block_for(offset);
+    fn read_b(&self, offset: u64) -> u8 {
+        let block = self.find_block_for(offset) as usize;
         let block_offset = offset - self.blocks[block].0;
-        return self.blocks[block].1[block_offset];
+        return self.blocks[block].1[block_offset as usize];
     }
 
     fn read_d(&self, _offset: u64) -> u64 {
@@ -86,14 +88,13 @@ impl Memory for BlockMemory {
     fn read_w(&self, offset: u64) -> u32 {
         trace!("Reading word at 0x{:x}", offset);
 
-        let offset = offset as usize;
         let block_i = self.find_block_for(offset);
-        let block = &self.blocks[block_i];
+        let block = &self.blocks[block_i as usize];
 
-        let p1 = block.1[offset - block.0] as u32;
-        let p2 = block.1[offset - block.0 + 1] as u32;
-        let p3 = block.1[offset - block.0 + 2] as u32;
-        let p4 = block.1[offset - block.0 + 3] as u32;
+        let p1 = block.1[(offset - block.0) as usize] as u32;
+        let p2 = block.1[(offset - block.0 + 1) as usize] as u32;
+        let p3 = block.1[(offset - block.0 + 2) as usize] as u32;
+        let p4 = block.1[(offset - block.0 + 3) as usize] as u32;
 
         let mut v = p1;
         v = v | (p2 << 8);
@@ -106,6 +107,7 @@ impl Memory for BlockMemory {
 
 #[derive(Debug)]
 enum FakeMemoryItem {
+    Byte(u8),
     Word(u32),
     Double(u64),
 }
@@ -123,7 +125,12 @@ impl fmt::Debug for FakeMemory {
 
 impl FakeMemory {
     pub fn new() -> Self {
-        Self { next: RefCell::new(vec![]) }
+        Self {
+            next: RefCell::new(vec![]),
+        }
+    }
+    pub fn push_byte(&mut self, n: u8) {
+        self.next.borrow_mut().push(FakeMemoryItem::Byte(n))
     }
     pub fn push_word(&mut self, n: u32) {
         self.next.borrow_mut().push(FakeMemoryItem::Word(n))
@@ -137,9 +144,12 @@ impl FakeMemory {
 }
 
 impl Memory for FakeMemory {
-    fn write_b(&mut self, _offset: usize, _value: u8) {}
-    fn read_b(&self, _offset: usize) -> u8 {
-        0
+    fn write_b(&mut self, _offset: u64, _value: u8) {}
+    fn read_b(&self, _offset: u64) -> u8 {
+        match self.next.borrow_mut().pop() {
+            Some(FakeMemoryItem::Byte(n)) => n,
+            n => panic!("Expected read fake byte, but was: {:?}", n),
+        }
     }
     fn read_d(&self, _offset: u64) -> u64 {
         match self.next.borrow_mut().pop() {
