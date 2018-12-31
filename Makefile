@@ -19,7 +19,7 @@ clean:
 	cargo clean
 
 save: run-addiw-test
-	bzcat assets/addiw.json.log.bz2 | cargo run
+	bzcat assets/addiw.json.log.bz2 | RUST_LOG=risk5=error cargo run
 	git add Makefile Cargo.* src u1
 	git commit -m'save'
 	git push
