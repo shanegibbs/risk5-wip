@@ -71,7 +71,11 @@ pub fn risk5_main() {
 }
 
 fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
-    macro_rules! wrap { ($f:ident) => ( |p, i| $f(p, i.into())) }
+    macro_rules! wrap { ($f:ident) => ( |p, i| {
+        let i = i.into();
+        info!("{} {}", stringify!($f), i);
+        $f(p, i)
+    }) }
 
     vec![
         Matcher::new(0x707f, 0x63, wrap!(beq)),
@@ -105,7 +109,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x7033, |p,_| panic!(format!("Unimplemented insn 'and' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x1b, wrap!(addiw)),
         Matcher::new(0xfe00707f, 0x101b, |p,_| panic!(format!("Unimplemented insn 'slliw' at {:x}", p.pc()))),
-        Matcher::new(0xfe00707f, 0x501b, |p,_| panic!(format!("Unimplemented insn 'srliw' at {:x}", p.pc()))),
+        Matcher::new(0xfe00707f, 0x501b, wrap!(srliw)),
         Matcher::new(0xfe00707f, 0x4000501b, |p,_| panic!(format!("Unimplemented insn 'sraiw' at {:x}", p.pc()))),
         Matcher::new(0xfe00707f, 0x3b, |p,_| panic!(format!("Unimplemented insn 'addw' at {:x}", p.pc()))),
         Matcher::new(0xfe00707f, 0x4000003b, |p,_| panic!(format!("Unimplemented insn 'subw' at {:x}", p.pc()))),

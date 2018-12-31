@@ -1,4 +1,5 @@
 use opcodes::Processor;
+use std::fmt;
 
 pub type Regi = u32;
 
@@ -84,6 +85,12 @@ impl Into<Btype> for u32 {
     }
 }
 
+impl fmt::Display for Btype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} 0x{:x}", self.rs1(), self.rs2(), self.imm())
+    }
+}
+
 // R Instruction Type
 
 pub struct Rtype(u32);
@@ -102,6 +109,12 @@ impl FieldRs2 for Rtype {}
 impl Into<Rtype> for u32 {
     fn into(self) -> Rtype {
         Rtype(self)
+    }
+}
+
+impl fmt::Display for Rtype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {}", self.rd(), self.rs1(), self.rs2())
     }
 }
 
@@ -139,6 +152,12 @@ impl Into<Itype> for u32 {
     }
 }
 
+impl fmt::Display for Itype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} 0x{:x}", self.rd(), self.rs1(), self.imm())
+    }
+}
+
 
 // S Instruction Type
 
@@ -171,6 +190,12 @@ impl Into<Stype> for u32 {
     }
 }
 
+impl fmt::Display for Stype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{} {} {} 0x{:x}", self.rd(), self.rs1(), self.rs2(), self.imm())
+    }
+}
+
 
 // U Instruction Type
 
@@ -196,6 +221,12 @@ impl Utype {
 impl Into<Utype> for u32 {
     fn into(self) -> Utype {
         Utype(self)
+    }
+}
+
+impl fmt::Display for Utype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "0x{:x}", self.imm())
     }
 }
 
@@ -228,5 +259,11 @@ impl Jtype {
 impl Into<Jtype> for u32 {
     fn into(self) -> Jtype {
         Jtype(self)
+    }
+}
+
+impl fmt::Display for Jtype {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "0x{:x}", self.imm())
     }
 }

@@ -199,3 +199,11 @@ pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }
+
+pub fn srliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let shmat = i.imm() & 0xf;
+    let v = p.regs.get(i.rs1() as usize);
+    let v = v >> shmat;
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
