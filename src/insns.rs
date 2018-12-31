@@ -30,13 +30,27 @@ pub fn bne<M: Memory>(p: &mut Processor<M>, i: Btype) {
 }
 
 pub fn bge<M: Memory>(p: &mut Processor<M>, i: Btype) {
-    if p.regs.get(i.rs1() as usize) < p.regs.get(i.rs2() as usize) {
+    if (p.regs.get(i.rs1() as usize) as i64) < (p.regs.get(i.rs2() as usize) as i64) {
         return p.advance_pc();
     }
     i.jump(p);
 }
 
 pub fn blt<M: Memory>(p: &mut Processor<M>, i: Btype) {
+    if (p.regs.get(i.rs1() as usize) as i64) >= (p.regs.get(i.rs2() as usize) as i64) {
+        return p.advance_pc();
+    }
+    i.jump(p);
+}
+
+pub fn bgeu<M: Memory>(p: &mut Processor<M>, i: Btype) {
+    if p.regs.get(i.rs1() as usize) < p.regs.get(i.rs2() as usize) {
+        return p.advance_pc();
+    }
+    i.jump(p);
+}
+
+pub fn bltu<M: Memory>(p: &mut Processor<M>, i: Btype) {
     if p.regs.get(i.rs1() as usize) >= p.regs.get(i.rs2() as usize) {
         return p.advance_pc();
     }

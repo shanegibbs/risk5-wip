@@ -87,12 +87,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x1063, wrap!(bne)),
         Matcher::new(0x707f, 0x4063, wrap!(blt)),
         Matcher::new(0x707f, 0x5063, wrap!(bge)),
-        Matcher::new(0x707f, 0x6063, |p, _| {
-            panic!(format!("Unimplemented insn 'bltu' at {:x}", p.pc()))
-        }),
-        Matcher::new(0x707f, 0x7063, |p, _| {
-            panic!(format!("Unimplemented insn 'bgeu' at {:x}", p.pc()))
-        }),
+        Matcher::new(0x707f, 0x6063, wrap!(bltu)),
+        Matcher::new(0x707f, 0x7063, wrap!(bgeu)),
         Matcher::new(0x707f, 0x67, wrap!(jalr)),
         Matcher::new(0x7f, 0x6f, wrap!(jal)),
         Matcher::new(0x7f, 0x37, wrap!(lui)),
