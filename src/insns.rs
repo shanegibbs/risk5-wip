@@ -220,7 +220,7 @@ pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
 }
 
 pub fn slliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let shmat = i.imm() & 0xf;
+    let shmat = i.imm() & ((2 << 5) - 1);
     let v = p.regs.get(i.rs1() as usize) as u32;
     let v = (((v << shmat) as i32) as i64) << 32 >> 32;
     p.regs.set(i.rd() as usize, v as u64);
@@ -228,7 +228,7 @@ pub fn slliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
 }
 
 pub fn srliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let shmat = i.imm() & 0xf;
+    let shmat = i.imm() & ((2 << 5) - 1);
     let v = p.regs.get(i.rs1() as usize) as u32;
     let v = v >> shmat;
     p.regs.set(i.rd() as usize, v as u64);
