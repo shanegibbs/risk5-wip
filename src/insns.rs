@@ -193,6 +193,12 @@ pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn and<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.geti(i.rs1() as usize) & p.regs.geti(i.rs2() as usize);
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
 pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let shmat = i.imm() & 0x3F;
     let v = p.regs.get(i.rs1() as usize);

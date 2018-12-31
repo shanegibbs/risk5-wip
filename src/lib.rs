@@ -145,9 +145,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x6033, |p, _| {
             panic!(format!("Unimplemented insn 'or' at {:x}", p.pc()))
         }),
-        Matcher::new(0xfe00707f, 0x7033, |p, _| {
-            panic!(format!("Unimplemented insn 'and' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x7033, wrap!(and)),
         Matcher::new(0x707f, 0x1b, wrap!(addiw)),
         Matcher::new(0xfe00707f, 0x101b, wrap!(slliw)),
         Matcher::new(0xfe00707f, 0x501b, wrap!(srliw)),
