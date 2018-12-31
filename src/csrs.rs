@@ -11,6 +11,7 @@ pub struct Csrs {
     pub mepc: u64,
     pub mtval: u64,
     pub mcause: u64,
+    pub mscratch: u64,
 }
 
 // Supervisor Protection and Translation
@@ -25,6 +26,7 @@ const MEDELEG: usize = 0x302;
 const MIDELEG: usize = 0x303;
 const MTVEC: usize = 0x305;
 const MCAUSE: usize = 0x342;
+const MSCRATCH: usize = 0x340;
 
 // Machine Trap Handling
 const MEPC: usize = 0x341;
@@ -46,6 +48,7 @@ impl Csrs {
             mepc: 0,
             mtval: 0,
             mcause: 0,
+            mscratch: 0,
         }
     }
 
@@ -88,6 +91,8 @@ impl Csrs {
             self.mepc
         } else if i == MTVAL {
             self.mtval
+        } else if i == MSCRATCH {
+            self.mscratch
         } else if i == MCAUSE {
             self.mcause
         } else {

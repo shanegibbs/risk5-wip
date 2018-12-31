@@ -93,7 +93,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfc00707f, 0x40005013, |p,_| panic!(format!("Unimplemented insn 'srai' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x6013, |p,_| panic!(format!("Unimplemented insn 'ori' at {:x}", p.pc()))),
         Matcher::new(0x707f, 0x7013, |p,_| panic!(format!("Unimplemented insn 'andi' at {:x}", p.pc()))),
-        Matcher::new(0xfe00707f, 0x33, |p,_| panic!(format!("Unimplemented insn 'add' at {:x}", p.pc()))),
+        Matcher::new(0xfe00707f, 0x33, wrap!(add)),
         Matcher::new(0xfe00707f, 0x40000033, |p,_| panic!(format!("Unimplemented insn 'sub' at {:x}", p.pc()))),
         Matcher::new(0xfe00707f, 0x1033, |p,_| panic!(format!("Unimplemented insn 'sll' at {:x}", p.pc()))),
         Matcher::new(0xfe00707f, 0x2033, |p,_| panic!(format!("Unimplemented insn 'slt' at {:x}", p.pc()))),

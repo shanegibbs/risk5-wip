@@ -86,7 +86,7 @@ impl Into<Btype> for u32 {
 
 // R Instruction Type
 
-struct Rtype(u32);
+pub struct Rtype(u32);
 
 impl Base for Rtype {
     #[inline(always)]

@@ -157,6 +157,12 @@ pub fn sw<M: Memory>(p: &mut Processor<M>, i: Stype) {
 
 // Integer Computational Instructions
 
+pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.geti(i.rs1() as usize).wrapping_add(p.regs.geti(i.rs2() as usize));
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
 pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
     p.regs.seti(i.rd() as usize, v);

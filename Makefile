@@ -1,7 +1,10 @@
 RUST_LOG=risk5=trace
 
-run-test:
-	bzcat assets/addiw.json.log.bz2 | env RUST_LOG=$(RUST_LOG) cargo run
+run-bbl-test:
+	bzcat assets/bbl.json.log.bz2 | env RUST_LOG=$(RUST_LOG) cargo run
+
+run-addiw-test:
+	bzcat assets/addiw.json.log.bz2 | env RUST_LOG=risk5=warn cargo run
 
 run:
 	cargo run --bin risk5 2>&1 |tail -n 100
