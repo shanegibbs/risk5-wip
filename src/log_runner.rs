@@ -244,7 +244,13 @@ fn run_err() -> Result<(), io::Error> {
 
         if let Some(load) = load {
             let load_val = u64::from_str_radix(&load.value[2..], 16).expect("load value)");
-            cpu.get_mem().push_double(load_val);
+            if load.kind == "int64" {
+                cpu.get_mem().push_double(load_val);
+            } else if load.kind == "int32" {
+                cpu.get_mem().push_word(load_val as u32);
+            } else {
+                unimplemented!("load fake val");
+            }
         }
 
         cpu.get_mem().push_word(insn_bits);
