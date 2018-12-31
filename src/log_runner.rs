@@ -133,7 +133,7 @@ impl Iterator for LogTupleIterator {
 
                         // sometimes spike restarts instrucions
                         if state.pc == pc {
-                            return self.next()
+                            return self.next();
                         } else {
                             break;
                         }
@@ -149,7 +149,10 @@ impl Iterator for LogTupleIterator {
 }
 
 fn format_diff(expected: u64, actual: u64) -> String {
-    format!("Was:      0x{:016x} {:064b}\nExpected: 0x{:016x} {:064b}", actual, actual, expected, expected)
+    format!(
+        "Was:      0x{:016x} {:064b}\nExpected: 0x{:016x} {:064b}",
+        actual, actual, expected, expected
+    )
 }
 
 fn run_err() -> Result<(), io::Error> {
@@ -181,20 +184,27 @@ fn run_err() -> Result<(), io::Error> {
                     error!("Fail check on {}.\n{}", $name, format_diff(val, $actual));
                     fail = true;
                 }
-            }
+            };
         }
 
         macro_rules! warn_on {
             ($name:expr, $expected:expr, $actual:expr) => {
                 let val = u64::from_str_radix(&$expected[2..], 16).expect($name);
                 if val != $actual {
-                    warn!("Fail {} check. Was: 0x{:016x}, expected: {}", $name, $actual, $expected);
+                    warn!(
+                        "Fail {} check. Was: 0x{:016x}, expected: {}",
+                        $name, $actual, $expected
+                    );
                 }
-            }
+            };
         }
 
         if cpu.pc() != u64::from_str_radix(&state.pc[2..], 16).expect("pc") {
-            error!("Fail pc check. Was: 0x{:016x}, expected: {}", cpu.pc(), state.pc);
+            error!(
+                "Fail pc check. Was: 0x{:016x}, expected: {}",
+                cpu.pc(),
+                state.pc
+            );
             fail = true;
         }
 
@@ -207,8 +217,12 @@ fn run_err() -> Result<(), io::Error> {
             if val != cpu.csrs.mstatus.val() {
                 use mstatus::Mstatus;
                 let mstatus_expected = Mstatus::new_with_val(val);
-                error!("Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
-                       format_diff(val, cpu.csrs.mstatus.val()), cpu.csrs.mstatus, mstatus_expected);
+                error!(
+                    "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
+                    format_diff(val, cpu.csrs.mstatus.val()),
+                    cpu.csrs.mstatus,
+                    mstatus_expected
+                );
                 fail = true;
             }
         }
@@ -225,12 +239,10 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         if fail {
-            return Err(io::Error::new(io::ErrorKind::Other, format!("Failed checks")));
-        }
-
-        // ratchet
-        if step > 144 {
-            // break;
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("Failed checks"),
+            ));
         }
 
         // load up transactions
@@ -244,7 +256,7 @@ fn run_err() -> Result<(), io::Error> {
 
         if let Some(load) = load {
             let load_val = u64::from_str_radix(&load.value[2..], 16).expect("load value)");
-            if load.kind == "int64" {
+            if load.kind == "int64" || load.kind == "uint64" {
                 cpu.get_mem().push_double(load_val);
             } else if load.kind == "int32" {
                 cpu.get_mem().push_word(load_val as u32);

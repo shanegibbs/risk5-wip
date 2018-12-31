@@ -4,7 +4,7 @@ run-bbl-test:
 	bzcat assets/bbl.json.log.bz2 | env RUST_LOG=$(RUST_LOG) cargo run
 
 run-addiw-test:
-	bzcat assets/addiw.json.log.bz2 | env RUST_LOG=risk5=warn cargo run
+	bzcat assets/addiw.json.log.bz2 | env RUST_LOG=$(RUST_LOG) cargo run
 
 run:
 	cargo run --bin risk5 2>&1 |tail -n 100
@@ -18,7 +18,7 @@ test:
 clean:
 	cargo clean
 
-save:
+save: run-addiw-test
 	git add Makefile Cargo.* src u1
 	git commit -m'save'
 	git push
