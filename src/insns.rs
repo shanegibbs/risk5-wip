@@ -194,19 +194,6 @@ pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
-pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
-    p.regs.seti(i.rd() as usize, v);
-    p.advance_pc();
-}
-
-pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
-    let b = a << 32 >> 32;
-    p.regs.set(i.rd() as usize, b as u64);
-    p.advance_pc();
-}
-
 pub fn and<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.geti(i.rs1() as usize) & p.regs.geti(i.rs2() as usize);
     p.regs.seti(i.rd() as usize, v);
@@ -222,6 +209,37 @@ pub fn or<M: Memory>(p: &mut Processor<M>, i: Rtype) {
 pub fn xor<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.geti(i.rs1() as usize) ^ p.regs.geti(i.rs2() as usize);
     p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn andi<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1() as usize) & i.imm();
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn ori<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1() as usize) | i.imm();
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn xori<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1() as usize) ^ i.imm();
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
+    let b = a << 32 >> 32;
+    p.regs.set(i.rd() as usize, b as u64);
     p.advance_pc();
 }
 
