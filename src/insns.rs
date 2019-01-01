@@ -173,6 +173,22 @@ pub fn ld<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn sb<M: Memory>(p: &mut Processor<M>, i: Stype) {
+    let rs1 = p.regs.get(i.rs1() as usize) as i64;
+    let rs2 = p.regs.get(i.rs2() as usize) as i64;
+    let offset = rs1 + i.imm();
+    p.mem_mut().write_b(offset as u64, rs2 as u8);
+    p.advance_pc();
+}
+
+pub fn sh<M: Memory>(p: &mut Processor<M>, i: Stype) {
+    let rs1 = p.regs.get(i.rs1() as usize) as i64;
+    let rs2 = p.regs.get(i.rs2() as usize) as i64;
+    let offset = rs1 + i.imm();
+    p.mem_mut().write_h(offset as u64, rs2 as u16);
+    p.advance_pc();
+}
+
 pub fn sw<M: Memory>(p: &mut Processor<M>, i: Stype) {
     let rs1 = p.regs.get(i.rs1() as usize) as i64;
     let rs2 = p.regs.get(i.rs2() as usize) as i64;

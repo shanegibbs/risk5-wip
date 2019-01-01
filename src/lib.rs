@@ -156,12 +156,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x6003, |p, _| {
             panic!(format!("Unimplemented insn 'lwu' at {:x}", p.pc()))
         }),
-        Matcher::new(0x707f, 0x23, |p, _| {
-            panic!(format!("Unimplemented insn 'sb' at {:x}", p.pc()))
-        }),
-        Matcher::new(0x707f, 0x1023, |p, _| {
-            panic!(format!("Unimplemented insn 'sh' at {:x}", p.pc()))
-        }),
+        Matcher::new(0x707f, 0x23, wrap!(sb)),
+        Matcher::new(0x707f, 0x1023, wrap!(sh)),
         Matcher::new(0x707f, 0x2023, wrap!(sw)),
         Matcher::new(0x707f, 0x3023, wrap!(sd)),
         Matcher::new(0x707f, 0xf, |p, _| {
