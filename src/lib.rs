@@ -76,7 +76,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         ($f:ident) => {
             |p, i| {
                 let i = i.into();
-                debug!("{} {}", stringify!($f), i);
+                debug!("exec {} {}", stringify!($f), i);
                 $f(p, i)
             }
         };

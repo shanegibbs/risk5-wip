@@ -1,33 +1,57 @@
 use std::fmt;
 
 pub trait Memory {
-    fn write_b(&mut self, _offset: u64, _value: u8) {
-        warn!("Memory write_b not implemented")
+    fn write_b(&mut self, offset: u64, value: u8);
+
+    fn write_h(&mut self, offset: u64, value: u16) {
+        self.write_b(offset, value as u8);
+        self.write_b(offset + 1, (value >> 8) as u8);
     }
-    fn write_w(&mut self, _offset: u64, _value: u32) {
-        warn!("Memory write_w not implemented")
+
+    fn write_w(&mut self, offset: u64, value: u32) {
+        self.write_b(offset, value as u8);
+        self.write_b(offset + 1, (value >> 8) as u8);
+        self.write_b(offset + 2, (value >> 16) as u8);
+        self.write_b(offset + 3, (value >> 24) as u8);
     }
-    fn write_h(&mut self, _offset: u64, _value: u16) {
-        warn!("Memory write_h not implemented")
+
+    fn write_d(&mut self, offset: u64, value: u64) {
+        self.write_b(offset, value as u8);
+        self.write_b(offset + 1, (value >> 8) as u8);
+        self.write_b(offset + 2, (value >> 16) as u8);
+        self.write_b(offset + 3, (value >> 24) as u8);
+        self.write_b(offset + 4, (value >> 32) as u8);
+        self.write_b(offset + 5, (value >> 40) as u8);
+        self.write_b(offset + 6, (value >> 48) as u8);
+        self.write_b(offset + 7, (value >> 56) as u8);
     }
-    fn write_d(&mut self, _offset: u64, _value: u64) {
-        warn!("Memory write_d not implemented")
+
+    fn read_b(&self, offset: u64) -> u8;
+
+    fn read_h(&self, offset: u64) -> u16 {
+        let mut n = self.read_b(offset) as u16;
+        n |= (self.read_b(offset + 1) as u16) << 8;
+        n
     }
-    fn read_b(&self, _offset: u64) -> u8 {
-        warn!("Memory read_b not implemented");
-        unimplemented!()
+
+    fn read_w(&self, offset: u64) -> u32 {
+        let mut n = self.read_b(offset) as u32;
+        n |= (self.read_b(offset + 1) as u32) << 8;
+        n |= (self.read_b(offset + 2) as u32) << 16;
+        n |= (self.read_b(offset + 3) as u32) << 24;
+        n
     }
-    fn read_h(&self, _offset: u64) -> u16 {
-        warn!("Memory read_h not implemented");
-        unimplemented!()
-    }
-    fn read_w(&self, _offset: u64) -> u32 {
-        warn!("Memory read_w not implemented");
-        unimplemented!()
-    }
-    fn read_d(&self, _offset: u64) -> u64 {
-        warn!("Memory read_d not implemented");
-        unimplemented!()
+
+    fn read_d(&self, offset: u64) -> u64 {
+        let mut n = self.read_b(offset) as u64;
+        n |= (self.read_b(offset + 1) as u64) << 8;
+        n |= (self.read_b(offset + 2) as u64) << 16;
+        n |= (self.read_b(offset + 3) as u64) << 24;
+        n |= (self.read_b(offset + 4) as u64) << 32;
+        n |= (self.read_b(offset + 5) as u64) << 40;
+        n |= (self.read_b(offset + 6) as u64) << 48;
+        n |= (self.read_b(offset + 7) as u64) << 56;
+        n
     }
 }
 
@@ -65,7 +89,10 @@ impl BlockMemory {
             let i = c - 1;
             if offset >= self.blocks[i].0 {
                 if offset > self.blocks[i].0 + self.blocks[i].1.len() as u64 {
-                    panic!("Memory out of range. Unable to read 0x{:x}", offset);
+                    panic!(
+                        "Memory out of range. Unable to find block for 0x{:x}",
+                        offset
+                    );
                 }
                 return i as u64;
             }
@@ -88,10 +115,7 @@ impl Memory for BlockMemory {
         return self.blocks[block].1[block_offset as usize];
     }
 
-    fn read_d(&self, _offset: u64) -> u64 {
-        0
-    }
-
+    /*
     fn read_w(&self, offset: u64) -> u32 {
         trace!("Reading word at 0x{:x}", offset);
 
@@ -110,6 +134,7 @@ impl Memory for BlockMemory {
         trace!("read 0x{:x}", v);
         v
     }
+    */
 }
 
 #[derive(Debug)]
@@ -176,6 +201,26 @@ impl Memory for FakeMemory {
 mod tests {
     use super::*;
     use pretty_env_logger;
+
+    #[test]
+    fn rw() {
+        let _ = pretty_env_logger::try_init();
+        let mut m = BlockMemory::new(0);
+        m.add_block(0, 10);
+
+        m.write_b(0x0, 0x01);
+        m.write_b(0x1, 0x02);
+        m.write_b(0x2, 0x03);
+        m.write_b(0x3, 0x04);
+        m.write_b(0x4, 0x05);
+        m.write_b(0x5, 0x06);
+        m.write_b(0x6, 0x07);
+        m.write_b(0x7, 0x08);
+        assert_eq!(m.read_b(0x0), 0x01);
+        assert_eq!(m.read_h(0x0), 0x0201);
+        assert_eq!(m.read_w(0x0), 0x04030201);
+        assert_eq!(m.read_d(0x0), 0x0807060504030201);
+    }
 
     #[test]
     fn it_memory() {
