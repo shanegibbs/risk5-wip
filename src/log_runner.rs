@@ -255,6 +255,7 @@ fn run_err() -> Result<(), io::Error> {
         let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
 
         if let Some(load) = load {
+            error!("{}", load.value);
             let load_val = u64::from_str_radix(&load.value[2..], 16).expect("load value)");
             if load.kind == "int64" || load.kind == "uint64" {
                 cpu.get_mem().push_double(load_val);
