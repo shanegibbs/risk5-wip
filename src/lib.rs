@@ -132,9 +132,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x101b, wrap!(slliw)),
         Matcher::new(0xfe00707f, 0x501b, wrap!(srliw)),
         Matcher::new(0xfe00707f, 0x4000501b, wrap!(sraiw)),
-        Matcher::new(0xfe00707f, 0x3b, |p, _| {
-            panic!(format!("Unimplemented insn 'addw' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x3b, wrap!(addw)),
         Matcher::new(0xfe00707f, 0x4000003b, wrap!(subw)),
         Matcher::new(0xfe00707f, 0x103b, |p, _| {
             panic!(format!("Unimplemented insn 'sllw' at {:x}", p.pc()))
