@@ -87,18 +87,22 @@ impl BlockMemory {
         let mut c = self.blocks.len();
         while c != 0 {
             let i = c - 1;
-            if offset >= self.blocks[i].0 {
+            if offset >= self.blocks[i].0
+                && offset < self.blocks[i].0 + (self.blocks[i].1.len() as u64)
+            {
+                /*
                 if offset > self.blocks[i].0 + self.blocks[i].1.len() as u64 {
                     panic!(
                         "Memory out of range. Unable to find block for 0x{:x}",
                         offset
                     );
                 }
+                */
                 return i as u64;
             }
             c -= 1;
         }
-        panic!("Unable to find memory block")
+        panic!("Unable to find memory block for address 0x{:x}", offset)
     }
 }
 

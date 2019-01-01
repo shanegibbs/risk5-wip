@@ -28,6 +28,8 @@ pub fn risk5_main() {
 
     let mut mem = BlockMemory::new(15);
 
+    mem.add_block(0x80000000, 100 * 1024 * 1024);
+
     use std::env;
     let filename = env::var("BIN").unwrap_or("assets/bbl".into());
 
@@ -38,6 +40,7 @@ pub fn risk5_main() {
 
     debug!("Loading ELF");
     for (f_offset, m_offset, size) in sections {
+        debug!("Loading 0x{:x} bytes @ 0x{:x}", size, m_offset);
         mem.add_block(m_offset, size);
         for i in 0..size {
             mem.write_b(m_offset + i, file_bytes[(f_offset + i) as usize]);
@@ -76,7 +79,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         ($f:ident) => {
             |p, i| {
                 let i = i.into();
-                debug!("exec {} {}", stringify!($f), i);
+                debug!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
                 $f(p, i)
             }
         };
