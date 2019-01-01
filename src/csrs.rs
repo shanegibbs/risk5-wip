@@ -1,5 +1,5 @@
-use std::fmt;
 use mstatus::Mstatus;
+use std::fmt;
 
 pub struct Csrs {
     pub prv: u64,
@@ -67,6 +67,8 @@ impl Csrs {
             mstatus.set_supervisor_xlen(2);
             mstatus.set_user_xlen(2);
             self.mstatus = mstatus;
+        } else if i == MSCRATCH {
+            self.mscratch = v
         } else {
             error!("unimplemented Csrs.set 0x{:x}", i)
         }
