@@ -249,8 +249,8 @@ pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
-pub fn subw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let a = (p.regs.get(i.rs1() as usize) as i64) - (p.regs.get(i.rs1() as usize) as i64);
+pub fn subw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let a = (p.regs.get(i.rs1() as usize) as i64) - (p.regs.get(i.rs2() as usize) as i64);
     let b = a << 32 >> 32;
     p.regs.set(i.rd() as usize, b as u64);
     p.advance_pc();
