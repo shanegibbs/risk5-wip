@@ -103,9 +103,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         }),
         Matcher::new(0x707f, 0x4013, wrap!(xori)),
         Matcher::new(0xfc00707f, 0x5013, wrap!(srli)),
-        Matcher::new(0xfc00707f, 0x40005013, |p, _| {
-            panic!(format!("Unimplemented insn 'srai' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfc00707f, 0x40005013, wrap!(srai)),
         Matcher::new(0x707f, 0x6013, wrap!(ori)),
         Matcher::new(0x707f, 0x7013, wrap!(andi)),
         Matcher::new(0xfe00707f, 0x33, wrap!(add)),
@@ -133,9 +131,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x1b, wrap!(addiw)),
         Matcher::new(0xfe00707f, 0x101b, wrap!(slliw)),
         Matcher::new(0xfe00707f, 0x501b, wrap!(srliw)),
-        Matcher::new(0xfe00707f, 0x4000501b, |p, _| {
-            panic!(format!("Unimplemented insn 'sraiw' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x4000501b, wrap!(sraiw)),
         Matcher::new(0xfe00707f, 0x3b, |p, _| {
             panic!(format!("Unimplemented insn 'addw' at {:x}", p.pc()))
         }),
