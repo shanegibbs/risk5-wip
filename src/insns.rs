@@ -213,6 +213,12 @@ pub fn and<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn sub<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.geti(i.rs1() as usize) as i64 - p.regs.geti(i.rs2() as usize) as i64;
+    p.regs.seti(i.rd() as usize, v);
+    p.advance_pc();
+}
+
 pub fn or<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.geti(i.rs1() as usize) | p.regs.geti(i.rs2() as usize);
     p.regs.seti(i.rd() as usize, v);
