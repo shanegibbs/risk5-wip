@@ -258,7 +258,7 @@ fn run_err() -> Result<(), io::Error> {
             let load_val = u64::from_str_radix(&load.value[2..], 16).expect("load value)");
             if load.kind == "int64" || load.kind == "uint64" {
                 cpu.get_mem().push_double(load_val);
-            } else if load.kind == "int32" {
+            } else if load.kind == "int32" || load.kind == "uint32" {
                 cpu.get_mem().push_word(load_val as u32);
             } else if load.kind == "uint8" {
                 cpu.get_mem().push_byte(load_val as u8);
