@@ -48,7 +48,7 @@ pub fn risk5_main() {
     }
 
     let mut dtb = vec![];
-    let mut dtb_file = File::open("dtb.bin").expect("dtb.bin");
+    let mut dtb_file = File::open("assets/dtb.bin").expect("dtb.bin");
     dtb_file.read_to_end(&mut dtb).expect("read dtb");
 
     //  auipc   t0, 0x0
