@@ -155,20 +155,23 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
 // Load and Store
 
 pub fn lbu<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.mem().read_b((i.rs1() as i64 + i.imm()) as u64);
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let v = p.mem().read_b((rs1 + i.imm()) as u64);
     p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }
 
 pub fn lw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.mem().read_w((i.rs1() as i64 + i.imm()) as u64);
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let v = p.mem().read_w((rs1 + i.imm()) as u64);
     let sign_extended = ((v as i64) << 32 >> 32) as u64;
     p.regs.set(i.rd() as usize, sign_extended);
     p.advance_pc();
 }
 
 pub fn ld<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.mem().read_d((i.rs1() as i64 + i.imm()) as u64);
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let v = p.mem().read_d((rs1 + i.imm()) as u64);
     p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }

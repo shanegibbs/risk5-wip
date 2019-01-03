@@ -47,28 +47,39 @@ pub fn risk5_main() {
         }
     }
 
+    let mut dtb = vec![];
+    let mut dtb_file = File::open("dtb.bin").expect("dtb.bin");
+    dtb_file.read_to_end(&mut dtb).expect("read dtb");
+
     //  auipc   t0, 0x0
     //  addi    a1, t0, 32
     //  csrr    a0, mhartid
     //  ld      t0, 24(t0)
     //  jr      t0
-    //  j       pc + 0x200
-    //  li      ra, 0
-    // let mem = vec![
-    //     0x00000297, 0x02028593, 0xf1402573, 0x0182b283, 0x00028067, 0x2000006f, 0x00000093,v
-    // ];
 
-    // mem.add_block(0, 10);
-    // // 00e00513
-    // mem.write_b(0, 0x00);
-    // mem.write_b(1, 0xe0);v
-    // mem.write_b(2, 0x05);v
-    // mem.write_b(3, 0x13);
+    let reset_vec_addr = 0x1000;
+    let reset_vec_size = 8;
+    mem.add_block(reset_vec_addr, (reset_vec_size * 4) + dtb.len() as u64);
+    mem.write_w(reset_vec_addr, 0x297);
+    mem.write_w(
+        reset_vec_addr + 4,
+        0x28593 + (reset_vec_size * 4 << 20) as u32,
+    );
+    mem.write_w(reset_vec_addr + 8, 0xf1402573);
+    mem.write_w(reset_vec_addr + 12, 0x0182b283);
+    mem.write_w(reset_vec_addr + 16, 0x28067);
+
+    mem.write_w(reset_vec_addr + 20, 0x0);
+    mem.write_w(reset_vec_addr + 24, entry as u32);
+    mem.write_w(reset_vec_addr + 28, (entry >> 32) as u32);
+    for (i, b) in dtb.into_iter().enumerate() {
+        mem.write_b(reset_vec_addr + 32 + i as u64, b);
+    }
 
     let matchers = build_matchers();
 
     // let mut csrs = csrs::Csrs::new();
-    let mut cpu = opcodes::Processor::new(entry, mem);
+    let mut cpu = opcodes::Processor::new(reset_vec_addr, mem);
     loop {
         cpu.step(&matchers);
     }
