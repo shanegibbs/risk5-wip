@@ -10,7 +10,7 @@ addiw-test:
 	bzcat assets/addiw.json.log.bz2 | env RUST_LOG=risk5=error cargo run --bin logrunner
 
 run:
-	cargo run --bin risk5
+	env RUST_LOG=$(RUST_LOG) cargo run --bin risk5
 
 unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
