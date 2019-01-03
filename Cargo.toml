@@ -22,6 +22,10 @@ regex = "1"
 name = "risk5"
 path = "bin/risk5.rs"
 
+[[bin]]
+name = "logrunner"
+path = "bin/logrunner.rs"
+
 # [[bin]]
 # name = "u1"
 # path = "bin/u1.rs"
