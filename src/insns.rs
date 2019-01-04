@@ -1,5 +1,5 @@
-use itypes::*;
-use *;
+use crate::itypes::*;
+use crate::*;
 
 pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
     let old_pc = p.pc();

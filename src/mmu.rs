@@ -60,7 +60,7 @@ pub struct BlockMemory {
 }
 
 impl fmt::Debug for BlockMemory {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "BlockMemory")
     }
 }
@@ -154,7 +154,7 @@ pub struct FakeMemory {
 }
 
 impl fmt::Debug for FakeMemory {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "FakeMemory")
     }
 }

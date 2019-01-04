@@ -1,4 +1,4 @@
-use mstatus::Mstatus;
+use crate::mstatus::Mstatus;
 use std::fmt;
 
 pub struct Csrs {
@@ -105,7 +105,7 @@ impl Csrs {
 }
 
 impl fmt::Debug for Csrs {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Csrs")
     }
 }

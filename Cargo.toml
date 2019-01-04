@@ -3,6 +3,14 @@ name = "risk5"
 version = "0.1.0"
 authors = ["Shane Gibbs <shane@hands.net.nz>"]
 
+edition = "2018"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+panic = "abort"
+
 [dependencies]
 
 elf = "0.0.10"
@@ -25,14 +33,3 @@ path = "bin/risk5.rs"
 [[bin]]
 name = "logrunner"
 path = "bin/logrunner.rs"
-
-# [[bin]]
-# name = "u1"
-# path = "bin/u1.rs"
-
-# [[bin]]
-# name = "u2"
-# path = "bin/u2.rs"
-
-[profile.release]
-panic = "abort"

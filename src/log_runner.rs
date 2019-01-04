@@ -1,5 +1,5 @@
-use mmu::*;
-use opcodes;
+use crate::mmu::*;
+use crate::opcodes;
 use pretty_env_logger;
 use serde_json;
 use std::io;
@@ -100,7 +100,7 @@ struct LogTupleIterator {
 
 impl LogTupleIterator {
     fn new() -> Result<Self, io::Error> {
-        let mut lines = try!(LogLineIterator::new());
+        let mut lines = LogLineIterator::new()?;
 
         let next_state = loop {
             let line = lines.next();
@@ -159,14 +159,14 @@ fn format_diff(expected: u64, actual: u64) -> String {
 fn run_err() -> Result<(), io::Error> {
     pretty_env_logger::init();
 
-    let matchers = ::build_matchers::<FakeMemory>();
+    let matchers = crate::build_matchers::<FakeMemory>();
 
     let mem = FakeMemory::new();
     let mut cpu = opcodes::Processor::new(0x1000, mem);
 
     info!("Initial checks");
 
-    for (step, (state, insn, load)) in try!(LogTupleIterator::new()).enumerate() {
+    for (step, (state, insn, load)) in LogTupleIterator::new()?.enumerate() {
         // trace!("{:?}", state);
 
         let mut fail = false;
@@ -217,7 +217,7 @@ fn run_err() -> Result<(), io::Error> {
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
             if val != cpu.csrs.mstatus.val() {
-                use mstatus::Mstatus;
+                use crate::mstatus::Mstatus;
                 let mstatus_expected = Mstatus::new_with_val(val);
                 error!(
                     "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",

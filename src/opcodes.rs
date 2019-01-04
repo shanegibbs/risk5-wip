@@ -1,5 +1,5 @@
-use csrs::Csrs;
-use mmu::*;
+use crate::csrs::Csrs;
+use crate::mmu::*;
 use std::fmt;
 
 pub struct Matcher<M: Memory> {
@@ -15,7 +15,7 @@ impl<M: Memory> Matcher<M> {
 }
 
 impl<M: fmt::Debug + Memory> fmt::Debug for Matcher<M> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Matcher")
     }
 }

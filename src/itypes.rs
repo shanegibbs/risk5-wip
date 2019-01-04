@@ -1,4 +1,4 @@
-use opcodes::Processor;
+use crate::opcodes::Processor;
 use std::fmt;
 
 pub type Regi = u32;
@@ -86,7 +86,7 @@ impl Into<Btype> for u32 {
 }
 
 impl fmt::Display for Btype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} 0x{:x}", self.rs1(), self.rs2(), self.imm())
     }
 }
@@ -113,7 +113,7 @@ impl Into<Rtype> for u32 {
 }
 
 impl fmt::Display for Rtype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {}", self.rd(), self.rs1(), self.rs2())
     }
 }
@@ -153,7 +153,7 @@ impl Into<Itype> for u32 {
 }
 
 impl fmt::Display for Itype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} 0x{:x}", self.rd(), self.rs1(), self.imm())
     }
 }
@@ -191,7 +191,7 @@ impl Into<Stype> for u32 {
 }
 
 impl fmt::Display for Stype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} {} {} 0x{:x}", self.rd(), self.rs1(), self.rs2(), self.imm())
     }
 }
@@ -225,7 +225,7 @@ impl Into<Utype> for u32 {
 }
 
 impl fmt::Display for Utype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "0x{:x}", self.imm())
     }
 }
@@ -263,7 +263,7 @@ impl Into<Jtype> for u32 {
 }
 
 impl fmt::Display for Jtype {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "0x{:x}", self.imm())
     }
 }

@@ -1,10 +1,5 @@
 #[macro_use]
 extern crate log;
-extern crate elf;
-extern crate pretty_env_logger;
-
-extern crate serde;
-extern crate serde_json;
 #[macro_use]
 extern crate serde_derive;
 
@@ -19,9 +14,9 @@ mod opcodes;
 use std::fs::File;
 use std::io::Read;
 
-pub use insns::*;
-use mmu::*;
-pub use opcodes::*;
+pub use crate::insns::*;
+use crate::mmu::*;
+pub use crate::opcodes::*;
 
 pub fn risk5_main() {
     pretty_env_logger::init();

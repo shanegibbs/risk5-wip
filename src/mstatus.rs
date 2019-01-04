@@ -236,7 +236,7 @@ impl Mstatus {
 
 use std::fmt;
 impl fmt::Debug for Mstatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={}",
                self.machine_interrupt_enabled(),
                self.supervisor_interrupt_enabled(),
