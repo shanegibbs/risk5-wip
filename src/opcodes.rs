@@ -124,7 +124,7 @@ impl<M> Processor<M> {
 
     #[inline(always)]
     pub fn set_pc(&mut self, pc: u64) {
-        trace!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
+        info!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
         self.pc = pc;
     }
 

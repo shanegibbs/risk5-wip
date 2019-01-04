@@ -77,6 +77,11 @@ pub fn risk5_main() {
     let mut cpu = opcodes::Processor::new(reset_vec_addr, mem);
     loop {
         cpu.step(&matchers);
+
+        let fromhost = cpu.mem().read_d(0x80009000);
+        let tohost = cpu.mem().read_d(0x80009008);
+
+        warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
     }
 }
 
@@ -170,10 +175,12 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x2023, wrap!(sw)),
         Matcher::new(0x707f, 0x3023, wrap!(sd)),
         Matcher::new(0x707f, 0xf, |p, _| {
-            panic!(format!("Unimplemented insn 'fence' at {:x}", p.pc()))
+            trace!("Unimplemented insn 'fence' at {:x}", p.pc());
+            p.advance_pc();
         }),
         Matcher::new(0x707f, 0x100f, |p, _| {
-            panic!(format!("Unimplemented insn 'fence.i' at {:x}", p.pc()))
+            trace!("Unimplemented insn 'fence.i' at {:x}", p.pc());
+            p.advance_pc();
         }),
         Matcher::new(0xfe00707f, 0x2000033, |p, _| {
             panic!(format!("Unimplemented insn 'mul' at {:x}", p.pc()))
@@ -238,9 +245,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xf800707f, 0xe000202f, |p, _| {
             panic!(format!("Unimplemented insn 'amomaxu.w' at {:x}", p.pc()))
         }),
-        Matcher::new(0xf800707f, 0x800202f, |p, _| {
-            panic!(format!("Unimplemented insn 'amoswap.w' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xf800707f, 0x800202f, wrap!(amoswapw)),
         Matcher::new(0xf9f0707f, 0x1000202f, |p, _| {
             panic!(format!("Unimplemented insn 'lr.w' at {:x}", p.pc()))
         }),

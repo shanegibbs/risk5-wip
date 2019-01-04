@@ -1,5 +1,8 @@
 use crate::itypes::*;
 use crate::*;
+mod amo;
+
+pub use self::amo::*;
 
 pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
     let old_pc = p.pc();
@@ -171,7 +174,8 @@ pub fn lw<M: Memory>(p: &mut Processor<M>, i: Itype) {
 
 pub fn ld<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let rs1 = p.regs.geti(i.rs1() as usize);
-    let v = p.mem().read_d((rs1 + i.imm()) as u64);
+    let offset = (rs1 + i.imm()) as u64;
+    let v = p.mem().read_d(offset);
     p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }
