@@ -73,6 +73,8 @@ pub fn risk5_main() {
 
     let matchers = build_matchers();
 
+    let mut output = String::new();
+
     // let mut csrs = csrs::Csrs::new();
     let mut cpu = opcodes::Processor::new(reset_vec_addr, mem);
     loop {
@@ -81,7 +83,14 @@ pub fn risk5_main() {
         let fromhost = cpu.mem().read_d(0x80009000);
         let tohost = cpu.mem().read_d(0x80009008);
 
-        warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
+        if tohost > 0 {
+            // warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
+            let ch = tohost as u8;
+            output = format!("{}{}", output, ch as char);
+            print!("{}", ch as char);
+            // warn!("{}\n{}", ch as char, output);
+            cpu.mem_mut().write_d(0x80009008, 0);
+        }
     }
 }
 

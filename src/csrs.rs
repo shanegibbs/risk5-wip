@@ -12,6 +12,7 @@ pub struct Csrs {
     pub mtval: u64,
     pub mcause: u64,
     pub mscratch: u64,
+    pub misa: u64,
 }
 
 // Supervisor Protection and Translation
@@ -22,6 +23,7 @@ const MHARTID: usize = 0xf14;
 
 // Machine Trap Setup
 const MSTATUS: usize = 0x300;
+const MISA: usize = 0x301;
 const MEDELEG: usize = 0x302;
 const MIDELEG: usize = 0x303;
 const MTVEC: usize = 0x305;
@@ -49,6 +51,7 @@ impl Csrs {
             mtval: 0,
             mcause: 0,
             mscratch: 0,
+            misa: 0x8000000000141101,
         }
     }
 
@@ -97,6 +100,8 @@ impl Csrs {
             self.mscratch
         } else if i == MCAUSE {
             self.mcause
+        } else if i == MISA {
+            self.misa
         } else {
             error!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
             return Err(2); // Illegal instruction
