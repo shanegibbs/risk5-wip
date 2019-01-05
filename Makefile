@@ -1,3 +1,5 @@
+# goo
+
 RUST_LOG=risk5=trace
 
 test: check unit-tests addiw-test
