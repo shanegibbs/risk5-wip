@@ -170,7 +170,6 @@ impl Base for Stype {
     }
 }
 
-impl FieldRd for Stype {}
 impl FieldRs1 for Stype {}
 impl FieldRs2 for Stype {}
 
@@ -192,7 +191,7 @@ impl Into<Stype> for u32 {
 
 impl fmt::Display for Stype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {} 0x{:x}", self.rd(), self.rs1(), self.rs2(), self.imm())
+        write!(f, "{} {} 0x{:x}", self.rs1(), self.rs2(), self.imm())
     }
 }
 

@@ -3,7 +3,6 @@ use std::fmt;
 
 pub struct Csrs {
     pub prv: u64,
-    pub satp: u64,
     pub mstatus: Mstatus,
     pub medeleg: u64,
     pub mideleg: u64,
@@ -13,7 +12,14 @@ pub struct Csrs {
     pub mcause: u64,
     pub mscratch: u64,
     pub misa: u64,
+    pub scounteren: u64,
+    pub mcounteren: u64,
+    pub satp: u64,
 }
+
+// Supervisor Trap Setup
+const SCOUNTEREN: usize = 0x106;
+const MCOUNTEREN: usize = 0x306;
 
 // Supervisor Protection and Translation
 const SATP: usize = 0x180;
@@ -42,7 +48,6 @@ impl Csrs {
 
         Csrs {
             prv: 3,
-            satp: 0,
             mstatus: mstatus,
             medeleg: 0,
             mideleg: 0,
@@ -52,6 +57,9 @@ impl Csrs {
             mcause: 0,
             mscratch: 0,
             misa: 0x8000000000141101,
+            scounteren: 0,
+            mcounteren: 0,
+            satp: 0,
         }
     }
 
@@ -72,6 +80,10 @@ impl Csrs {
             self.mstatus = mstatus;
         } else if i == MSCRATCH {
             self.mscratch = v
+        } else if i == MCOUNTEREN {
+            self.mcounteren = v
+        } else if i == SCOUNTEREN {
+            self.scounteren = v
         } else {
             error!("unimplemented Csrs.set 0x{:x}", i)
         }
@@ -88,6 +100,10 @@ impl Csrs {
             self.medeleg
         } else if i == MIDELEG {
             self.mideleg
+        } else if i == MCOUNTEREN {
+            self.mcounteren
+        } else if i == SCOUNTEREN {
+            self.scounteren
         } else if i == SATP {
             self.satp
         } else if i == MTVEC {
