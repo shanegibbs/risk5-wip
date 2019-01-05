@@ -292,6 +292,14 @@ pub fn subw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn sllw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let shmat = i.rs2() & 0x1F;
+    let v = p.regs.get(i.rs1() as usize) as u32;
+    let v = v << shmat;
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
 pub fn slli<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let shmat = i.imm() & 0x3F;
     let v = p.regs.get(i.rs1() as usize);
@@ -304,6 +312,14 @@ pub fn slliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let shmat = i.imm() & ((2 << 5) - 1);
     let v = p.regs.get(i.rs1() as usize) as u32;
     let v = (((v << shmat) as i32) as i64) << 32 >> 32;
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
+pub fn srl<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let shmat = p.regs.get(i.rs2() as usize) & 0x3f;
+    let v = p.regs.get(i.rs1() as usize);
+    let v = v >> shmat;
     p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }

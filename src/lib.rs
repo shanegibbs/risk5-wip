@@ -71,6 +71,9 @@ pub fn risk5_main() {
         mem.write_b(reset_vec_addr + 32 + i as u64, b);
     }
 
+    // dummy clint
+    mem.add_block(0x2000000, 0xc000);
+
     let matchers = build_matchers();
 
     let mut output = String::new();
@@ -141,9 +144,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             panic!(format!("Unimplemented insn 'sltu' at {:x}", p.pc()))
         }),
         Matcher::new(0xfe00707f, 0x4033, wrap!(xor)),
-        Matcher::new(0xfe00707f, 0x5033, |p, _| {
-            panic!(format!("Unimplemented insn 'srl' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x5033, wrap!(srl)),
         Matcher::new(0xfe00707f, 0x40005033, |p, _| {
             panic!(format!("Unimplemented insn 'sra' at {:x}", p.pc()))
         }),
@@ -155,9 +156,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x4000501b, wrap!(sraiw)),
         Matcher::new(0xfe00707f, 0x3b, wrap!(addw)),
         Matcher::new(0xfe00707f, 0x4000003b, wrap!(subw)),
-        Matcher::new(0xfe00707f, 0x103b, |p, _| {
-            panic!(format!("Unimplemented insn 'sllw' at {:x}", p.pc()))
-        }),
+        Matcher::new(0xfe00707f, 0x103b, wrap!(sllw)),
         Matcher::new(0xfe00707f, 0x503b, |p, _| {
             panic!(format!("Unimplemented insn 'srlw' at {:x}", p.pc()))
         }),

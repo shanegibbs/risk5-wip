@@ -15,6 +15,7 @@ pub struct Csrs {
     pub scounteren: u64,
     pub mcounteren: u64,
     pub satp: u64,
+    pub mie: u64,
 }
 
 // Supervisor Trap Setup
@@ -32,6 +33,7 @@ const MSTATUS: usize = 0x300;
 const MISA: usize = 0x301;
 const MEDELEG: usize = 0x302;
 const MIDELEG: usize = 0x303;
+const MIE: usize = 0x304;
 const MTVEC: usize = 0x305;
 const MCAUSE: usize = 0x342;
 const MSCRATCH: usize = 0x340;
@@ -60,6 +62,7 @@ impl Csrs {
             scounteren: 0,
             mcounteren: 0,
             satp: 0,
+            mie: 0,
         }
     }
 
@@ -78,6 +81,12 @@ impl Csrs {
             mstatus.set_supervisor_xlen(2);
             mstatus.set_user_xlen(2);
             self.mstatus = mstatus;
+        } else if i == MIE {
+            self.mie = v
+        } else if i == MEDELEG {
+            self.medeleg = v
+        } else if i == MIDELEG {
+            self.mideleg = v
         } else if i == MSCRATCH {
             self.mscratch = v
         } else if i == MCOUNTEREN {
@@ -96,6 +105,8 @@ impl Csrs {
             0
         } else if i == MSTATUS {
             self.mstatus.val()
+        } else if i == MIE {
+            self.mie
         } else if i == MEDELEG {
             self.medeleg
         } else if i == MIDELEG {
