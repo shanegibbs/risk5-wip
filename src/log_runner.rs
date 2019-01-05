@@ -163,6 +163,7 @@ fn run_err() -> Result<(), io::Error> {
 
     let mem = FakeMemory::new();
     let mut cpu = opcodes::Processor::new(0x1000, mem);
+    let mut last_insn: Option<Insn> = None;
 
     info!("Initial checks");
 
@@ -241,10 +242,22 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         if fail {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Failed checks"),
-            ));
+            let last_insn = last_insn.expect("last_insn");
+            error!("step: {}", step);
+            error!("PC:   {}", last_insn.pc);
+            error!("Insn: {}", last_insn.desc);
+            panic!("Failed checks");
+        }
+
+        // stop if required
+        {
+            use std::env;
+            if let Ok(val) = env::var("STOP_AT") {
+                let current_step = format!("{}", step);
+                if val == current_step {
+                    return Ok(());
+                }
+            }
         }
 
         // load up transactions
@@ -271,6 +284,8 @@ fn run_err() -> Result<(), io::Error> {
 
         cpu.get_mem().push_word(insn_bits);
         cpu.step(&matchers);
+
+        last_insn = Some(insn);
     }
 
     Ok(())
