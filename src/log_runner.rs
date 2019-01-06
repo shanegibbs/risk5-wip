@@ -207,7 +207,7 @@ fn run_err() -> Result<(), io::Error> {
             };
         }
 
-        macro_rules! warn_on {
+        /* macro_rules! warn_on {
             ($name:expr, $expected:expr, $actual:expr) => {
                 let val = u64::from_str_radix(&$expected[2..], 16).expect($name);
                 if val != $actual {
@@ -217,7 +217,7 @@ fn run_err() -> Result<(), io::Error> {
                     );
                 }
             };
-        }
+        } */
 
         if cpu.pc() != u64::from_str_radix(&state.pc[2..], 16).expect("pc") {
             error!(
@@ -229,7 +229,7 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         fail_on!("prv", state.prv, cpu.csrs.prv);
-        warn_on!("mepc", state.mepc, cpu.csrs.mepc);
+        fail_on!("mepc", state.mepc, cpu.csrs.mepc);
         fail_on!("mcause", state.mcause, cpu.csrs.mcause);
         fail_on!("mscratch", state.mscratch, cpu.csrs.mscratch);
         fail_on!("mtvec", state.mtvec, cpu.csrs.mtvec);

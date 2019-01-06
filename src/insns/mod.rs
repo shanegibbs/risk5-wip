@@ -142,13 +142,16 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, i: Itype) {
 }
 
 pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
-    let mpie = p.csrs.mstatus.machine_prior_interrupt_enabled();
+    let pprv = p.csrs.mstatus.machine_previous_privilege();
+    let pie = p.csrs.mstatus.machine_prior_interrupt_enabled();
+    let epc = p.csrs.mepc;
 
-    p.csrs.mstatus.set_machine_interrupt_enabled(mpie);
+    p.csrs.mstatus.set_machine_interrupt_enabled(pie);
     p.csrs.mstatus.set_machine_prior_interrupt_enabled(1);
     p.csrs.mstatus.set_machine_previous_privilege(0);
 
-    p.advance_pc();
+    p.csrs.prv = pprv;
+    p.set_pc(epc);
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
