@@ -141,6 +141,14 @@ pub fn csrrs<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn csrrc<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let old = handle_trap!(p, p.csrs.get(i.imm() as usize));
+    p.csrs
+        .set(i.imm() as usize, old & !p.regs.get(i.rs1() as usize));
+    p.regs.set(i.rd() as usize, old);
+    p.advance_pc();
+}
+
 pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
     let pprv = p.csrs.mstatus.machine_previous_privilege();
     let pie = p.csrs.mstatus.machine_prior_interrupt_enabled();

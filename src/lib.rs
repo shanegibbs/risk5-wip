@@ -318,9 +318,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         }),
         Matcher::new(0x707f, 0x1073, wrap!(csrrw)),
         Matcher::new(0x707f, 0x2073, wrap!(csrrs)),
-        Matcher::new(0x707f, 0x3073, |p, _| {
-            panic!(format!("Unimplemented insn 'csrrc' at {:x}", p.pc()))
-        }),
+        Matcher::new(0x707f, 0x3073, wrap!(csrrc)),
         Matcher::new(0x707f, 0x5073, wrap!(csrrwi)),
         Matcher::new(0x707f, 0x6073, |p, _| {
             panic!(format!("Unimplemented insn 'csrrsi' at {:x}", p.pc()))
