@@ -77,6 +77,10 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
         panic!("Unimplemented prv level");
     }
 
+    trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs.medeleg);
+    trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs.mtvec);
+    // trace!("stvec   0x{0:016x} b'{0:064b}", p.csrs.stvec);
+
     let mtvec = p.csrs.mtvec;
 
     let mode = mtvec & 0x3;
@@ -85,7 +89,7 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
     }
 
     p.csrs.mepc = p.pc();
-    p.set_pc(mtvec & !0x3);
+    p.set_pc(mtvec & !0x1);
 
     {
         let m = &mut p.csrs.mstatus;

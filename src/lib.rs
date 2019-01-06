@@ -80,10 +80,13 @@ pub fn risk5_main() {
 
     // let mut csrs = csrs::Csrs::new();
     let mut cpu = opcodes::Processor::new(reset_vec_addr, mem);
+    let mut counter = 0;
     loop {
         cpu.step(&matchers);
+        counter += 1;
+        trace!("--- Step {} ---", counter);
 
-        let fromhost = cpu.mem().read_d(0x80009000);
+        let _fromhost = cpu.mem().read_d(0x80009000);
         let tohost = cpu.mem().read_d(0x80009008);
 
         if tohost > 0 {

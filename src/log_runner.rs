@@ -34,6 +34,7 @@ struct State {
     mstatus: String,
     mcause: String,
     mscratch: String,
+    mtvec: String,
     mepc: String,
     xregs: Vec<String>,
     fregs: Vec<String>,
@@ -231,6 +232,7 @@ fn run_err() -> Result<(), io::Error> {
         warn_on!("mepc", state.mepc, cpu.csrs.mepc);
         fail_on!("mcause", state.mcause, cpu.csrs.mcause);
         fail_on!("mscratch", state.mscratch, cpu.csrs.mscratch);
+        fail_on!("mtvec", state.mtvec, cpu.csrs.mtvec);
 
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");

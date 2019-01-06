@@ -99,7 +99,7 @@ impl Csrs {
         } else if i == SCOUNTEREN {
             self.scounteren = v
         } else {
-            error!("unimplemented Csrs.set 0x{:x}", i)
+            warn!("unimplemented Csrs.set 0x{:x}", i)
         }
     }
 

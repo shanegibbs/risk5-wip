@@ -176,13 +176,6 @@ impl FakeMemory {
     }
 }
 
-fn check_addr(actual: u64, expected: u64) {
-    if actual != expected {
-        error!("invalid offset: 0x{:x} expecting: 0x{:x}", actual, expected);
-        panic!("memory offset fail")
-    }
-}
-
 macro_rules! check {
     ($n:expr, $expected:expr, $actual:expr) => {{
         if $actual != $expected {
