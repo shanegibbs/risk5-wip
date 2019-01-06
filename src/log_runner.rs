@@ -15,7 +15,9 @@ enum LogLine {
     #[serde(rename = "state")]
     State(State),
     #[serde(rename = "load")]
-    Load(Load),
+    Load(Memory),
+    #[serde(rename = "store")]
+    Store(Memory),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -41,14 +43,14 @@ struct State {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct Load {
+struct Memory {
     #[serde(rename = "type")]
     kind: String,
     addr: String,
     value: String,
 }
 
-impl Into<FakeMemoryItem> for Load {
+impl Into<FakeMemoryItem> for Memory {
     fn into(self) -> FakeMemoryItem {
         let addr = u64::from_str_radix(&self.addr[2..], 16).expect("load value)");
         let value = &self.value[2..];
@@ -135,17 +137,19 @@ impl LogTupleIterator {
 }
 
 impl Iterator for LogTupleIterator {
-    type Item = (State, Insn, Option<Load>);
+    type Item = (State, Insn, Option<Memory>, Option<Memory>);
 
-    fn next(&mut self) -> Option<(State, Insn, Option<Load>)> {
+    fn next(&mut self) -> Option<(State, Insn, Option<Memory>, Option<Memory>)> {
         self.next_state.take().and_then(|state| {
             let mut insn = None;
             let mut load = None;
+            let mut store = None;
 
             loop {
                 match self.line_it.next() {
                     Some(LogLine::Insn(n)) => insn = Some(n),
                     Some(LogLine::Load(n)) => load = Some(n),
+                    Some(LogLine::Store(n)) => store = Some(n),
                     Some(LogLine::State(n)) => {
                         let pc = n.pc.clone();
                         self.next_state = Some(n);
@@ -162,7 +166,7 @@ impl Iterator for LogTupleIterator {
             }
             let insn = insn.unwrap();
 
-            Some((state, insn, load))
+            Some((state, insn, load, store))
         })
     }
 }
@@ -185,7 +189,7 @@ fn run_err() -> Result<(), io::Error> {
 
     info!("Initial checks");
 
-    for (step, (state, insn, load)) in LogTupleIterator::new()?.enumerate() {
+    for (step, (state, insn, load, store)) in LogTupleIterator::new()?.enumerate() {
         // trace!("{:?}", state);
 
         let mut fail = false;
@@ -260,11 +264,19 @@ fn run_err() -> Result<(), io::Error> {
             }
         }
 
+        cpu.mem_mut().trim();
+        if cpu.get_mem().queue_size() != 0 {
+            // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
+            error!("Memory operations still queued");
+            // fail = true;
+        }
+        cpu.mem_mut().reset();
+
         if fail {
             let last_insn = last_insn.expect("last_insn");
-            error!("step: {}", step);
-            error!("PC:   {}", last_insn.pc);
-            error!("Insn: {}", last_insn.desc);
+            warn!("step: {}", step - 1);
+            warn!("PC:   {}", last_insn.pc);
+            warn!("Insn: {}", last_insn.desc);
             panic!("Failed checks");
         }
 
@@ -284,16 +296,22 @@ fn run_err() -> Result<(), io::Error> {
         info!("--- Begin step {} ---", step);
 
         debug!("{:?}", insn);
-        trace!("Load {:?}", load);
 
         let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
         let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
 
-        if let Some(load) = load {
-            cpu.get_mem().push(load);
+        if let Some(mem) = load {
+            trace!("Load {:?}", mem);
+            cpu.get_mem().push_read(mem);
         }
 
-        cpu.get_mem().push(FakeMemoryItem::Word(insn_pc, insn_bits));
+        if let Some(mem) = store {
+            trace!("Store {:?}", mem);
+            cpu.get_mem().push_write(mem);
+        }
+
+        cpu.get_mem()
+            .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
         cpu.step(&matchers);
 
         last_insn = Some(insn);
