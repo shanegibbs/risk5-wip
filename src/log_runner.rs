@@ -47,6 +47,23 @@ struct Load {
     value: String,
 }
 
+impl Into<FakeMemoryItem> for Load {
+    fn into(self) -> FakeMemoryItem {
+        let addr = u64::from_str_radix(&self.addr[2..], 16).expect("load value)");
+        let value = &self.value[2..];
+        let value = u64::from_str_radix(value, 16).expect("load value)");
+        if self.kind == "int64" || self.kind == "uint64" {
+            FakeMemoryItem::Double(addr, value)
+        } else if self.kind == "int32" || self.kind == "uint32" {
+            FakeMemoryItem::Word(addr, value as u32)
+        } else if self.kind == "uint8" {
+            FakeMemoryItem::Byte(addr, value as u8)
+        } else {
+            unimplemented!("load fake val");
+        }
+    }
+}
+
 struct LogLineIterator {
     had_first_state: bool,
     lines: Lines<BufReader<io::Stdin>>,
@@ -267,22 +284,14 @@ fn run_err() -> Result<(), io::Error> {
         debug!("{:?}", insn);
         trace!("Load {:?}", load);
 
+        let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
         let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
 
         if let Some(load) = load {
-            let load_val = u64::from_str_radix(&load.value[2..], 16).expect("load value)");
-            if load.kind == "int64" || load.kind == "uint64" {
-                cpu.get_mem().push_double(load_val);
-            } else if load.kind == "int32" || load.kind == "uint32" {
-                cpu.get_mem().push_word(load_val as u32);
-            } else if load.kind == "uint8" {
-                cpu.get_mem().push_byte(load_val as u8);
-            } else {
-                unimplemented!("load fake val");
-            }
+            cpu.get_mem().push(load);
         }
 
-        cpu.get_mem().push_word(insn_bits);
+        cpu.get_mem().push(FakeMemoryItem::Word(insn_pc, insn_bits));
         cpu.step(&matchers);
 
         last_insn = Some(insn);

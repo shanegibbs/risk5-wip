@@ -142,10 +142,10 @@ impl Memory for BlockMemory {
 }
 
 #[derive(Debug)]
-enum FakeMemoryItem {
-    Byte(u8),
-    Word(u32),
-    Double(u64),
+pub enum FakeMemoryItem {
+    Byte(u64, u8),
+    Word(u64, u32),
+    Double(u64, u64),
 }
 
 use std::cell::RefCell;
@@ -165,37 +165,54 @@ impl FakeMemory {
             next: RefCell::new(vec![]),
         }
     }
-    pub fn push_byte(&mut self, n: u8) {
-        self.next.borrow_mut().push(FakeMemoryItem::Byte(n))
-    }
-    pub fn push_word(&mut self, n: u32) {
-        self.next.borrow_mut().push(FakeMemoryItem::Word(n))
-    }
-    pub fn push_double(&mut self, n: u64) {
-        self.next.borrow_mut().push(FakeMemoryItem::Double(n))
+    pub fn push<T>(&mut self, t: T)
+    where
+        T: Into<FakeMemoryItem>,
+    {
+        self.next.borrow_mut().push(t.into())
     }
     pub fn queue_size(&self) -> usize {
         self.next.borrow().len()
     }
 }
 
+fn check_addr(actual: u64, expected: u64) {
+    if actual != expected {
+        error!("invalid offset: 0x{:x} expecting: 0x{:x}", actual, expected);
+        panic!("memory offset fail")
+    }
+}
+
+macro_rules! check {
+    ($n:expr, $expected:expr, $actual:expr) => {{
+        if $actual != $expected {
+            error!(
+                "invalid offset: 0x{:x} expecting: 0x{:x}",
+                $actual, $expected
+            );
+            panic!("memory offset fail");
+        }
+        return $n;
+    }};
+}
+
 impl Memory for FakeMemory {
     fn write_b(&mut self, _offset: u64, _value: u8) {}
-    fn read_b(&self, _offset: u64) -> u8 {
+    fn read_b(&self, offset: u64) -> u8 {
         match self.next.borrow_mut().pop() {
-            Some(FakeMemoryItem::Byte(n)) => n,
+            Some(FakeMemoryItem::Byte(addr, n)) => check!(n, addr, offset),
             n => panic!("Expected read fake byte, but was: {:?}", n),
         }
     }
-    fn read_d(&self, _offset: u64) -> u64 {
+    fn read_w(&self, offset: u64) -> u32 {
         match self.next.borrow_mut().pop() {
-            Some(FakeMemoryItem::Double(n)) => n,
+            Some(FakeMemoryItem::Word(addr, n)) => check!(n, addr, offset),
             n => panic!("Expected read fake word, but was: {:?}", n),
         }
     }
-    fn read_w(&self, _offset: u64) -> u32 {
+    fn read_d(&self, offset: u64) -> u64 {
         match self.next.borrow_mut().pop() {
-            Some(FakeMemoryItem::Word(n)) => n,
+            Some(FakeMemoryItem::Double(addr, n)) => check!(n, addr, offset),
             n => panic!("Expected read fake word, but was: {:?}", n),
         }
     }
