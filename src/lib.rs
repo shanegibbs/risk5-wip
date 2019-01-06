@@ -102,7 +102,7 @@ pub fn risk5_main() {
 
 fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
     macro_rules! wrap {
-        ($f:ident) => {
+        ($f:path) => {
             |p, i| {
                 let i = i.into();
                 debug!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
@@ -110,6 +110,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             }
         };
     }
+
+    use crate::insns::csr;
 
     vec![
         Matcher::new(0x707f, 0x63, wrap!(beq)),
@@ -316,10 +318,10 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             panic!(format!("Unimplemented insn 'wfi' at {:x}", p.pc()))
         }),
-        Matcher::new(0x707f, 0x1073, wrap!(csrrw)),
-        Matcher::new(0x707f, 0x2073, wrap!(csrrs)),
-        Matcher::new(0x707f, 0x3073, wrap!(csrrc)),
-        Matcher::new(0x707f, 0x5073, wrap!(csrrwi)),
+        Matcher::new(0x707f, 0x1073, wrap!(csr::insn<M, csr::ReadWrite>)),
+        Matcher::new(0x707f, 0x2073, wrap!(csr::insn<M, csr::ReadSet>)),
+        Matcher::new(0x707f, 0x3073, wrap!(csr::insn<M, csr::ReadClear>)),
+        Matcher::new(0x707f, 0x5073, wrap!(csr::insn<M, csr::ReadWriteImm>)),
         Matcher::new(0x707f, 0x6073, |p, _| {
             panic!(format!("Unimplemented insn 'csrrsi' at {:x}", p.pc()))
         }),

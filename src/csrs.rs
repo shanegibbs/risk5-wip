@@ -108,6 +108,7 @@ impl Csrs {
         }
     }
 
+    #[inline(always)]
     pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
         let i = i.into();
         debug!("Setting CSR 0x{:x} to 0x{:x} with prv {}", i, v, self.prv);
@@ -149,6 +150,7 @@ impl Csrs {
         }
     }
 
+    #[inline(always)]
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, u64> {
         let i = i.into();
         trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);
@@ -182,7 +184,7 @@ impl Csrs {
             SATP => self.satp,
 
             i => {
-                error!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
+                warn!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
                 return Err(2); // Illegal instruction
             }
         });

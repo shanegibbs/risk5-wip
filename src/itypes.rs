@@ -45,7 +45,6 @@ pub trait FieldRs2: Base {
     }
 }
 
-
 // B Instruction Type
 
 pub struct Btype(u32);
@@ -58,7 +57,6 @@ impl Base for Btype {
 }
 
 impl Btype {
-
     #[inline(always)]
     pub fn imm(&self) -> i64 {
         let mut i: u32 = 0;
@@ -118,7 +116,6 @@ impl fmt::Display for Rtype {
     }
 }
 
-
 // I Instruction Type
 
 pub struct Itype(u32);
@@ -134,9 +131,8 @@ impl FieldRd for Itype {}
 impl FieldRs1 for Itype {}
 
 impl Itype {
-
     #[inline(always)]
-    pub fn u_imm(&self) -> u64 {
+    pub fn immu(&self) -> u64 {
         self.field(20, 12) as u64
     }
 
@@ -157,7 +153,6 @@ impl fmt::Display for Itype {
         write!(f, "{} {} 0x{:x}", self.rd(), self.rs1(), self.imm())
     }
 }
-
 
 // S Instruction Type
 
@@ -195,7 +190,6 @@ impl fmt::Display for Stype {
     }
 }
 
-
 // U Instruction Type
 
 pub struct Utype(u32);
@@ -212,7 +206,7 @@ impl FieldRd for Utype {}
 impl Utype {
     #[inline(always)]
     pub fn imm(&self) -> i64 {
-        let i  = (self.val() as i32) >> 12 << 12;
+        let i = (self.val() as i32) >> 12 << 12;
         i as i64
     }
 }
@@ -228,7 +222,6 @@ impl fmt::Display for Utype {
         write!(f, "0x{:x}", self.imm())
     }
 }
-
 
 // J Instruction Type
 

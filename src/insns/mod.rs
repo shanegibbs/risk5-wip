@@ -14,7 +14,7 @@ macro_rules! handle_trap {
     };
 }
 
-mod csr;
+pub mod csr;
 pub use self::csr::*;
 
 mod amo;
