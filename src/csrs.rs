@@ -16,6 +16,7 @@ pub struct Csrs {
     pub mcounteren: u64,
     pub satp: u64,
     pub mie: u64,
+    pub mip: u64,
 }
 
 // Supervisor Trap Setup
@@ -41,6 +42,7 @@ const MSCRATCH: usize = 0x340;
 // Machine Trap Handling
 const MEPC: usize = 0x341;
 const MTVAL: usize = 0x343;
+const MIP: usize = 0x344;
 
 impl Csrs {
     pub fn new() -> Self {
@@ -63,6 +65,7 @@ impl Csrs {
             mcounteren: 0,
             satp: 0,
             mie: 0,
+            mip: 0,
         }
     }
 
@@ -81,6 +84,8 @@ impl Csrs {
             mstatus.set_supervisor_xlen(2);
             mstatus.set_user_xlen(2);
             self.mstatus = mstatus;
+        } else if i == MIP {
+            self.mip = v
         } else if i == MIE {
             self.mie = v
         } else if i == MEDELEG {
@@ -105,6 +110,8 @@ impl Csrs {
             0
         } else if i == MSTATUS {
             self.mstatus.val()
+        } else if i == MIP {
+            self.mip
         } else if i == MIE {
             self.mie
         } else if i == MEDELEG {
