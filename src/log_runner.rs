@@ -267,7 +267,7 @@ fn run_err() -> Result<(), io::Error> {
         cpu.mem_mut().trim();
         if cpu.get_mem().queue_size() != 0 {
             // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
-            error!("Memory operations still queued");
+            warn!("Memory operations still queued");
             // fail = true;
         }
         cpu.mem_mut().reset();
