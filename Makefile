@@ -3,7 +3,7 @@
 RUST_LOG=risk5=trace
 
 test: check unit-tests addiw-test
-	bzcat assets/bbl.json.log.bz2 |env STOP_AT=135538 RUST_LOG=risk5=error cargo run --release --bin logrunner
+	bzcat assets/bbl.json.log.bz2 |env STOP_AT=135558 RUST_LOG=risk5=error cargo run --release --bin logrunner
 
 check:
 	cargo check
