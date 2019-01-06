@@ -1,5 +1,4 @@
-use crate::itypes::*;
-use crate::*;
+use super::*;
 
 pub fn amoswapw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let rs1 = p.regs.geti(i.rs1() as usize);
