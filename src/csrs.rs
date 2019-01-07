@@ -142,7 +142,7 @@ impl Csrs {
             SIP => self.sip = v,
             SATP => {
                 if v != 0 {
-                    panic!("unimplemented set SATP to 0x{:x}", v)
+                    error!("unimplemented set SATP to 0x{0:x} b{0:064b}", v)
                 }
             }
 

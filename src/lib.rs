@@ -105,7 +105,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         ($f:path) => {
             |p, i| {
                 let i = i.into();
-                debug!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
+                trace!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
                 $f(p, i)
             }
         };
@@ -311,7 +311,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             panic!(format!("Unimplemented insn 'dret' at {:x}", p.pc()))
         }),
         Matcher::new(0xfe007fff, 0x12000073, |p, _| {
-            panic!(format!("Unimplemented insn 'sfence.vma' at {:x}", p.pc()))
+            trace!("Noop insn 'sfence.vma' at {:x}", p.pc());
+            p.advance_pc();
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             panic!(format!("Unimplemented insn 'wfi' at {:x}", p.pc()))
