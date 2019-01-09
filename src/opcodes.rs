@@ -72,8 +72,8 @@ impl Regs {
 #[derive(Debug)]
 pub struct Processor<M> {
     pc: u64,
-    pub regs: Regs,
-    pub csrs: Csrs,
+    pub(crate) regs: Regs,
+    pub(crate) csrs: Csrs,
     mem: M,
 }
 

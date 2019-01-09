@@ -1,34 +1,35 @@
-use crate::mstatus::Mstatus;
+use crate::bitfield::Mstatus;
+use crate::bitfield::Satp;
 use std::fmt;
 
-pub struct Csrs {
-    pub prv: u64,
+pub(crate) struct Csrs {
+    pub(crate) prv: u64,
 
-    pub mstatus: Mstatus,
-    pub medeleg: u64,
-    pub mideleg: u64,
-    pub mtvec: u64,
-    pub mepc: u64,
-    pub mtval: u64,
-    pub mcause: u64,
-    pub mscratch: u64,
-    pub misa: u64,
-    pub mcounteren: u64,
-    pub mie: u64,
-    pub mip: u64,
+    pub(crate) mstatus: Mstatus,
+    pub(crate) medeleg: u64,
+    pub(crate) mideleg: u64,
+    pub(crate) mtvec: u64,
+    pub(crate) mepc: u64,
+    pub(crate) mtval: u64,
+    pub(crate) mcause: u64,
+    pub(crate) mscratch: u64,
+    pub(crate) misa: u64,
+    pub(crate) mcounteren: u64,
+    pub(crate) mie: u64,
+    pub(crate) mip: u64,
 
-    pub sstatus: u64,
-    pub sedeleg: u64,
-    pub sideleg: u64,
-    pub sie: u64,
-    pub stvec: u64,
-    pub scounteren: u64,
-    pub sscratch: u64,
-    pub sepc: u64,
-    pub scause: u64,
-    pub stval: u64,
-    pub sip: u64,
-    pub satp: u64,
+    pub(crate) sstatus: u64,
+    pub(crate) sedeleg: u64,
+    pub(crate) sideleg: u64,
+    pub(crate) sie: u64,
+    pub(crate) stvec: u64,
+    pub(crate) scounteren: u64,
+    pub(crate) sscratch: u64,
+    pub(crate) sepc: u64,
+    pub(crate) scause: u64,
+    pub(crate) stval: u64,
+    pub(crate) sip: u64,
+    pub(crate) satp: Satp,
 }
 
 // Supervisor
@@ -104,7 +105,7 @@ impl Csrs {
             scause: 0,
             stval: 0,
             sip: 0,
-            satp: 0,
+            satp: Default::default(),
         }
     }
 
@@ -141,9 +142,17 @@ impl Csrs {
             STVAL => self.stval = v,
             SIP => self.sip = v,
             SATP => {
-                if v != 0 {
-                    error!("unimplemented set SATP to 0x{0:x} b{0:064b}", v)
+                let satp = v.into();
+                if self.satp.mode() != 0 && self.satp.mode() != 8 {
+                    return;
                 }
+                self.satp = satp;
+                warn!(
+                    "Using satp mode {}, asid {}, ppn {}",
+                    self.satp.mode(),
+                    self.satp.asid(),
+                    self.satp.ppn()
+                );
             }
 
             i => warn!("unimplemented Csrs.set 0x{:x}", i),
@@ -181,7 +190,7 @@ impl Csrs {
             SCAUSE => self.scause,
             STVAL => self.stval,
             SIP => self.sip,
-            SATP => self.satp,
+            SATP => (&self.satp).into(),
 
             i => {
                 warn!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);

@@ -241,7 +241,7 @@ fn run_err() -> Result<(), io::Error> {
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
             if val != cpu.csrs.mstatus.val() {
-                use crate::mstatus::Mstatus;
+                use crate::bitfield::Mstatus;
                 let mstatus_expected = Mstatus::new_with_val(val);
                 error!(
                     "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",

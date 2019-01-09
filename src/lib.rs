@@ -3,13 +3,13 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
+mod bitfield;
 mod csrs;
 mod elf_loader;
 mod insns;
 mod itypes;
 pub mod log_runner;
 mod mmu;
-mod mstatus;
 mod opcodes;
 use std::fs::File;
 use std::io::Read;
