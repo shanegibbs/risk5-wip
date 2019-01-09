@@ -5,8 +5,8 @@ authors = ["Shane Gibbs <shane@hands.net.nz>"]
 
 edition = "2018"
 
-[profile.dev]
-panic = "abort"
+# [profile.dev]
+# panic = "abort"
 
 [profile.release]
 panic = "abort"

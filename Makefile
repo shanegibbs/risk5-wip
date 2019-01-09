@@ -1,6 +1,4 @@
-# goo
-
-RUST_LOG=risk5=trace
+RUST_LOG=risk5=warn
 
 test: check unit-tests addiw-test
 	bzcat assets/bbl.json.log.bz2 |env STOP_AT=595283 RUST_LOG=risk5=error cargo run --release --bin logrunner
@@ -16,6 +14,9 @@ addiw-test:
 
 run:
 	env RUST_LOG=$(RUST_LOG) cargo run --bin risk5 --release
+
+run-dev:
+	env RUST_BACKTRACE=1 RUST_LOG=$(RUST_LOG) cargo run --bin risk5
 
 unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
