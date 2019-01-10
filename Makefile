@@ -32,3 +32,4 @@ save: test
 
 load:
 	git pull
+	make test
