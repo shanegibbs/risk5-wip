@@ -1,6 +1,7 @@
 use crate::csrs::Csrs;
-use crate::mmu::{FakeMemory, Memory};
+use crate::mmu::FakeMemory;
 use crate::opcodes::*;
+use crate::Memory;
 
 #[derive(Debug)]
 pub struct Processor<M> {

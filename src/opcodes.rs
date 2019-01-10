@@ -1,4 +1,4 @@
-use crate::mmu::*;
+use crate::Memory;
 use crate::Processor;
 use std::fmt;
 

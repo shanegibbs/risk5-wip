@@ -9,16 +9,18 @@ mod elf_loader;
 mod insns;
 mod itypes;
 pub mod log_runner;
+mod memory;
 mod mmu;
 mod opcodes;
 mod processor;
-use std::fs::File;
-use std::io::Read;
 
 pub use crate::insns::*;
+use crate::memory::Memory;
 use crate::mmu::*;
 pub use crate::opcodes::*;
 use crate::processor::Processor;
+use std::fs::File;
+use std::io::Read;
 
 pub fn risk5_main() {
     pretty_env_logger::init();
