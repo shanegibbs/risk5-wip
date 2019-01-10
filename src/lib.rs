@@ -15,8 +15,8 @@ mod opcodes;
 mod processor;
 
 pub use crate::insns::*;
+use crate::memory::BlockMemory;
 use crate::memory::Memory;
-use crate::mmu::*;
 pub use crate::opcodes::*;
 use crate::processor::Processor;
 use std::fs::File;

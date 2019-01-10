@@ -1,3 +1,7 @@
+mod block;
+
+pub(crate) use self::block::BlockMemory;
+
 pub trait Memory {
     fn write_b(&mut self, offset: u64, value: u8);
 
