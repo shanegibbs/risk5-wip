@@ -1,5 +1,5 @@
 use crate::csrs::Csrs;
-use crate::mmu::FakeMemory;
+use crate::memory::FakeMemory;
 use crate::opcodes::*;
 use crate::Memory;
 

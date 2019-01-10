@@ -10,7 +10,6 @@ mod insns;
 mod itypes;
 pub mod log_runner;
 mod memory;
-mod mmu;
 mod opcodes;
 mod processor;
 

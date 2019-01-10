@@ -1,4 +1,4 @@
-use crate::mmu::*;
+use crate::memory::*;
 use crate::opcodes;
 use crate::Processor;
 use pretty_env_logger;

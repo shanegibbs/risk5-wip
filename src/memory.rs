@@ -1,6 +1,8 @@
 mod block;
+mod fake;
 
 pub(crate) use self::block::BlockMemory;
+pub(crate) use self::fake::{FakeMemory, FakeMemoryItem};
 
 pub trait Memory {
     fn write_b(&mut self, offset: u64, value: u8);
