@@ -1,5 +1,6 @@
 use crate::mmu::*;
 use crate::opcodes;
+use crate::Processor;
 use pretty_env_logger;
 use serde_json;
 use std::io;
@@ -68,6 +69,7 @@ impl Into<FakeMemoryItem> for Memory {
 }
 
 struct LogLineIterator {
+    count: usize,
     had_first_state: bool,
     lines: Lines<BufReader<io::Stdin>>,
 }
@@ -76,6 +78,7 @@ impl LogLineIterator {
     fn new() -> Result<Self, io::Error> {
         let reader = BufReader::new(io::stdin());
         Ok(LogLineIterator {
+            count: 0,
             had_first_state: false,
             lines: reader.lines(),
         })
@@ -91,6 +94,8 @@ impl Iterator for LogLineIterator {
                 Some(l) => l,
                 None => return None,
             };
+
+            self.count += 1;
 
             let l = line.unwrap();
 
@@ -164,6 +169,12 @@ impl Iterator for LogTupleIterator {
                     None => return None,
                 }
             }
+
+            if insn.is_none() {
+                // can happen when switching into virtual memory
+                return self.next();
+            }
+
             let insn = insn.unwrap();
 
             Some((state, insn, load, store))
@@ -184,7 +195,7 @@ fn run_err() -> Result<(), io::Error> {
     let matchers = crate::build_matchers::<FakeMemory>();
 
     let mem = FakeMemory::new();
-    let mut cpu = opcodes::Processor::new(0x1000, mem);
+    let mut cpu = Processor::new(0x1000, mem);
     let mut last_insn: Option<Insn> = None;
 
     info!("Initial checks");
@@ -274,9 +285,9 @@ fn run_err() -> Result<(), io::Error> {
 
         if fail {
             let last_insn = last_insn.expect("last_insn");
-            warn!("step: {}", step - 1);
-            warn!("PC:   {}", last_insn.pc);
-            warn!("Insn: {}", last_insn.desc);
+            error!("debug info - step: {}", step - 1);
+            error!("debug info - PC:   {}", last_insn.pc);
+            error!("debug info - Insn: {}", last_insn.desc);
             panic!("Failed checks");
         }
 

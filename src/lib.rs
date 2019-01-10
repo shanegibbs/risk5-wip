@@ -11,12 +11,14 @@ mod itypes;
 pub mod log_runner;
 mod mmu;
 mod opcodes;
+mod processor;
 use std::fs::File;
 use std::io::Read;
 
 pub use crate::insns::*;
 use crate::mmu::*;
 pub use crate::opcodes::*;
+use crate::processor::Processor;
 
 pub fn risk5_main() {
     pretty_env_logger::init();
@@ -79,7 +81,7 @@ pub fn risk5_main() {
     let mut output = String::new();
 
     // let mut csrs = csrs::Csrs::new();
-    let mut cpu = opcodes::Processor::new(reset_vec_addr, mem);
+    let mut cpu = Processor::new(reset_vec_addr, mem);
     let mut counter = 0;
     loop {
         cpu.step(&matchers);

@@ -1,16 +1,22 @@
-use crate::csrs::Csrs;
 use crate::mmu::*;
+use crate::Processor;
 use std::fmt;
 
 pub struct Matcher<M: Memory> {
     mask: u32,
     mtch: u32,
-    pub exec: fn(&mut Processor<M>, u32),
+    exec: fn(&mut Processor<M>, u32),
 }
 
 impl<M: Memory> Matcher<M> {
     pub fn new(mask: u32, mtch: u32, exec: fn(&mut Processor<M>, u32)) -> Self {
         Self { mask, mtch, exec }
+    }
+    pub fn matches(&self, insn: u32) -> bool {
+        insn & self.mask == self.mtch
+    }
+    pub fn exec(&self, p: &mut Processor<M>, insn: u32) {
+        (self.exec)(p, insn)
     }
 }
 
@@ -27,12 +33,12 @@ pub static REG_NAMES: &'static [&str] = &[
 ];
 
 #[derive(Debug)]
-pub struct Regs {
+pub(crate) struct Regs {
     regs: [u64; 32],
 }
 
 impl Regs {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Regs { regs: [0; 32] }
     }
 
@@ -66,70 +72,5 @@ impl Regs {
     #[inline(always)]
     pub fn seti<T: Into<usize>>(&mut self, i: T, v: i64) {
         self.set(i, v as u64)
-    }
-}
-
-#[derive(Debug)]
-pub struct Processor<M> {
-    pc: u64,
-    pub(crate) regs: Regs,
-    pub(crate) csrs: Csrs,
-    mem: M,
-}
-
-impl Processor<FakeMemory> {
-    pub fn get_mem(&mut self) -> &mut FakeMemory {
-        &mut self.mem
-    }
-}
-
-impl<M> Processor<M> {
-    pub fn new(pc: u64, mem: M) -> Self {
-        Processor {
-            pc: pc,
-            regs: Regs::new(),
-            csrs: Csrs::new(),
-            mem,
-        }
-    }
-
-    pub fn mem(&mut self) -> &M {
-        &self.mem
-    }
-
-    pub fn mem_mut(&mut self) -> &mut M {
-        &mut self.mem
-    }
-
-    #[inline(never)]
-    pub fn step(&mut self, matchers: &[Matcher<M>])
-    where
-        M: Memory,
-    {
-        let insn = self.mem.read_w(self.pc);
-        trace!("0x{:x} inst 0x{:x}", self.pc, insn);
-        for matcher in matchers {
-            if insn & matcher.mask == matcher.mtch {
-                (matcher.exec)(self, insn);
-                return;
-            }
-        }
-        panic!(format!("Unmatched instruction: 0x{:x}", insn));
-    }
-
-    #[inline(always)]
-    pub fn advance_pc(&mut self) {
-        self.pc += 4;
-    }
-
-    #[inline(always)]
-    pub fn set_pc(&mut self, pc: u64) {
-        info!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
-        self.pc = pc;
-    }
-
-    #[inline(always)]
-    pub fn pc(&self) -> u64 {
-        self.pc
     }
 }

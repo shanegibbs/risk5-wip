@@ -1,4 +1,4 @@
-use crate::opcodes::Processor;
+use crate::Processor;
 use std::fmt;
 
 pub type Regi = u32;
