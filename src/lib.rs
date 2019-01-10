@@ -9,15 +9,17 @@ mod elf_loader;
 mod insns;
 mod itypes;
 pub mod log_runner;
+mod matcher;
 mod memory;
-mod opcodes;
 mod processor;
+mod regs;
 
 pub use crate::insns::*;
+pub(crate) use crate::matcher::Matcher;
 use crate::memory::BlockMemory;
 use crate::memory::Memory;
-pub use crate::opcodes::*;
 use crate::processor::Processor;
+pub(crate) use crate::regs::Regs;
 use std::fs::File;
 use std::io::Read;
 

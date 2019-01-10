@@ -1,32 +1,4 @@
-use crate::Memory;
-use crate::Processor;
-use std::fmt;
-
-pub struct Matcher<M: Memory> {
-    mask: u32,
-    mtch: u32,
-    exec: fn(&mut Processor<M>, u32),
-}
-
-impl<M: Memory> Matcher<M> {
-    pub fn new(mask: u32, mtch: u32, exec: fn(&mut Processor<M>, u32)) -> Self {
-        Self { mask, mtch, exec }
-    }
-    pub fn matches(&self, insn: u32) -> bool {
-        insn & self.mask == self.mtch
-    }
-    pub fn exec(&self, p: &mut Processor<M>, insn: u32) {
-        (self.exec)(p, insn)
-    }
-}
-
-impl<M: fmt::Debug + Memory> fmt::Debug for Matcher<M> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "Matcher")
-    }
-}
-
-pub static REG_NAMES: &'static [&str] = &[
+pub(crate) static REG_NAMES: &'static [&str] = &[
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1", "a0", "a1", "a2", "a3", "a4",
     "a5", "a6", "a7", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "sA", "sB", "t3", "t4", "t5",
     "t6",

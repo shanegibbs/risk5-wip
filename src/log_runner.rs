@@ -1,5 +1,5 @@
 use crate::memory::*;
-use crate::opcodes;
+use crate::regs;
 use crate::Processor;
 use pretty_env_logger;
 use serde_json;
@@ -269,7 +269,7 @@ fn run_err() -> Result<(), io::Error> {
             let actual = cpu.regs.get(i);
             if val != actual {
                 let msg = format!("Fail reg check on 0x{:02x} ({})\nWas:      0x{:016x} {:064b} \nExpected: 0x{:016x} {:064b}",
-                    i, opcodes::REG_NAMES[i], actual, actual, val, val);
+                    i, regs::REG_NAMES[i], actual, actual, val, val);
                 error!("{}", msg);
                 fail = true;
             }
