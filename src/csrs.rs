@@ -73,6 +73,8 @@ const MCAUSE: usize = 0x342;
 const MTVAL: usize = 0x343;
 const MIP: usize = 0x344;
 
+use crate::Processor;
+
 impl Csrs {
     pub fn new() -> Self {
         let mut mstatus = Mstatus::new();
@@ -110,7 +112,7 @@ impl Csrs {
     }
 
     #[inline(always)]
-    pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
+    pub fn set<T: Into<usize>, M>(&mut self, i: T, v: u64) {
         let i = i.into();
         debug!("Setting CSR 0x{:x} to 0x{:x} with prv {}", i, v, self.prv);
         match i {
