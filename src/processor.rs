@@ -1,5 +1,5 @@
 use crate::csrs::Csrs;
-use crate::memory::FakeMemory;
+use crate::Mmu;
 use crate::{Matcher, Memory, Regs};
 
 #[derive(Debug)]
@@ -7,13 +7,7 @@ pub struct Processor<M> {
     pc: u64,
     pub(crate) regs: Regs,
     pub(crate) csrs: Csrs,
-    pub(crate) mem: M,
-}
-
-impl Processor<FakeMemory> {
-    pub fn get_mem(&mut self) -> &mut FakeMemory {
-        &mut self.mem
-    }
+    pub(crate) mmu: Mmu<M>,
 }
 
 impl<M> Processor<M> {
@@ -22,16 +16,16 @@ impl<M> Processor<M> {
             pc: pc,
             regs: Regs::new(),
             csrs: Csrs::new(),
-            mem,
+            mmu: Mmu::new(mem),
         }
     }
 
-    pub fn mem(&mut self) -> &M {
-        &self.mem
+    pub fn mmu(&mut self) -> &Mmu<M> {
+        &self.mmu
     }
 
-    pub fn mem_mut(&mut self) -> &mut M {
-        &mut self.mem
+    pub fn mmu_mut(&mut self) -> &mut Mmu<M> {
+        &mut self.mmu
     }
 
     #[inline(never)]
@@ -39,7 +33,7 @@ impl<M> Processor<M> {
     where
         M: Memory,
     {
-        let insn = self.mem.read_w(self.pc);
+        let insn = self.mmu.read_w(self.pc);
         trace!("0x{:x} inst 0x{:x}", self.pc, insn);
         for matcher in matchers {
             if matcher.matches(insn) {

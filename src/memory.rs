@@ -1,10 +1,13 @@
 mod block;
 mod fake;
+mod sv39;
 
 pub(crate) use self::block::BlockMemory;
 pub(crate) use self::fake::{FakeMemory, FakeMemoryItem};
+pub(crate) use self::sv39::Sv39;
 
 pub trait Memory {
+    fn read_b(&self, offset: u64) -> u8;
     fn write_b(&mut self, offset: u64, value: u8);
 
     fn write_h(&mut self, offset: u64, value: u16) {
@@ -29,8 +32,6 @@ pub trait Memory {
         self.write_b(offset + 6, (value >> 48) as u8);
         self.write_b(offset + 7, (value >> 56) as u8);
     }
-
-    fn read_b(&self, offset: u64) -> u8;
 
     fn read_h(&self, offset: u64) -> u16 {
         let mut n = self.read_b(offset) as u16;

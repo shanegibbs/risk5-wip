@@ -1,4 +1,6 @@
 use crate::memory::Memory;
+use crate::Processor;
+use std::cell::RefCell;
 use std::fmt;
 
 #[derive(Debug)]
@@ -6,6 +8,12 @@ pub enum FakeMemoryItem {
     Byte(u64, u8),
     Word(u64, u32),
     Double(u64, u64),
+}
+
+impl Processor<FakeMemory> {
+    pub fn fake_mem(&mut self) -> &mut FakeMemory {
+        self.mmu.mem_mut()
+    }
 }
 
 impl FakeMemoryItem {
@@ -19,7 +27,6 @@ impl FakeMemoryItem {
     }
 }
 
-use std::cell::RefCell;
 pub struct FakeMemory {
     next_read: RefCell<Vec<FakeMemoryItem>>,
     next_write: RefCell<Vec<FakeMemoryItem>>,

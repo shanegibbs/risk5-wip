@@ -275,13 +275,13 @@ fn run_err() -> Result<(), io::Error> {
             }
         }
 
-        cpu.mem_mut().trim();
-        if cpu.get_mem().queue_size() != 0 {
+        cpu.fake_mem().trim();
+        if cpu.fake_mem().queue_size() != 0 {
             // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
             warn!("Memory operations still queued");
             // fail = true;
         }
-        cpu.mem_mut().reset();
+        cpu.fake_mem().reset();
 
         if fail {
             let last_insn = last_insn.expect("last_insn");
@@ -313,15 +313,15 @@ fn run_err() -> Result<(), io::Error> {
 
         if let Some(mem) = load {
             trace!("Load {:?}", mem);
-            cpu.get_mem().push_read(mem);
+            cpu.fake_mem().push_read(mem);
         }
 
         if let Some(mem) = store {
             trace!("Store {:?}", mem);
-            cpu.get_mem().push_write(mem);
+            cpu.fake_mem().push_write(mem);
         }
 
-        cpu.get_mem()
+        cpu.fake_mem()
             .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
         cpu.step(&matchers);
 
