@@ -1,0 +1,7 @@
+[package]
+name = "bitcalc"
+version = "0.1.0"
+authors = ["Shane Gibbs <shane@hands.net.nz>"]
+edition = "2018"
+
+[dependencies]

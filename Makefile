@@ -25,7 +25,7 @@ clean:
 	cargo clean
 
 save: test
-	git add Makefile Cargo.* bin src u1
+	git add Makefile Cargo.* bin src u1 bitcalc
 	git commit -m'save'
 	git push
 	git st
