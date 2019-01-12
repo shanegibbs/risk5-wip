@@ -2,7 +2,7 @@ use crate::bitfield::Mstatus;
 use crate::bitfield::Satp;
 use std::fmt;
 
-pub(crate) struct Csrs {
+pub struct Csrs {
     pub(crate) prv: u64,
 
     pub(crate) mstatus: Mstatus,
@@ -30,6 +30,17 @@ pub(crate) struct Csrs {
     pub(crate) stval: u64,
     pub(crate) sip: u64,
     pub(crate) satp: Satp,
+}
+
+pub enum PostSetOp {
+    None,
+    SetMemMode(SetMemMode),
+}
+
+pub struct SetMemMode {
+    pub mode: u64,
+    pub asid: u64,
+    pub ppn: u64,
 }
 
 // Supervisor
@@ -73,8 +84,6 @@ const MCAUSE: usize = 0x342;
 const MTVAL: usize = 0x343;
 const MIP: usize = 0x344;
 
-use crate::Processor;
-
 impl Csrs {
     pub fn new() -> Self {
         let mut mstatus = Mstatus::new();
@@ -112,7 +121,7 @@ impl Csrs {
     }
 
     #[inline(always)]
-    pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
+    pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) -> PostSetOp {
         let i = i.into();
         debug!("Setting CSR 0x{:x} to 0x{:x} with prv {}", i, v, self.prv);
         match i {
@@ -144,21 +153,22 @@ impl Csrs {
             STVAL => self.stval = v,
             SIP => self.sip = v,
             SATP => {
-                let satp = v.into();
-                if self.satp.mode() != 0 && self.satp.mode() != 8 {
-                    return;
-                }
+                let satp: Satp = v.into();
+                let mode = satp.mode();
+                let asid = satp.asid();
+                let ppn = satp.ppn();
                 self.satp = satp;
-                warn!(
-                    "Using satp mode {}, asid {}, ppn {}",
-                    self.satp.mode(),
-                    self.satp.asid(),
-                    self.satp.ppn()
-                );
+
+                return PostSetOp::SetMemMode(SetMemMode {
+                    mode: mode,
+                    asid: asid,
+                    ppn: ppn,
+                });
             }
 
             i => warn!("unimplemented Csrs.set 0x{:x}", i),
         }
+        PostSetOp::None
     }
 
     #[inline(always)]

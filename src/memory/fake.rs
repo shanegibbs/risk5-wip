@@ -12,7 +12,7 @@ pub enum FakeMemoryItem {
 
 impl Processor<FakeMemory> {
     pub fn fake_mem(&mut self) -> &mut FakeMemory {
-        self.mmu.mem_mut()
+        self.mmu_mut().mem_mut()
     }
 }
 

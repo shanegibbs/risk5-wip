@@ -1,4 +1,4 @@
-use crate::csrs::Csrs;
+use crate::csrs::{Csrs, PostSetOp, SetMemMode};
 use crate::Mmu;
 use crate::{Matcher, Memory, Regs};
 
@@ -6,8 +6,8 @@ use crate::{Matcher, Memory, Regs};
 pub struct Processor<M> {
     pc: u64,
     pub(crate) regs: Regs,
-    pub(crate) csrs: Csrs,
-    pub(crate) mmu: Mmu<M>,
+    csrs: Csrs,
+    mmu: Mmu<M>,
 }
 
 impl<M> Processor<M> {
@@ -20,10 +20,43 @@ impl<M> Processor<M> {
         }
     }
 
+    #[inline(always)]
+    pub fn set_mem_mode(&mut self, op: SetMemMode) {
+        if op.mode != 0 {
+            // && op.mode != 8 {
+            panic!("Unsupported mode")
+        }
+    }
+
+    #[inline(always)]
+    pub fn get_reg(&self, i: u32) -> u64 {
+        self.regs.get(i as usize)
+    }
+
+    #[inline(always)]
+    pub fn set_csr(&mut self, i: u32, val: u64) {
+        match self.csrs.set(i as usize, val) {
+            PostSetOp::None => (),
+            PostSetOp::SetMemMode(m) => self.set_mem_mode(m),
+        }
+    }
+
+    #[inline(always)]
+    pub fn csrs(&mut self) -> &Csrs {
+        &self.csrs
+    }
+
+    #[inline(always)]
+    pub fn csrs_mut(&mut self) -> &mut Csrs {
+        &mut self.csrs
+    }
+
+    #[inline(always)]
     pub fn mmu(&mut self) -> &Mmu<M> {
         &self.mmu
     }
 
+    #[inline(always)]
     pub fn mmu_mut(&mut self) -> &mut Mmu<M> {
         &mut self.mmu
     }

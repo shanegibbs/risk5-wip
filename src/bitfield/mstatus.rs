@@ -36,7 +36,7 @@ impl Mstatus {
     }
 
     #[inline(always)]
-    pub fn set_supervisor_interrupt_enabled(&mut self, n: u64) {
+    pub fn _set_supervisor_interrupt_enabled(&mut self, n: u64) {
         self.0.set_bool_field(1, n)
     }
 
@@ -48,7 +48,7 @@ impl Mstatus {
     }
 
     #[inline(always)]
-    pub fn set_user_interrupt_enabled(&mut self, n: u64) {
+    pub fn _set_user_interrupt_enabled(&mut self, n: u64) {
         self.0.set_bool_field(0, n)
     }
 
@@ -126,7 +126,7 @@ impl Mstatus {
     }
 
     #[inline(always)]
-    pub fn set_supervisor_previous_privilege(&mut self, n: u64) {
+    pub fn _set_supervisor_previous_privilege(&mut self, n: u64) {
         self.0.set_field(8, 2, n)
     }
 

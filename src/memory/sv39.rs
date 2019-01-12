@@ -3,6 +3,8 @@ use std::fmt;
 
 pub(crate) struct Sv39<M> {
     mem: M,
+    asid: u64,
+    ppn: u64,
 }
 
 impl<M: Memory> Memory for Sv39<M> {

@@ -6,7 +6,7 @@ macro_rules! handle_trap {
         match $val {
             Ok(n) => n,
             Err(cause) => {
-                $p.csrs.mcause = cause;
+                $p.csrs_mut().mcause = cause;
                 do_trap($p);
                 return;
             }
@@ -91,55 +91,56 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
 
 pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
     debug!("Doing trap");
-    if p.csrs.prv != 3 {
+    if p.csrs().prv != 3 {
         panic!("Unimplemented prv level");
     }
 
-    trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs.medeleg);
-    trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs.mtvec);
-    // trace!("stvec   0x{0:016x} b'{0:064b}", p.csrs.stvec);
+    trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs().medeleg);
+    trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs().mtvec);
+    // trace!("stvec   0x{0:016x} b'{0:064b}", p.csrs().stvec);
 
-    let mtvec = p.csrs.mtvec;
+    let mtvec = p.csrs().mtvec;
 
     let mode = mtvec & 0x3;
     if mode != 0 {
         panic!("Unimplemented mtvec mode");
     }
 
-    p.csrs.mepc = p.pc();
+    p.csrs_mut().mepc = p.pc();
     p.set_pc(mtvec & !0x1);
 
     {
-        let m = &mut p.csrs.mstatus;
+        let pprv = p.csrs().prv;
+        let m = &mut p.csrs_mut().mstatus;
 
         // move xIE to xPIE and set xIE to 0
         m.move_machine_interrupt_enabled_to_prior();
         m.set_machine_interrupt_enabled(0);
         // set xPP to prv
-        m.set_machine_previous_privilege(p.csrs.prv);
+        m.set_machine_previous_privilege(pprv);
     }
 
-    p.csrs.prv = 3;
+    p.csrs_mut().prv = 3;
 }
 
 pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
-    let pprv = p.csrs.mstatus.machine_previous_privilege();
-    let pie = p.csrs.mstatus.machine_prior_interrupt_enabled();
-    let epc = p.csrs.mepc;
+    let pprv = p.csrs().mstatus.machine_previous_privilege();
+    let pie = p.csrs().mstatus.machine_prior_interrupt_enabled();
+    let epc = p.csrs().mepc;
 
-    p.csrs.mstatus.set_machine_interrupt_enabled(pie);
-    p.csrs.mstatus.set_machine_prior_interrupt_enabled(1);
-    p.csrs.mstatus.set_machine_previous_privilege(0);
+    p.csrs_mut().mstatus.set_machine_interrupt_enabled(pie);
+    p.csrs_mut().mstatus.set_machine_prior_interrupt_enabled(1);
+    p.csrs_mut().mstatus.set_machine_previous_privilege(0);
 
-    p.csrs.prv = pprv;
+    p.csrs_mut().prv = pprv;
     p.set_pc(epc);
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
-    if p.csrs.prv != 3 {
+    if p.csrs().prv != 3 {
         panic!("Unimplemented prv level");
     }
-    p.csrs.mcause = 0xb; // env call from M mode
+    p.csrs_mut().mcause = 0xb; // env call from M mode
     do_trap(p)
 }
 

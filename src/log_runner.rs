@@ -243,21 +243,21 @@ fn run_err() -> Result<(), io::Error> {
             fail = true;
         }
 
-        fail_on!("prv", state.prv, cpu.csrs.prv);
-        fail_on!("mepc", state.mepc, cpu.csrs.mepc);
-        fail_on!("mcause", state.mcause, cpu.csrs.mcause);
-        fail_on!("mscratch", state.mscratch, cpu.csrs.mscratch);
-        fail_on!("mtvec", state.mtvec, cpu.csrs.mtvec);
+        fail_on!("prv", state.prv, cpu.csrs().prv);
+        fail_on!("mepc", state.mepc, cpu.csrs().mepc);
+        fail_on!("mcause", state.mcause, cpu.csrs().mcause);
+        fail_on!("mscratch", state.mscratch, cpu.csrs().mscratch);
+        fail_on!("mtvec", state.mtvec, cpu.csrs().mtvec);
 
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
-            if val != cpu.csrs.mstatus.val() {
+            if val != cpu.csrs().mstatus.val() {
                 use crate::bitfield::Mstatus;
                 let mstatus_expected = Mstatus::new_with_val(val);
                 error!(
                     "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
-                    format_diff(val, cpu.csrs.mstatus.val()),
-                    cpu.csrs.mstatus,
+                    format_diff(val, cpu.csrs().mstatus.val()),
+                    cpu.csrs().mstatus,
                     mstatus_expected
                 );
                 fail = true;
