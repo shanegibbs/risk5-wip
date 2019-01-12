@@ -24,7 +24,7 @@ impl<M> Processor<M> {
     pub fn set_mem_mode(&mut self, op: SetMemMode) {
         if op.mode != 0 {
             // && op.mode != 8 {
-            panic!("Unsupported mode")
+            panic!("Unsupported memory mode")
         }
     }
 
