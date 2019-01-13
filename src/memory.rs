@@ -1,10 +1,10 @@
 mod block;
 mod fake;
-mod sv39;
+// mod sv39;
 
 pub(crate) use self::block::BlockMemory;
 pub(crate) use self::fake::{FakeMemory, FakeMemoryItem};
-pub(crate) use self::sv39::Sv39;
+// pub(crate) use self::sv39::Sv39;
 
 pub trait Memory {
     fn read_b(&self, offset: u64) -> u8;

@@ -107,7 +107,7 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
 pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
     debug!("Doing trap");
     if p.csrs().prv != 3 {
-        panic!("Unimplemented prv level");
+        panic!("Unimplemented trap at prv level: {}", p.csrs().prv);
     }
 
     p.csrs_mut().mcause = cause;

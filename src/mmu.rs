@@ -1,5 +1,4 @@
 use crate::bitfield::{PageTableEntry, VirtualAddress};
-use crate::insns::Trap;
 use crate::Memory;
 use std::fmt;
 
@@ -43,7 +42,7 @@ impl<M> Mmu<M> {
     }
 }
 
-macro_rules! read_mem {
+macro_rules! mem {
     ($self:expr, $func:ident, $addr:expr) => {{
         let addr = match $self.translate($addr) {
             Ok(a) => a,
@@ -51,9 +50,6 @@ macro_rules! read_mem {
         };
         Ok($self.mem.$func(addr))
     }};
-}
-
-macro_rules! write_mem {
     ($self:expr, $func:ident, $addr:expr, $val:expr) => {{
         let addr = match $self.translate($addr) {
             Ok(a) => a,
@@ -103,7 +99,7 @@ impl<M: Memory> Mmu<M> {
 
             if !pte.v() || (!pte.r() && pte.w()) {
                 // step 3. page-fault exception
-                panic!("sv39 step 3 page-fault");
+                return Err(());
             }
 
             if pte.r() || pte.x() {
@@ -125,35 +121,35 @@ impl<M: Memory> Mmu<M> {
     }
 
     pub fn read_b(&self, offset: u64) -> Result<u8, ()> {
-        read_mem!(self, read_b, offset)
+        mem!(self, read_b, offset)
     }
 
     pub fn read_h(&self, offset: u64) -> Result<u16, ()> {
-        read_mem!(self, read_h, offset)
+        mem!(self, read_h, offset)
     }
 
     pub fn read_w(&self, offset: u64) -> Result<u32, ()> {
-        read_mem!(self, read_w, offset)
+        mem!(self, read_w, offset)
     }
 
     pub fn read_d(&self, offset: u64) -> Result<u64, ()> {
-        read_mem!(self, read_d, offset)
+        mem!(self, read_d, offset)
     }
 
     pub fn write_b(&mut self, offset: u64, value: u8) -> Result<(), ()> {
-        write_mem!(self, write_b, offset, value)
+        mem!(self, write_b, offset, value)
     }
 
     pub fn write_h(&mut self, offset: u64, value: u16) -> Result<(), ()> {
-        write_mem!(self, write_h, offset, value)
+        mem!(self, write_h, offset, value)
     }
 
     pub fn write_w(&mut self, offset: u64, value: u32) -> Result<(), ()> {
-        write_mem!(self, write_w, offset, value)
+        mem!(self, write_w, offset, value)
     }
 
     pub fn write_d(&mut self, offset: u64, value: u64) -> Result<(), ()> {
-        write_mem!(self, write_d, offset, value)
+        mem!(self, write_d, offset, value)
     }
 }
 
