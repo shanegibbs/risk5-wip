@@ -4,6 +4,40 @@ mod satp;
 pub(crate) use self::mstatus::Mstatus;
 pub(crate) use self::satp::Satp;
 
+pub(crate) struct PhysicalAddress(BitField);
+impl PhysicalAddress {
+    pub fn offset(&self) -> u64 {
+        self.0.field(0, 12)
+    }
+    pub fn set_offset(&mut self, offset: u64) {
+        self.0.set_field(0, 12, offset)
+    }
+
+    pub fn set_physical_page_number_arr(&mut self, i: u8, val: u64) {
+        if i == 2 {
+            self.0.set_field(30, 26, val)
+        } else {
+            self.0.set_field(12 + (i * 9), 9, val)
+        }
+    }
+
+    pub fn val(&self) -> u64 {
+        self.0.val()
+    }
+}
+
+impl Into<PhysicalAddress> for u64 {
+    fn into(self) -> PhysicalAddress {
+        PhysicalAddress(BitField::new(self))
+    }
+}
+
+impl Into<u64> for PhysicalAddress {
+    fn into(self) -> u64 {
+        self.0.into_val()
+    }
+}
+
 pub(crate) struct VirtualAddress(BitField);
 impl VirtualAddress {
     pub fn virtual_page_number(&self, i: u8) -> u64 {
@@ -11,6 +45,9 @@ impl VirtualAddress {
     }
     pub fn offset(&self) -> u64 {
         self.0.field(0, 12)
+    }
+    pub fn val(&self) -> u64 {
+        self.0.val()
     }
 }
 
@@ -38,16 +75,23 @@ impl PageTableEntry {
         self.0.bool_field(3)
     }
 
-    // pub fn physical_page_number(&self, i: u8) -> u64 {
-    //     if i == 2 {
-    //         self.0.field(28, 26)
-    //     } else {
-    //         self.0.field(10 + (i * 9), 9)
-    //     }
-    // }
+    pub fn physical_page_number_arr(&self, i: u8) -> u64 {
+        if i == 2 {
+            self.0.field(28, 26)
+        } else {
+            self.0.field(10 + (i * 9), 9)
+        }
+    }
 
     pub fn physical_page_number(&self) -> u64 {
         self.0.field(10, 44)
+    }
+    pub fn offset(&self) -> u64 {
+        self.0.field(0, 12)
+    }
+
+    pub fn val(&self) -> u64 {
+        self.0.val()
     }
 }
 
@@ -70,8 +114,9 @@ impl BitField {
         self.set_field(offset, len, val);
         self
     }
-    #[cfg(test)]
-    fn into_val(self) -> u64 {
+
+    #[inline(always)]
+    pub fn into_val(self) -> u64 {
         self.0
     }
 

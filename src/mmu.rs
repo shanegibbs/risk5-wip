@@ -1,4 +1,4 @@
-use crate::bitfield::{PageTableEntry, VirtualAddress};
+use crate::bitfield::{PageTableEntry, PhysicalAddress, VirtualAddress};
 use crate::Memory;
 use std::fmt;
 
@@ -84,7 +84,7 @@ impl<M: Memory> Mmu<M> {
 
         error!("i={},a=0x{:x}", i, a);
 
-        loop {
+        let pte = loop {
             error!("-- Looking up level {}", i);
 
             // step 2
@@ -105,7 +105,7 @@ impl<M: Memory> Mmu<M> {
 
             if pte.r() || pte.x() {
                 // step 5
-                panic!("sv39 step 5");
+                break pte;
             }
 
             // pte is a pointer to the next page
@@ -116,9 +116,24 @@ impl<M: Memory> Mmu<M> {
             // step down a level
             a = pte.physical_page_number() * pagesize;
             i = i - 1;
+        };
+
+        error!("Using pte 0x{:x}", pte.val());
+
+        let mut pa: PhysicalAddress = 0.into();
+        pa.set_offset(pte.offset());
+        error!("pa with offset 0x{:x}", pa.val());
+
+        error!("i={}", i);
+        for n in (i..levels - 1).rev() {
+            let ppn = pte.physical_page_number_arr(n);
+            error!("Using ppn 0x{:x}", ppn);
+            pa.set_physical_page_number_arr(n, ppn);
         }
 
-        panic!("sv39 end of translate")
+        error!("Using pa 0x{:x}", pa.val());
+
+        Ok(pa.into())
     }
 
     pub fn read_b(&self, offset: u64) -> Result<u8, ()> {
