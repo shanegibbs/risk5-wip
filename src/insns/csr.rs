@@ -1,12 +1,17 @@
 use super::*;
-use crate::csrs::PostSetOp;
 
 pub trait Op {
     fn exec<M>(p: &mut Processor<M>, i: &Itype, old: u64);
 }
 
 pub fn insn<M: Memory, O: Op>(p: &mut Processor<M>, i: Itype) {
-    let old = handle_trap!(p, p.csrs().get(i.immu() as usize));
+    let old = match p.csrs().get(i.immu() as usize) {
+        Ok(v) => v,
+        Err(t) => {
+            do_trap(p, t.cause, t.value);
+            return;
+        }
+    };
     O::exec(p, &i, old);
     p.regs.set(i.rd() as usize, old);
     p.advance_pc();

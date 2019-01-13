@@ -1,18 +1,33 @@
 use crate::itypes::*;
 use crate::*;
 
-macro_rules! handle_trap {
-    ($p:expr, $val:expr) => {
-        match $val {
-            Ok(n) => n,
-            Err(cause) => {
-                $p.csrs_mut().mcause = cause;
-                do_trap($p);
-                return;
-            }
-        }
-    };
+pub struct Trap {
+    cause: u64,
+    value: u64,
 }
+
+impl Trap {
+    pub fn illegal_insn() -> Trap {
+        Trap { cause: 2, value: 0 }
+    }
+}
+
+// macro_rules! handle_trap {
+//     ($p:expr, $trap:expr) => {
+//         match $trap {
+//             (Ok(n), _) => n,
+//             (Err(trap), 3) => {
+//                 $p.csrs_mut().mcause = trap.cause;
+//                 $p.csrs_mut().mtval = trap.value;
+//                 do_trap($p, trap.cause, trap.value);
+//                 return;
+//             }
+//             (Err(_trap), _prv) => {
+//                 panic!("Unimplemented trap level");
+//             }
+//         }
+//     };
+// }
 
 pub mod mem;
 
@@ -89,11 +104,14 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
     p.advance_pc();
 }
 
-pub fn do_trap<M: Memory>(p: &mut Processor<M>) {
+pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
     debug!("Doing trap");
     if p.csrs().prv != 3 {
         panic!("Unimplemented prv level");
     }
+
+    p.csrs_mut().mcause = cause;
+    p.csrs_mut().mtval = val;
 
     trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs().medeleg);
     trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs().mtvec);
@@ -140,8 +158,7 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
     if p.csrs().prv != 3 {
         panic!("Unimplemented prv level");
     }
-    p.csrs_mut().mcause = 0xb; // env call from M mode
-    do_trap(p)
+    do_trap(p, 0xb, 0)
 }
 
 // Integer Computational Instructions

@@ -4,6 +4,59 @@ mod satp;
 pub(crate) use self::mstatus::Mstatus;
 pub(crate) use self::satp::Satp;
 
+pub(crate) struct VirtualAddress(BitField);
+impl VirtualAddress {
+    pub fn virtual_page_number(&self, i: u8) -> u64 {
+        self.0.field(12 + (i * 9), 9)
+    }
+    pub fn offset(&self) -> u64 {
+        self.0.field(0, 12)
+    }
+}
+
+impl Into<VirtualAddress> for u64 {
+    fn into(self) -> VirtualAddress {
+        VirtualAddress(BitField::new(self))
+    }
+}
+
+pub(crate) struct PageTableEntry(BitField);
+impl PageTableEntry {
+    pub fn v(&self) -> bool {
+        self.0.bool_field(0)
+    }
+
+    pub fn r(&self) -> bool {
+        self.0.bool_field(1)
+    }
+
+    pub fn w(&self) -> bool {
+        self.0.bool_field(2)
+    }
+
+    pub fn x(&self) -> bool {
+        self.0.bool_field(3)
+    }
+
+    // pub fn physical_page_number(&self, i: u8) -> u64 {
+    //     if i == 2 {
+    //         self.0.field(28, 26)
+    //     } else {
+    //         self.0.field(10 + (i * 9), 9)
+    //     }
+    // }
+
+    pub fn physical_page_number(&self) -> u64 {
+        self.0.field(10, 44)
+    }
+}
+
+impl Into<PageTableEntry> for u64 {
+    fn into(self) -> PageTableEntry {
+        PageTableEntry(BitField::new(self))
+    }
+}
+
 struct BitField(u64);
 
 impl BitField {
@@ -50,7 +103,7 @@ impl BitField {
         self.0
     }
     #[inline(always)]
-    fn _bool_field(&self, offset: u8) -> bool {
+    fn bool_field(&self, offset: u8) -> bool {
         self.field(offset, 1) == 1
     }
     #[inline(always)]

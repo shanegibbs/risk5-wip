@@ -1,5 +1,6 @@
 use crate::bitfield::Mstatus;
 use crate::bitfield::Satp;
+use crate::insns::Trap;
 use std::fmt;
 
 pub struct Csrs {
@@ -172,7 +173,7 @@ impl Csrs {
     }
 
     #[inline(always)]
-    pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, u64> {
+    pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, Trap> {
         let i = i.into();
         trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);
         return Ok(match i {
@@ -206,7 +207,7 @@ impl Csrs {
 
             i => {
                 warn!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
-                return Err(2); // Illegal instruction
+                return Err(Trap::illegal_insn());
             }
         });
     }
