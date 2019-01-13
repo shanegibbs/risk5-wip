@@ -85,7 +85,7 @@ impl<M: Memory> Mmu<M> {
         error!("i={},a=0x{:x}", i, a);
 
         loop {
-            error!("\nLooking up level {}", i);
+            error!("-- Looking up level {}", i);
 
             // step 2
             let pte_offset = a + (va.virtual_page_number(i) * ptesize);
@@ -99,6 +99,7 @@ impl<M: Memory> Mmu<M> {
 
             if !pte.v() || (!pte.r() && pte.w()) {
                 // step 3. page-fault exception
+                error!("-- page-fault");
                 return Err(());
             }
 

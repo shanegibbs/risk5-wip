@@ -115,39 +115,64 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
  */
 pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
     debug!("Doing trap");
-    if p.csrs().prv != 3 {
-        panic!("Unimplemented trap at prv level: {}", p.csrs().prv);
-    }
 
-    p.csrs_mut().mcause = cause;
-    p.csrs_mut().mtval = val;
+    let prv = p.csrs().prv;
+    let medeleg = p.csrs().medeleg;
 
-    trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs().medeleg);
-    trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs().mtvec);
-    // trace!("stvec   0x{0:016x} b'{0:064b}", p.csrs().stvec);
+    if prv <= 1 && ((medeleg >> cause) & 0x1) == 1 {
+        // handle in supervisor mode if in supervisor or user mode
+        // or if the bit from cause is set is set in medeleg
 
-    let mtvec = p.csrs().mtvec;
+        let pc = p.pc();
+        let stvec = p.csrs().stvec;
 
-    let mode = mtvec & 0x3;
-    if mode != 0 {
-        panic!("Unimplemented mtvec mode");
-    }
+        p.set_pc(stvec);
 
-    p.csrs_mut().mepc = p.pc();
-    p.set_pc(mtvec & !0x1);
-
-    {
-        let pprv = p.csrs().prv;
-        let m = &mut p.csrs_mut().mstatus;
+        let mut csrs = p.csrs_mut();
+        csrs.scause = cause;
+        csrs.sepc = pc;
+        csrs.stval = val;
 
         // move xIE to xPIE and set xIE to 0
-        m.move_machine_interrupt_enabled_to_prior();
-        m.set_machine_interrupt_enabled(0);
+        csrs.mstatus.move_machine_interrupt_enabled_to_prior();
+        csrs.mstatus.set_supervisor_interrupt_enabled(0);
         // set xPP to prv
-        m.set_machine_previous_privilege(pprv);
-    }
+        csrs.mstatus.set_supervisor_previous_privilege(prv);
 
-    p.csrs_mut().prv = 3;
+        csrs.prv = 1;
+    } else {
+        // handle in machine mode by default
+
+        p.csrs_mut().mcause = cause;
+        p.csrs_mut().mtval = val;
+
+        trace!("medeleg 0x{0:016x} b'{0:064b}", p.csrs().medeleg);
+        trace!("mtvec   0x{0:016x} b'{0:064b}", p.csrs().mtvec);
+        // trace!("stvec   0x{0:016x} b'{0:064b}", p.csrs().stvec);
+
+        let mtvec = p.csrs().mtvec;
+
+        let mode = mtvec & 0x3;
+        if mode != 0 {
+            panic!("Unimplemented mtvec mode");
+        }
+
+        p.csrs_mut().mepc = p.pc();
+        p.set_pc(mtvec & !0x1);
+
+        {
+            let pprv = p.csrs().prv;
+            let m = &mut p.csrs_mut().mstatus;
+
+            // move xIE to xPIE and set xIE to 0
+            m.move_machine_interrupt_enabled_to_prior();
+            m.set_machine_interrupt_enabled(0);
+            // set xPP to prv
+            m.set_machine_previous_privilege(pprv);
+        }
+
+        p.csrs_mut().prv = 3;
+    }
 }
 
 pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
