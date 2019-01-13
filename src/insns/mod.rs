@@ -104,6 +104,15 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
     p.advance_pc();
 }
 
+/*
+ *
+ * PRV
+ * ---
+ * 0 User
+ * 1 Supervisor
+ * 3 Machine
+ *
+ */
 pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
     debug!("Doing trap");
     if p.csrs().prv != 3 {

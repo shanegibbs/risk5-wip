@@ -19,7 +19,7 @@ COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.json.log.
 all-compliance-tests: $(COMPLIANCE_TESTS)
 
 %-compliance-test: compliance/logs/%.json.log.bz2 target/release/logrunner
-	bzcat $< | env RUST_LOG=risk5=error ./target/release/logrunner
+	bzcat $< | env ./target/release/logrunner
 
 compliance/logs/%.json.log.bz2:
 	env LD_LIBRARY_PATH=$(shell pwd)/compliance/lib ./compliance/bin/spike compliance/tests/$*.elf
