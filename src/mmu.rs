@@ -65,7 +65,7 @@ impl<M: Memory> Mmu<M> {
             return Ok(offset);
         }
 
-        error!("Doing sv39");
+        error!("Doing sv39 for 0x{:x}", offset);
 
         let pagesize = 4096;
         let levels = 3;
@@ -121,15 +121,29 @@ impl<M: Memory> Mmu<M> {
         error!("Using pte 0x{:x}", pte.val());
 
         let mut pa: PhysicalAddress = 0.into();
-        pa.set_offset(pte.offset());
-        error!("pa with offset 0x{:x}", pa.val());
 
         error!("i={}", i);
-        for n in (i..levels - 1).rev() {
+
+        if i > 0 {
+            // superpage translation
+            error!("doing superpage");
+            for n in (0..i).rev() {
+                let ppn = va.virtual_page_number(i);
+                error!("Using ppn 0x{:x}", ppn);
+                pa.set_physical_page_number_arr(n, ppn);
+            }
+        }
+
+        error!("doing normal");
+        for n in (i..levels).rev() {
             let ppn = pte.physical_page_number_arr(n);
             error!("Using ppn 0x{:x}", ppn);
             pa.set_physical_page_number_arr(n, ppn);
         }
+
+        error!("pa before offset 0x{:x}", pa.val());
+
+        pa.set_offset(va.offset());
 
         error!("Using pa 0x{:x}", pa.val());
 

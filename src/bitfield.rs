@@ -14,10 +14,10 @@ impl PhysicalAddress {
     }
 
     pub fn set_physical_page_number_arr(&mut self, i: u8, val: u64) {
-        if i == 2 {
-            self.0.set_field(30, 26, val)
-        } else {
-            self.0.set_field(12 + (i * 9), 9, val)
+        match i {
+            0 | 1 => self.0.set_field(12 + (i * 9), 9, val),
+            2 => self.0.set_field(30, 26, val),
+            _ => unreachable!(),
         }
     }
 
@@ -41,6 +41,7 @@ impl Into<u64> for PhysicalAddress {
 pub(crate) struct VirtualAddress(BitField);
 impl VirtualAddress {
     pub fn virtual_page_number(&self, i: u8) -> u64 {
+        assert!(i < 3);
         self.0.field(12 + (i * 9), 9)
     }
     pub fn offset(&self) -> u64 {
@@ -76,10 +77,10 @@ impl PageTableEntry {
     }
 
     pub fn physical_page_number_arr(&self, i: u8) -> u64 {
-        if i == 2 {
-            self.0.field(28, 26)
-        } else {
-            self.0.field(10 + (i * 9), 9)
+        match i {
+            2 => self.0.field(28, 26),
+            0 | 1 => self.0.field(10 + (i * 9), 9),
+            _ => unreachable!(),
         }
     }
 
