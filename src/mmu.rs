@@ -188,3 +188,6 @@ impl<M> fmt::Debug for Mmu<M> {
         write!(f, "Mmu")
     }
 }
+
+#[cfg(test)]
+mod test {}
