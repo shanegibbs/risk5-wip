@@ -74,16 +74,9 @@ impl<M: Memory> Mmu<M> {
 
         let va: VirtualAddress = offset.into();
 
-        error!("offset=0x{:x}", va.offset());
-        error!("vpn[0]=0x{:x}", va.virtual_page_number(0));
-        error!("vpn[1]=0x{:x}", va.virtual_page_number(1));
-        error!("vpn[2]=0x{:x}", va.virtual_page_number(2));
-
         // step 1
         let mut a = self.ppn * pagesize;
         let mut i = levels - 1;
-
-        error!("i={},a=0x{:x}", i, a);
 
         let pte = loop {
             error!("-- Looking up level {}", i);
@@ -96,7 +89,6 @@ impl<M: Memory> Mmu<M> {
             error!("pte_val=0x{:x}", pte_val);
 
             let pte: PageTableEntry = pte_val.into();
-            error!("pte ppn=0x{:x}", pte.physical_page_number());
 
             if !pte.v() || (!pte.r() && pte.w()) {
                 // step 3. page-fault exception
@@ -119,30 +111,20 @@ impl<M: Memory> Mmu<M> {
             i = i - 1;
         };
 
-        error!("Using pte 0x{:x}", pte.val());
-
         let mut pa: PhysicalAddress = 0.into();
-
-        error!("i={}", i);
 
         if i > 0 {
             // superpage translation
-            error!("doing superpage");
             for n in (0..i).rev() {
                 let ppn = va.virtual_page_number(i);
-                error!("Using ppn 0x{:x}", ppn);
                 pa.set_physical_page_number_arr(n, ppn);
             }
         }
 
-        error!("doing normal");
         for n in (i..levels).rev() {
             let ppn = pte.physical_page_number_arr(n);
-            error!("Using ppn 0x{:x}", ppn);
             pa.set_physical_page_number_arr(n, ppn);
         }
-
-        error!("pa before offset 0x{:x}", pa.val());
 
         pa.set_offset(va.offset());
 
@@ -197,14 +179,23 @@ mod test {
 
     #[test]
     fn first_linux_page_translation() {
-        let mut mem = FakeMemory::new();
-        mem.push_read(FakeMemoryItem::Double(0x8021c000, 0x200800cf));
-        mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
-
-        let mut mmu = Mmu::new(mem);
+        let mut mmu = Mmu::new({
+            let mut mem = FakeMemory::new();
+            mem.push_read(FakeMemoryItem::Double(0x8021c000, 0x200800cf));
+            mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
+            mem
+		});
         mmu.set_page_mode(0, 0x8021d);
+        assert_eq!(mmu.translate(0xffffffe0000000c0).expect("ok"), 0x802000c0);
 
-        let pa = mmu.translate(0xffffffe0000000c0).expect("ok");
-        assert_eq!(pa, 0x802000c0);
+
+        let mut mmu = Mmu::new({
+            let mut mem = FakeMemory::new();
+            mem.push_read(FakeMemoryItem::Double(0x80687010, 0x201800cf));
+            mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
+            mem
+		});
+        mmu.set_page_mode(0, 0x80707);
+        assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80602440);
     }
 }
