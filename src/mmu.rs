@@ -37,6 +37,7 @@ impl<M> Mmu<M> {
 
     pub fn set_page_mode(&mut self, asid: u16, ppn: u64) {
         self.sv39 = true;
+        error!("0x{:x} 0x{:x}", asid, ppn);
         self.asid = asid;
         self.ppn = ppn;
     }
@@ -190,4 +191,20 @@ impl<M> fmt::Debug for Mmu<M> {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+    use crate::memory::{FakeMemory, FakeMemoryItem};
+
+    #[test]
+    fn first_linux_page_translation() {
+        let mut mem = FakeMemory::new();
+        mem.push_read(FakeMemoryItem::Double(0x8021c000, 0x200800cf));
+        mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
+
+        let mut mmu = Mmu::new(mem);
+        mmu.set_page_mode(0, 0x8021d);
+
+        let pa = mmu.translate(0xffffffe0000000c0).expect("ok");
+        assert_eq!(pa, 0x802000c0);
+    }
+}
