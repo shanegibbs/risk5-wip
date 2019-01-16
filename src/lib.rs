@@ -323,7 +323,9 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             p.advance_pc();
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
-            panic!(format!("Unimplemented insn 'wfi' at {:x}", p.pc()))
+            trace!("Noop insn 'wfi' at {:x}", p.pc());
+            p.advance_pc();
+            unreachable!();
         }),
         Matcher::new(0x707f, 0x1073, wrap!(csr::insn<M, csr::ReadWrite>)),
         Matcher::new(0x707f, 0x2073, wrap!(csr::insn<M, csr::ReadSet>)),

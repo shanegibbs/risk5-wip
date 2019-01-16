@@ -30,6 +30,7 @@ impl Trap {
 // }
 
 pub mod mem;
+pub mod prv;
 
 pub mod csr;
 pub use self::csr::*;
@@ -114,10 +115,10 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
  *
  */
 pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
-    debug!("Doing trap");
-
     let prv = p.csrs().prv;
     let medeleg = p.csrs().medeleg;
+
+    debug!("Doing trap prv={} cause=0x{:x} value={:x}", prv, cause, val);
 
     if prv <= 1 && ((medeleg >> cause) & 0x1) == 1 {
         // handle in supervisor mode if in supervisor or user mode

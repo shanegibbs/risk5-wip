@@ -30,12 +30,14 @@ impl<M> Mmu<M> {
     }
 
     pub fn set_bare_mode(&mut self) {
+        trace!("Setting bare mode");
         self.sv39 = false;
         self.asid = 0;
         self.ppn = 0;
     }
 
     pub fn set_page_mode(&mut self, asid: u16, ppn: u64) {
+        trace!("Setting sv39 mode asid=0x{:x} ppn={:x}", asid, ppn);
         self.sv39 = true;
         self.asid = asid;
         self.ppn = ppn;
@@ -46,14 +48,20 @@ macro_rules! mem {
     ($self:expr, $func:ident, $addr:expr) => {{
         let addr = match $self.translate($addr) {
             Ok(a) => a,
-            Err(_) => return Err(()),
+            Err(_) => {
+                debug!("Page-fault on load");
+                return Err(());
+            }
         };
         Ok($self.mem.$func(addr))
     }};
     ($self:expr, $func:ident, $addr:expr, $val:expr) => {{
         let addr = match $self.translate($addr) {
             Ok(a) => a,
-            Err(_) => return Err(()),
+            Err(_) => {
+                debug!("Page-fault on store");
+                return Err(());
+            }
         };
         Ok($self.mem.$func(addr, $val))
     }};
@@ -76,7 +84,6 @@ impl<M: Memory> Mmu<M> {
         let mut i = levels - 1;
 
         let pte = loop {
-
             // step 2
             let pte_offset = a + (va.virtual_page_number(i) * ptesize);
 
@@ -175,17 +182,16 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x8021c000, 0x200800cf));
             mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
             mem
-		});
+        });
         mmu.set_page_mode(0, 0x8021d);
         assert_eq!(mmu.translate(0xffffffe0000000c0).expect("ok"), 0x802000c0);
-
 
         let mut mmu = Mmu::new({
             let mut mem = FakeMemory::new();
             mem.push_read(FakeMemoryItem::Double(0x80687010, 0x201800cf));
             mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
             mem
-		});
+        });
         mmu.set_page_mode(0, 0x80707);
         assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80602440);
     }
