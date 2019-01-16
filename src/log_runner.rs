@@ -19,6 +19,8 @@ enum LogLine {
     Load(Memory),
     #[serde(rename = "store")]
     Store(Memory),
+    #[serde(rename = "mem")]
+    Memory(Memory),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -142,13 +144,14 @@ impl LogTupleIterator {
 }
 
 impl Iterator for LogTupleIterator {
-    type Item = (State, Insn, Option<Memory>, Option<Memory>);
+    type Item = (State, Insn, Option<Memory>, Option<Memory>, Vec<Memory>);
 
-    fn next(&mut self) -> Option<(State, Insn, Option<Memory>, Option<Memory>)> {
+    fn next(&mut self) -> Option<(State, Insn, Option<Memory>, Option<Memory>, Vec<Memory>)> {
         self.next_state.take().and_then(|state| {
             let mut insn = None;
             let mut load = None;
             let mut store = None;
+            let mut mems = vec![];
 
             loop {
                 match self.line_it.next() {
@@ -166,6 +169,7 @@ impl Iterator for LogTupleIterator {
                             break;
                         }
                     }
+                    Some(LogLine::Memory(n)) => mems.push(n),
                     None => return None,
                 }
             }
@@ -177,7 +181,7 @@ impl Iterator for LogTupleIterator {
 
             let insn = insn.unwrap();
 
-            Some((state, insn, load, store))
+            Some((state, insn, load, store, mems))
         })
     }
 }
@@ -200,7 +204,7 @@ fn run_err() -> Result<(), io::Error> {
 
     info!("Initial checks");
 
-    for (step, (state, insn, load, store)) in LogTupleIterator::new()?.enumerate() {
+    for (step, (state, insn, load, store, mems)) in LogTupleIterator::new()?.enumerate() {
         // trace!("{:?}", state);
 
         let mut fail = false;
