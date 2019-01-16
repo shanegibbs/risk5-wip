@@ -37,7 +37,6 @@ impl<M> Mmu<M> {
 
     pub fn set_page_mode(&mut self, asid: u16, ppn: u64) {
         self.sv39 = true;
-        error!("0x{:x} 0x{:x}", asid, ppn);
         self.asid = asid;
         self.ppn = ppn;
     }
@@ -66,8 +65,6 @@ impl<M: Memory> Mmu<M> {
             return Ok(offset);
         }
 
-        error!("Doing sv39 for 0x{:x}", offset);
-
         let pagesize = 4096;
         let levels = 3;
         let ptesize = 8;
@@ -79,20 +76,16 @@ impl<M: Memory> Mmu<M> {
         let mut i = levels - 1;
 
         let pte = loop {
-            error!("-- Looking up level {}", i);
 
             // step 2
             let pte_offset = a + (va.virtual_page_number(i) * ptesize);
-            error!("pte_offset=0x{:x}", pte_offset);
 
             let pte_val = self.mem.read_d(pte_offset);
-            error!("pte_val=0x{:x}", pte_val);
 
             let pte: PageTableEntry = pte_val.into();
 
             if !pte.v() || (!pte.r() && pte.w()) {
                 // step 3. page-fault exception
-                error!("-- page-fault");
                 return Err(());
             }
 
@@ -127,8 +120,6 @@ impl<M: Memory> Mmu<M> {
         }
 
         pa.set_offset(va.offset());
-
-        error!("Using pa 0x{:x}", pa.val());
 
         Ok(pa.into())
     }
