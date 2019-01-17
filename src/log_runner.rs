@@ -196,9 +196,9 @@ fn format_diff(expected: u64, actual: u64) -> String {
 fn run_err() -> Result<(), io::Error> {
     pretty_env_logger::init();
 
-    let matchers = crate::build_matchers::<FakeMemory>();
+    let matchers = crate::build_matchers::<ByteMap>();
 
-    let mem = FakeMemory::new();
+    let mem = ByteMap::new();
     let mut cpu = Processor::new(0x1000, mem);
     let mut last_insn: Option<Insn> = None;
 
@@ -279,13 +279,12 @@ fn run_err() -> Result<(), io::Error> {
             }
         }
 
-        cpu.fake_mem().trim();
-        if cpu.fake_mem().queue_size() != 0 {
-            // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
-            warn!("Memory operations still queued");
-            // fail = true;
-        }
-        cpu.fake_mem().reset();
+        // if cpu.fake_mem().queue_size() != 0 {
+        //     // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
+        //     warn!("Memory operations still queued");
+        //     // fail = true;
+        // }
+        cpu.mmu_mut().mem_mut().clear();
 
         if fail {
             let last_insn = last_insn.expect("last_insn");
@@ -313,20 +312,21 @@ fn run_err() -> Result<(), io::Error> {
         debug!("{:?}", insn);
 
         let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
-        let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
+        // let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
 
-        if let Some(mem) = load {
-            trace!("Load {:?}", mem);
-            cpu.fake_mem().push_read(mem);
-        }
+        // if let Some(mem) = load {
+        //     trace!("Load {:?}", mem);
+        //     cpu.fake_mem().push_read(mem);
+        // }
 
-        if let Some(mem) = store {
-            trace!("Store {:?}", mem);
-            cpu.fake_mem().push_write(mem);
-        }
+        // if let Some(mem) = store {
+        //     trace!("Store {:?}", mem);
+        //     cpu.fake_mem().push_write(mem);
+        // }
 
-        cpu.fake_mem()
-            .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
+        // cpu.fake_mem()
+        //     .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
+
         cpu.step(&matchers);
 
         last_insn = Some(insn);
