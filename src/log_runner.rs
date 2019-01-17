@@ -37,6 +37,8 @@ struct State {
     pc: String,
     prv: String,
     mstatus: String,
+    mideleg: String,
+
     mcause: String,
     mscratch: String,
     mtvec: String,
@@ -213,9 +215,20 @@ impl Iterator for LogTupleDedupIterator {
         }
 
         let buf = self.buf.take().expect("buf");
-        let n = self.it.next();
+        let n = match self.it.next() {
+            Some(n) => n,
+            None => return Some(buf),
+        };
 
-        if n.state.pc !=
+        if n.state.pc == buf.state.pc {
+            // merge
+            let mut n = n;
+            n.mems.extend(buf.mems);
+            return Some(n);
+        } else {
+            self.buf = Some(n);
+            return Some(buf);
+        }
     }
 }
 
@@ -295,6 +308,7 @@ fn run_err() -> Result<(), io::Error> {
         fail_on!("mcause", state.mcause, cpu.csrs().mcause);
         fail_on!("mscratch", state.mscratch, cpu.csrs().mscratch);
         fail_on!("mtvec", state.mtvec, cpu.csrs().mtvec);
+        fail_on!("mideleg", state.mideleg, cpu.csrs().mideleg);
 
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
@@ -353,9 +367,9 @@ fn run_err() -> Result<(), io::Error> {
         // load up transactions
 
         if step % 10000 == 0 {
-            warn!("--- Begin step {} ---", step);
+            warn!("--- Begin step {} ({}) ---", step, line);
         }
-        info!("--- Begin step {} ---", step);
+        info!("--- Begin step {} ({}) ---", step, line);
 
         debug!("{:?}", insn);
 

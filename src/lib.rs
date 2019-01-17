@@ -101,6 +101,9 @@ pub fn risk5_main() {
         cpu.step(&matchers);
         counter += 1;
         trace!("--- Step {} ---", counter);
+        if counter % 10000 == 0 {
+            warn!("--- Step {} ---", counter);
+        }
 
         let _fromhost = cpu.mmu().bare().read_d(0x80009000);
         let tohost = cpu.mmu().bare().read_d(0x80009008);
@@ -110,7 +113,7 @@ pub fn risk5_main() {
             let ch = tohost as u8;
             output = format!("{}{}", output, ch as char);
             print!("{}", ch as char);
-            // warn!("{}\n{}", ch as char, output);
+            warn!("tohost '{}'", ch as char);
             cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
         }
     }
