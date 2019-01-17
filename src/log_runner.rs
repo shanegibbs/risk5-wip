@@ -129,83 +129,93 @@ impl Iterator for LogLineIterator {
 
 struct LogTupleIterator {
     line_it: LogLineIterator,
-    next_state: Option<State>,
 }
 
 impl LogTupleIterator {
     fn new() -> Result<Self, io::Error> {
         let mut lines = LogLineIterator::new()?;
+        Ok(LogTupleIterator { line_it: lines })
+    }
+}
 
-        let next_state = loop {
-            let line = lines.next();
-            if let Some(LogLine::State(s)) = line {
-                break s;
+struct LogTuple {
+    line: usize,
+    state: State,
+    insn: Insn,
+    load: Option<Memory>,
+    store: Option<Memory>,
+    mems: Vec<Memory>,
+}
+
+impl Iterator for LogTupleIterator {
+    type Item = LogTuple;
+
+    fn next(&mut self) -> Option<LogTuple> {
+        let mut insn = None;
+        let mut state = None;
+        let mut load = None;
+        let mut store = None;
+        let mut mems = vec![];
+
+        loop {
+            match self.line_it.next() {
+                Some(LogLine::Insn(n)) => {
+                    insn = Some(n);
+                    break;
+                }
+                Some(LogLine::Load(n)) => load = Some(n),
+                Some(LogLine::Store(n)) => store = Some(n),
+                Some(LogLine::State(n)) => state = Some(n),
+                Some(LogLine::Memory(n)) => mems.push(n),
+                None => return None,
             }
-        };
+        }
 
-        Ok(LogTupleIterator {
-            line_it: lines,
-            next_state: Some(next_state),
+        let insn = insn.expect("insn");
+        let state = state.expect("state");
+
+        Some(LogTuple {
+            line: self.line_it.count,
+            state: state,
+            insn,
+            load,
+            store,
+            mems,
         })
     }
 }
 
-impl Iterator for LogTupleIterator {
-    type Item = (
-        usize,
-        State,
-        Insn,
-        Option<Memory>,
-        Option<Memory>,
-        Vec<Memory>,
-    );
+struct LogTupleDedupIterator {
+    it: LogTupleIterator,
+    buf: Option<LogTuple>,
+}
 
-    fn next(
-        &mut self,
-    ) -> Option<(
-        usize,
-        State,
-        Insn,
-        Option<Memory>,
-        Option<Memory>,
-        Vec<Memory>,
-    )> {
-        self.next_state.take().and_then(|state| {
-            let mut insn = None;
-            let mut load = None;
-            let mut store = None;
-            let mut mems = vec![];
-
-            loop {
-                match self.line_it.next() {
-                    Some(LogLine::Insn(n)) => insn = Some(n),
-                    Some(LogLine::Load(n)) => load = Some(n),
-                    Some(LogLine::Store(n)) => store = Some(n),
-                    Some(LogLine::State(n)) => {
-                        let pc = n.pc.clone();
-                        self.next_state = Some(n);
-
-                        // sometimes spike restarts instrucions
-                        if state.pc == pc {
-                            return self.next();
-                        } else {
-                            break;
-                        }
-                    }
-                    Some(LogLine::Memory(n)) => mems.push(n),
-                    None => return None,
-                }
-            }
-
-            if insn.is_none() {
-                // can happen when switching into virtual memory
-                return self.next();
-            }
-
-            let insn = insn.expect("insn");
-
-            Some((self.line_it.count, state, insn, load, store, mems))
+impl LogTupleDedupIterator {
+    fn new() -> Result<Self, io::Error> {
+        Ok(LogTupleDedupIterator {
+            it: LogTupleIterator::new()?,
+            buf: None,
         })
+    }
+}
+
+impl Iterator for LogTupleDedupIterator {
+    type Item = LogTuple;
+
+    fn next(&mut self) -> Option<LogTuple> {
+        if self.buf.is_none() {
+            let n = self.it.next();
+            if n.is_none() {
+                return None;
+            }
+            self.buf = n;
+            return self.next();
+        }
+
+        let buf = self.buf.take().expect("buf");
+        let n = self.it.next();
+
+        if n.state.pc !=
     }
 }
 
@@ -229,7 +239,15 @@ fn run_err() -> Result<(), io::Error> {
 
     info!("Initial checks");
 
-    for (step, (count, state, insn, load, store, mems)) in LogTupleIterator::new()?.enumerate() {
+    for (step, log_tuple) in LogTupleDedupIterator::new()?.enumerate() {
+        let LogTuple {
+            line,
+            state,
+            insn,
+            load,
+            store,
+            mems,
+        } = log_tuple;
         // trace!("{:?}", state);
 
         let mut fail = false;
@@ -317,7 +335,7 @@ fn run_err() -> Result<(), io::Error> {
             error!("debug info - step: {}", step - 1);
             error!("debug info - PC:   {}", last_insn.pc);
             error!("debug info - Insn: {}", last_insn.desc);
-            error!("debug info - Line: {}", count);
+            error!("debug info - Line: {}", line);
             panic!("Failed checks");
         }
 
