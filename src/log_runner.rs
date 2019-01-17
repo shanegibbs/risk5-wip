@@ -99,13 +99,20 @@ impl Iterator for LogLineIterator {
 
             self.count += 1;
 
-            let l = line.unwrap();
+            let l = line.expect("line");
 
             if l.is_empty() {
                 continue;
             }
 
-            let d: LogLine = serde_json::from_str(l.as_str()).unwrap();
+            let d: LogLine = match serde_json::from_str(l.as_str()) {
+                Ok(l) => l,
+                Err(e) => {
+                    error!("Parsing line: {}", e);
+                    error!("{}", l);
+                    panic!("line parse failed");
+                }
+            };
 
             if let LogLine::State(_) = d {
                 self.had_first_state = true;
@@ -144,9 +151,25 @@ impl LogTupleIterator {
 }
 
 impl Iterator for LogTupleIterator {
-    type Item = (State, Insn, Option<Memory>, Option<Memory>, Vec<Memory>);
+    type Item = (
+        usize,
+        State,
+        Insn,
+        Option<Memory>,
+        Option<Memory>,
+        Vec<Memory>,
+    );
 
-    fn next(&mut self) -> Option<(State, Insn, Option<Memory>, Option<Memory>, Vec<Memory>)> {
+    fn next(
+        &mut self,
+    ) -> Option<(
+        usize,
+        State,
+        Insn,
+        Option<Memory>,
+        Option<Memory>,
+        Vec<Memory>,
+    )> {
         self.next_state.take().and_then(|state| {
             let mut insn = None;
             let mut load = None;
@@ -179,9 +202,9 @@ impl Iterator for LogTupleIterator {
                 return self.next();
             }
 
-            let insn = insn.unwrap();
+            let insn = insn.expect("insn");
 
-            Some((state, insn, load, store, mems))
+            Some((self.line_it.count, state, insn, load, store, mems))
         })
     }
 }
@@ -198,13 +221,15 @@ fn run_err() -> Result<(), io::Error> {
 
     let matchers = crate::build_matchers::<ByteMap>();
 
+    let dtb = crate::load_dtb();
+
     let mem = ByteMap::new();
     let mut cpu = Processor::new(0x1000, mem);
     let mut last_insn: Option<Insn> = None;
 
     info!("Initial checks");
 
-    for (step, (state, insn, load, store, mems)) in LogTupleIterator::new()?.enumerate() {
+    for (step, (count, state, insn, load, store, mems)) in LogTupleIterator::new()?.enumerate() {
         // trace!("{:?}", state);
 
         let mut fail = false;
@@ -285,12 +310,14 @@ fn run_err() -> Result<(), io::Error> {
         //     // fail = true;
         // }
         cpu.mmu_mut().mem_mut().clear();
+        crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
 
         if fail {
             let last_insn = last_insn.expect("last_insn");
             error!("debug info - step: {}", step - 1);
             error!("debug info - PC:   {}", last_insn.pc);
             error!("debug info - Insn: {}", last_insn.desc);
+            error!("debug info - Line: {}", count);
             panic!("Failed checks");
         }
 
@@ -307,11 +334,14 @@ fn run_err() -> Result<(), io::Error> {
 
         // load up transactions
 
+        if step % 10000 == 0 {
+            warn!("--- Begin step {} ---", step);
+        }
         info!("--- Begin step {} ---", step);
 
         debug!("{:?}", insn);
 
-        let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
+        // let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
         // let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
 
         // if let Some(mem) = load {
@@ -326,6 +356,22 @@ fn run_err() -> Result<(), io::Error> {
 
         // cpu.fake_mem()
         //     .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
+
+        trace!("Have {} mems", mems.len());
+        for mem in mems {
+            trace!("{:?}", mem);
+            use crate::Memory;
+            cpu.mmu_mut().mem_mut().write_b(
+                u64::from_str_radix(&mem.addr[2..], 16).expect("mem.addr"),
+                u8::from_str_radix(&mem.value[2..], 16).expect("mem.value"),
+            );
+        }
+
+        for (addr, value) in &cpu.mmu().mem().data {
+            if *addr >= 0x4096 {
+                trace!("Have 0x{:x}: 0x{:x}", addr, value);
+            }
+        }
 
         cpu.step(&matchers);
 

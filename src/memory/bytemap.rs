@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use crate::Memory;
+use std::collections::HashMap;
 
 pub(crate) struct ByteMap {
-    data: HashMap<u64, u8>,
+    pub data: HashMap<u64, u8>,
 }
 
 impl ByteMap {
@@ -19,10 +19,13 @@ impl ByteMap {
 
 impl Memory for ByteMap {
     fn read_b(&self, offset: u64) -> u8 {
-        *self.data.get(&offset).expect("No memory here")
+        let value = *self.data.get(&offset).expect("No memory here");
+        trace!("Loaded 0x{:x} from 0x{:x}", value, offset);
+        value
     }
 
     fn write_b(&mut self, offset: u64, value: u8) {
+        // trace!("Saving 0x{:x} to 0x{:x}", value, offset);
         self.data.insert(offset, value);
     }
 }

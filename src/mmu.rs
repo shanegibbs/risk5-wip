@@ -19,6 +19,10 @@ impl<M> Mmu<M> {
         }
     }
 
+    pub fn mem(&self) -> &M {
+        &self.mem
+    }
+
     pub fn mem_mut(&mut self) -> &mut M {
         &mut self.mem
     }

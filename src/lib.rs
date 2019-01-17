@@ -25,6 +25,39 @@ pub(crate) use crate::regs::Regs;
 use std::fs::File;
 use std::io::Read;
 
+pub fn load_dtb() -> Vec<u8> {
+    let mut dtb = vec![];
+    let mut dtb_file = File::open("assets/dtb.bin").expect("dtb.bin");
+    dtb_file.read_to_end(&mut dtb).expect("read dtb");
+    dtb
+}
+
+pub fn write_reset_vec<M: Memory>(mem: &mut M, entry: u64, dtb: &[u8]) {
+    //  auipc   t0, 0x0
+    //  addi    a1, t0, 32
+    //  csrr    a0, mhartid
+    //  ld      t0, 24(t0)
+    //  jr      t0
+
+    let reset_vec_addr = 0x1000;
+    let reset_vec_size = 8;
+    mem.write_w(reset_vec_addr, 0x297);
+    mem.write_w(
+        reset_vec_addr + 4,
+        0x28593 + (reset_vec_size * 4 << 20) as u32,
+    );
+    mem.write_w(reset_vec_addr + 8, 0xf1402573);
+    mem.write_w(reset_vec_addr + 12, 0x0182b283);
+    mem.write_w(reset_vec_addr + 16, 0x28067);
+
+    mem.write_w(reset_vec_addr + 20, 0x0);
+    mem.write_w(reset_vec_addr + 24, entry as u32);
+    mem.write_w(reset_vec_addr + 28, (entry >> 32) as u32);
+    for (i, b) in dtb.into_iter().enumerate() {
+        mem.write_b(reset_vec_addr + 32 + i as u64, *b);
+    }
+}
+
 pub fn risk5_main() {
     pretty_env_logger::init();
 
@@ -49,34 +82,10 @@ pub fn risk5_main() {
         }
     }
 
-    let mut dtb = vec![];
-    let mut dtb_file = File::open("assets/dtb.bin").expect("dtb.bin");
-    dtb_file.read_to_end(&mut dtb).expect("read dtb");
-
-    //  auipc   t0, 0x0
-    //  addi    a1, t0, 32
-    //  csrr    a0, mhartid
-    //  ld      t0, 24(t0)
-    //  jr      t0
-
+    let dtb = load_dtb();
     let reset_vec_addr = 0x1000;
-    let reset_vec_size = 8;
-    mem.add_block(reset_vec_addr, (reset_vec_size * 4) + dtb.len() as u64);
-    mem.write_w(reset_vec_addr, 0x297);
-    mem.write_w(
-        reset_vec_addr + 4,
-        0x28593 + (reset_vec_size * 4 << 20) as u32,
-    );
-    mem.write_w(reset_vec_addr + 8, 0xf1402573);
-    mem.write_w(reset_vec_addr + 12, 0x0182b283);
-    mem.write_w(reset_vec_addr + 16, 0x28067);
-
-    mem.write_w(reset_vec_addr + 20, 0x0);
-    mem.write_w(reset_vec_addr + 24, entry as u32);
-    mem.write_w(reset_vec_addr + 28, (entry >> 32) as u32);
-    for (i, b) in dtb.into_iter().enumerate() {
-        mem.write_b(reset_vec_addr + 32 + i as u64, b);
-    }
+    mem.add_block(reset_vec_addr, 2048);
+    write_reset_vec(&mut mem, entry, &dtb);
 
     // dummy clint
     mem.add_block(0x2000000, 0xc000);

@@ -55,7 +55,7 @@ impl<M> Processor<M> {
     }
 
     #[inline(always)]
-    pub fn mmu(&mut self) -> &Mmu<M> {
+    pub fn mmu(&self) -> &Mmu<M> {
         &self.mmu
     }
 
