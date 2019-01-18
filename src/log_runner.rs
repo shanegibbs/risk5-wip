@@ -11,6 +11,8 @@ use std::io::Lines;
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "kind")]
 enum LogLine {
+    #[serde(rename = "mark")]
+    Mark,
     #[serde(rename = "insn")]
     Insn(Insn),
     #[serde(rename = "state")]
@@ -37,14 +39,12 @@ struct State {
     pc: String,
     prv: String,
     mstatus: String,
-    mideleg: String,
-
+    // mideleg: String,
     mcause: String,
     mscratch: String,
     mtvec: String,
     mepc: String,
     xregs: Vec<String>,
-    fregs: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -129,17 +129,6 @@ impl Iterator for LogLineIterator {
     }
 }
 
-struct LogTupleIterator {
-    line_it: LogLineIterator,
-}
-
-impl LogTupleIterator {
-    fn new() -> Result<Self, io::Error> {
-        let mut lines = LogLineIterator::new()?;
-        Ok(LogTupleIterator { line_it: lines })
-    }
-}
-
 struct LogTuple {
     line: usize,
     state: State,
@@ -147,6 +136,25 @@ struct LogTuple {
     load: Option<Memory>,
     store: Option<Memory>,
     mems: Vec<Memory>,
+}
+
+struct LogTupleIterator {
+    line_it: LogLineIterator,
+}
+
+impl LogTupleIterator {
+    fn new() -> Result<Self, io::Error> {
+        let mut it = LogLineIterator::new()?;
+        loop {
+            match it.next() {
+                None => break,
+                Some(LogLine::Mark) => break,
+                _ => (),
+            }
+        }
+
+        Ok(LogTupleIterator { line_it: it })
+    }
 }
 
 impl Iterator for LogTupleIterator {
@@ -161,10 +169,12 @@ impl Iterator for LogTupleIterator {
 
         loop {
             match self.line_it.next() {
-                Some(LogLine::Insn(n)) => {
-                    insn = Some(n);
-                    break;
+                Some(LogLine::Mark) => {
+                    if insn.is_some() {
+                        break;
+                    }
                 }
+                Some(LogLine::Insn(n)) => insn = Some(n),
                 Some(LogLine::Load(n)) => load = Some(n),
                 Some(LogLine::Store(n)) => store = Some(n),
                 Some(LogLine::State(n)) => state = Some(n),
@@ -173,7 +183,7 @@ impl Iterator for LogTupleIterator {
             }
         }
 
-        let insn = insn.expect("insn");
+        let insn = insn.expect(&format!("insn. line {}", self.line_it.count));
         let state = state.expect("state");
 
         Some(LogTuple {
@@ -221,6 +231,7 @@ impl Iterator for LogTupleDedupIterator {
         };
 
         if n.state.pc == buf.state.pc {
+            panic!("duplicate insn pc");
             // merge
             let mut n = n;
             n.mems.extend(buf.mems);
@@ -262,6 +273,17 @@ fn run_err() -> Result<(), io::Error> {
             mems,
         } = log_tuple;
         // trace!("{:?}", state);
+
+        // stop if required
+        {
+            use std::env;
+            if let Ok(val) = env::var("STOP_AT") {
+                let current_step = format!("{}", step);
+                if val == current_step {
+                    return Ok(());
+                }
+            }
+        }
 
         let mut fail = false;
 
@@ -308,7 +330,7 @@ fn run_err() -> Result<(), io::Error> {
         fail_on!("mcause", state.mcause, cpu.csrs().mcause);
         fail_on!("mscratch", state.mscratch, cpu.csrs().mscratch);
         fail_on!("mtvec", state.mtvec, cpu.csrs().mtvec);
-        fail_on!("mideleg", state.mideleg, cpu.csrs().mideleg);
+        // fail_on!("mideleg", state.mideleg, cpu.csrs().mideleg);
 
         {
             let val = u64::from_str_radix(&state.mstatus[2..], 16).expect("mstatus");
@@ -351,17 +373,6 @@ fn run_err() -> Result<(), io::Error> {
             error!("debug info - Insn: {}", last_insn.desc);
             error!("debug info - Line: {}", line);
             panic!("Failed checks");
-        }
-
-        // stop if required
-        {
-            use std::env;
-            if let Ok(val) = env::var("STOP_AT") {
-                let current_step = format!("{}", step);
-                if val == current_step {
-                    return Ok(());
-                }
-            }
         }
 
         // load up transactions

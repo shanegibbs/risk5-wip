@@ -9,7 +9,7 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 bbl-test: target/release/logrunner
-	bzcat assets/bbl.json.log.bz2 |env STOP_AT=595283 ./target/release/logrunner
+	bzcat assets/bbl.json.log.bz2 |env STOP_AT=543900 ./target/release/logrunner
 
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
