@@ -90,9 +90,9 @@ impl LogLineIterator {
 }
 
 impl Iterator for LogLineIterator {
-    type Item = LogLine;
+    type Item = (LogLine, String);
 
-    fn next(&mut self) -> Option<LogLine> {
+    fn next(&mut self) -> Option<(LogLine, String)> {
         loop {
             let line = match self.lines.next() {
                 Some(l) => l,
@@ -124,7 +124,7 @@ impl Iterator for LogLineIterator {
                 }
             }
 
-            return Some(d);
+            return Some((d, l));
         }
     }
 }
@@ -148,7 +148,7 @@ impl LogTupleIterator {
         loop {
             match it.next() {
                 None => break,
-                Some(LogLine::Mark) => break,
+                Some((LogLine::Mark, _)) => break,
                 _ => (),
             }
         }
@@ -161,6 +161,8 @@ impl Iterator for LogTupleIterator {
     type Item = LogTuple;
 
     fn next(&mut self) -> Option<LogTuple> {
+        let mut lines = vec![];
+
         let mut insn = None;
         let mut state = None;
         let mut load = None;
@@ -168,23 +170,34 @@ impl Iterator for LogTupleIterator {
         let mut mems = vec![];
 
         loop {
-            match self.line_it.next() {
-                Some(LogLine::Mark) => {
+            let next = match self.line_it.next() {
+                Some((ll, line)) => {
+                    lines.push(line);
+                    ll
+                }
+                None => return None,
+            };
+
+            match next {
+                LogLine::Mark => {
                     if insn.is_some() {
                         break;
                     }
                 }
-                Some(LogLine::Insn(n)) => insn = Some(n),
-                Some(LogLine::Load(n)) => load = Some(n),
-                Some(LogLine::Store(n)) => store = Some(n),
-                Some(LogLine::State(n)) => state = Some(n),
-                Some(LogLine::Memory(n)) => mems.push(n),
-                None => return None,
+                LogLine::Insn(n) => insn = Some(n),
+                LogLine::Load(n) => load = Some(n),
+                LogLine::Store(n) => store = Some(n),
+                LogLine::State(n) => state = Some(n),
+                LogLine::Memory(n) => mems.push(n),
             }
         }
 
         let insn = insn.expect(&format!("insn. line {}", self.line_it.count));
         let state = state.expect("state");
+
+        for line in lines {
+            trace!("Log {}", line);
+        }
 
         Some(LogTuple {
             line: self.line_it.count,
@@ -263,7 +276,7 @@ fn run_err() -> Result<(), io::Error> {
 
     info!("Initial checks");
 
-    for (step, log_tuple) in LogTupleDedupIterator::new()?.enumerate() {
+    for (step, log_tuple) in LogTupleIterator::new()?.enumerate() {
         let LogTuple {
             line,
             state,
