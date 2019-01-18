@@ -135,10 +135,11 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
         csrs.stval = val;
 
         // move xIE to xPIE and set xIE to 0
-        csrs.mstatus.move_machine_interrupt_enabled_to_prior();
+        csrs.mstatus.move_supervisor_interrupt_enabled_to_prior();
         csrs.mstatus.set_supervisor_interrupt_enabled(0);
         // set xPP to prv
-        csrs.mstatus.set_supervisor_previous_privilege(prv);
+        error!("here");
+        csrs.mstatus.set_supervisor_previous_privilege(1);
 
         csrs.prv = 1;
     } else {

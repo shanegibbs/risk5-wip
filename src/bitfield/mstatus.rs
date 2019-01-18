@@ -135,12 +135,12 @@ impl Mstatus {
 
     #[inline(always)]
     pub fn supervisor_previous_privilege(&self) -> u64 {
-        self.0.field(8, 2)
+        self.0.field(8, 1)
     }
 
     #[inline(always)]
     pub fn set_supervisor_previous_privilege(&mut self, n: u64) {
-        self.0.set_field(8, 2, n)
+        self.0.set_field(8, 1, n)
     }
 
     // fs

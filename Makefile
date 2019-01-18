@@ -1,6 +1,6 @@
 RUST_LOG=risk5=warn
 
-test: check unit-tests all-compliance-tests bbl-test
+test: check unit-tests compliance-tests bbl-test
 
 check:
 	cargo check
@@ -11,12 +11,15 @@ unit-tests:
 bbl-test: target/release/logrunner
 	bzcat assets/bbl.json.log.bz2 |env STOP_AT=543900 ./target/release/logrunner
 
+bbl-run: target/release/logrunner
+	bzcat assets/bbl.json.log.bz2 |./target/release/logrunner
+
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
 COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.json.log.bz2,$(COMPLIANCE_PATHS))
 .SECONDARY: $(COMPLIANCE_LOGS)
 
-all-compliance-tests: $(COMPLIANCE_TESTS)
+compliance-tests: $(COMPLIANCE_TESTS)
 
 %-compliance-test: compliance/logs/%.json.log.bz2 target/release/logrunner
 	bzcat $< | env ./target/release/logrunner
