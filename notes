@@ -1,0 +1,17 @@
+: until pc 0x802000bc
+: until pc 0 0x802000bc
+bbl loader
+:
+Bits 0x0000000018051073
+Insn 0x0000000018051073
+core   0: 0x00000000802000bc (0x18051073) csrw    satp, a0
+{"core":0,"priv":1,"pc":"0x00000000802000bc","bits":"0x18051073","desc":"csrw    satp, a0"}
+:
+core   0: exception trap_instruction_page_fault, epc 0x00000000802000c0
+core   0:           tval 0x00000000802000c0
+:
+Bits 0x0000000000000517
+Insn 0x0000000000000517
+core   0: 0xffffffe0000000c0 (0x00000517) auipc   a0, 0x0
+{"core":0,"priv":1,"pc":"0xffffffe0000000c0","bits":"0x00000517","desc":"auipc   a0, 0x0"}
+
