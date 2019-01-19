@@ -1,6 +1,7 @@
 use super::*;
 use crate::memory::*;
 use log::Level::*;
+use std::panic;
 
 struct BincodeReader {
     reader: BufReader<io::Stdin>,
@@ -85,17 +86,10 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             insn,
             mems,
         } = log_tuple;
-        // let _guard = flame::start_guard("step");
-        // trace!("{:?}", state);
 
-        trace!("This insn {:?}", insn);
+        // trace!("This insn {:?}", insn);
 
         let mut fail = false;
-
-        /* for i in 0..8 {
-            let offset = (i * 4) as usize;
-            debug!("0x{:16x} 0x{:16x} 0x{:16x} 0x{:16x}", cpu.regs.get(offset), cpu.regs.get(offset + 1), cpu.regs.get(offset + 2), cpu.regs.get(offset + 3));
-        } */
 
         // validate current state
 
@@ -131,15 +125,7 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             }
         }
 
-        if cpu.pc() != state.pc {
-            error!(
-                "Fail pc check. Was: 0x{:x}, expected: 0x{:x}",
-                cpu.pc(),
-                state.pc
-            );
-            fail = true;
-        }
-
+        fail_on!("pc", state.pc, cpu.pc());
         fail_on!("prv", state.prv, cpu.csrs().prv);
         fail_on!("mepc", state.mepc, cpu.csrs().mepc);
         fail_on!("mcause", state.mcause, cpu.csrs().mcause);
@@ -195,22 +181,6 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
         debug!("--- Begin step {} ({}) ---", step, line);
         trace!("{:?}", insn);
 
-        // let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
-        // let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
-
-        // if let Some(mem) = load {
-        //     trace!("Load {:?}", mem);
-        //     cpu.fake_mem().push_read(mem);
-        // }
-
-        // if let Some(mem) = store {
-        //     trace!("Store {:?}", mem);
-        //     cpu.fake_mem().push_write(mem);
-        // }
-
-        // cpu.fake_mem()
-        //     .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
-
         for mem in mems {
             use crate::Memory;
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
@@ -223,11 +193,6 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
                 }
             }
         }
-
-        // if step >= 543880 {
-        //     use log::{Level, LevelFilter, Metadata, Record};
-        //     log::set_max_level(LevelFilter::Trace);
-        // }
 
         cpu.step(&matchers);
 

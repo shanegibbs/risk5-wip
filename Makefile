@@ -60,6 +60,7 @@ save-broken:
 
 load:
 	git pull
+	bunzip2 -k assets/bbl.bincode.bz2
 	make test
 
 convert-bz2: target/release/logrunner

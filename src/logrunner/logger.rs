@@ -12,7 +12,7 @@ pub fn init() -> Result<(), SetLoggerError> {
 }
 
 struct TracerLogger {
-    buffer: RwLock<Vec<(Level, String)>>,
+    buffer: RwLock<Vec<(Level, Option<String>, String)>>,
 }
 
 impl TracerLogger {
@@ -27,10 +27,12 @@ fn to_line(record: &Record) -> String {
     format!("{}", record.args())
 }
 
-fn print_line(level: &Level, line: &String) {
+fn print_line(level: &Level, module: Option<&str>, line: &String) {
+    let module = module.unwrap_or("");
+    let module = format!("{0}[2m{1: <25}{0}[22m", 27 as char, module);
     writeln!(
         io::stderr(),
-        "{0}[1m{0}[{1}m{2}{0}[0m {0}[{1}m{3}{0}[0m",
+        "{0}[1m{0}[{1}m{2}{0}[0m {3} {0}[{1}m{4}{0}[0m",
         27 as char,
         match level {
             Level::Error => "31",
@@ -40,6 +42,7 @@ fn print_line(level: &Level, line: &String) {
             Level::Trace => "36",
         },
         level,
+        module,
         line
     )
     .expect("print log line");
@@ -54,19 +57,27 @@ impl log::Log for LOGGER {
         let mut buffer = self.buffer.write().expect("log lock");
 
         if record.metadata().level() == Level::Error {
-            for (level, line) in buffer.iter() {
-                print_line(level, line);
+            for (level, module, line) in buffer.iter() {
+                print_line(level, module.as_ref().map(|s| s.as_str()), line);
             }
             buffer.clear();
         } else {
-            buffer.push((record.metadata().level(), to_line(record)));
+            buffer.push((
+                record.metadata().level(),
+                record.module_path().map(|s| s.into()),
+                to_line(record),
+            ));
             if buffer.len() > 200 {
                 buffer.remove(0);
             }
         }
 
         if record.metadata().level() <= Level::Warn {
-            print_line(&record.metadata().level(), &to_line(record));
+            print_line(
+                &record.metadata().level(),
+                record.module_path(),
+                &to_line(record),
+            );
         }
     }
 
