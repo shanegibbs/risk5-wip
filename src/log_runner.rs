@@ -285,9 +285,9 @@ fn run_err() -> Result<(), io::Error> {
             store,
             mems,
         } = log_tuple;
-        // trace!("{:?}", state);
 
         // stop if required
+
         {
             use std::env;
             if let Ok(val) = env::var("STOP_AT") {
@@ -299,11 +299,6 @@ fn run_err() -> Result<(), io::Error> {
         }
 
         let mut fail = false;
-
-        /* for i in 0..8 {
-            let offset = (i * 4) as usize;
-            debug!("0x{:16x} 0x{:16x} 0x{:16x} 0x{:16x}", cpu.regs.get(offset), cpu.regs.get(offset + 1), cpu.regs.get(offset + 2), cpu.regs.get(offset + 3));
-        } */
 
         // validate current state
 
@@ -371,11 +366,6 @@ fn run_err() -> Result<(), io::Error> {
             }
         }
 
-        // if cpu.fake_mem().queue_size() != 0 {
-        //     // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
-        //     warn!("Memory operations still queued");
-        //     // fail = true;
-        // }
         cpu.mmu_mut().mem_mut().clear();
         crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
 
@@ -397,9 +387,6 @@ fn run_err() -> Result<(), io::Error> {
 
         debug!("{:?}", insn);
 
-        // let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
-        // let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
-
         // if let Some(mem) = load {
         //     trace!("Load {:?}", mem);
         //     cpu.fake_mem().push_read(mem);
@@ -409,9 +396,6 @@ fn run_err() -> Result<(), io::Error> {
         //     trace!("Store {:?}", mem);
         //     cpu.fake_mem().push_write(mem);
         // }
-
-        // cpu.fake_mem()
-        //     .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
 
         trace!("Have {} mems", mems.len());
         for mem in mems {
