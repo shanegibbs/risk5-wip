@@ -19,7 +19,7 @@ pub fn convert() -> Result<(), io::Error> {
 
     let mut out = BufWriter::new(io::stdout());
 
-    error!("starting");
+    info!("starting");
 
     for line in JsonLogTupleIterator::new()? {
         trace!("{:?}", line);

@@ -5,6 +5,8 @@ mod fake;
 
 pub(crate) use self::block::BlockMemory;
 pub(crate) use self::bytemap::ByteMap;
+#[cfg(test)]
+pub(crate) use self::fake::*;
 
 pub trait Memory {
     fn read_b(&self, offset: u64) -> u8;

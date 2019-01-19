@@ -16,18 +16,21 @@ bbl-run: target/release/logrunner
 
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
-COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.json.log.bz2,$(COMPLIANCE_PATHS))
+COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.log.bz2,$(COMPLIANCE_PATHS))
 .SECONDARY: $(COMPLIANCE_LOGS)
 
 compliance-tests: $(COMPLIANCE_TESTS)
 
-%-compliance-test: compliance/logs/%.json.log.bz2 target/release/logrunner
-	bzcat $< | env ./target/release/logrunner
+%-compliance-test: compliance/logs/%.bincode.log.bz2 target/release/logrunner
+	bzcat $< |./target/release/logrunner
 
-compliance/logs/%.json.log.bz2:
-	env LD_LIBRARY_PATH=$(shell pwd)/compliance/lib ./compliance/bin/spike compliance/tests/$*.elf
-	bzip2 log.json
-	mv log.json.bz2 compliance/logs/$*.json.log.bz2
+compliance/logs/%.bincode.log.bz2:
+	rm -rf work-$*
+	mkdir work-$*
+	cd work-$* && \
+		env LD_LIBRARY_PATH=$(shell pwd)/compliance/lib ../compliance/bin/spike ../compliance/tests/$*.elf && \
+		cat log.json |../target/release/convert |bzip2 > ../compliance/logs/$*.bincode.log.bz2
+	rm -rf work-$*
 
 target/release/logrunner:
 	cargo build --release
