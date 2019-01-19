@@ -9,10 +9,10 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 bbl-test: target/release/logrunner
-	bzcat assets/bbl.json.log.bz2 |env STOP_AT=543900 ./target/release/logrunner
+	bzcat assets/bbl.bincode.bz2 |env STOP_AT=543900 ./target/release/logrunner
 
 bbl-run: target/release/logrunner
-	bzcat assets/bbl.json.log.bz2 |./target/release/logrunner
+	bzcat assets/bbl.bincode.bz2 |RUST_LOG=risk5=warn ./target/release/logrunner
 
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
@@ -30,7 +30,7 @@ compliance/logs/%.json.log.bz2:
 	mv log.json.bz2 compliance/logs/$*.json.log.bz2
 
 target/release/logrunner:
-	cargo build --bin logrunner --release
+	cargo build --release
 
 run:
 	env RUST_LOG=$(RUST_LOG) cargo run --bin risk5 --release
@@ -49,6 +49,15 @@ save: test
 	git push
 	git st
 
+save-broken:
+	git add Makefile Cargo.* bin src u1 bitcalc
+	git commit -m'save broken'
+	git push
+	git st
+
 load:
 	git pull
 	make test
+
+convert: target/release/logrunner
+	cat assets/bbl.json.log.bz2 |pv -cN read |bunzip2 |pv -cN uncomp |target/release/convert |pv -cN convert |bzip2 |pv -cN write > assets/bbl.bincode.bz2

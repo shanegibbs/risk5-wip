@@ -8,7 +8,7 @@ mod csrs;
 mod elf_loader;
 mod insns;
 mod itypes;
-pub mod log_runner;
+pub mod logrunner;
 mod matcher;
 mod memory;
 mod mmu;

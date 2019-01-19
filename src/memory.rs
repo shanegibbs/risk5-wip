@@ -1,10 +1,9 @@
 mod block;
-mod fake;
 mod bytemap;
+mod fake;
 // mod sv39;
 
 pub(crate) use self::block::BlockMemory;
-pub(crate) use self::fake::{FakeMemory, FakeMemoryItem};
 pub(crate) use self::bytemap::ByteMap;
 
 pub trait Memory {
