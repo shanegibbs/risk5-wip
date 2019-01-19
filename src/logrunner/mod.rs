@@ -8,6 +8,7 @@ use std::io::Lines;
 
 mod loglineiterator;
 // mod logtuplededupiterator;
+mod logger;
 mod logtupleiterator;
 mod run;
 
@@ -175,7 +176,7 @@ impl Into<Memory> for JsonMemory {
 pub(crate) struct JsonLogTuple {
     line: usize,
     state: JsonState,
-    insn: JsonInsn,
+    insn: Option<JsonInsn>,
     mems: Vec<JsonMemory>,
 }
 
@@ -184,7 +185,7 @@ impl JsonLogTuple {
         LogTuple {
             line: self.line,
             state: self.state.into(),
-            insn: self.insn.into(),
+            insn: self.insn.map(|i| i.into()),
             mems: self.mems.into_iter().map(|n| n.into()).collect(),
         }
     }
@@ -194,6 +195,6 @@ impl JsonLogTuple {
 pub(crate) struct LogTuple {
     line: usize,
     state: State,
-    insn: Insn,
+    insn: Option<Insn>,
     mems: Vec<Memory>,
 }

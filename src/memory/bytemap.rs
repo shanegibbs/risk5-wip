@@ -1,31 +1,33 @@
 use crate::Memory;
-use std::collections::HashMap;
 
 pub(crate) struct ByteMap {
-    pub data: HashMap<u64, u8>,
+    pub data: Vec<(u64, u8)>,
 }
 
 impl ByteMap {
     pub fn new() -> Self {
-        ByteMap {
-            data: HashMap::new(),
-        }
+        ByteMap { data: vec![] }
     }
 
     pub fn clear(&mut self) {
-        self.data.clear()
+        self.data.retain(|(addr, _)| *addr < 0x4096);
     }
 }
 
 impl Memory for ByteMap {
     fn read_b(&self, offset: u64) -> u8 {
-        let value = *self.data.get(&offset).expect("No memory here");
-        trace!("Loaded 0x{:x} from 0x{:x}", value, offset);
-        value
+        for (addr, value) in (&self.data).iter().rev() {
+            if *addr == offset {
+                trace!("Loaded 0x{:x} from 0x{:x}", value, offset);
+                return *value;
+            }
+        }
+        error!("No memory here at 0x{:x}", offset);
+        0
     }
 
     fn write_b(&mut self, offset: u64, value: u8) {
         // trace!("Saving 0x{:x} to 0x{:x}", value, offset);
-        self.data.insert(offset, value);
+        self.data.push((offset, value));
     }
 }

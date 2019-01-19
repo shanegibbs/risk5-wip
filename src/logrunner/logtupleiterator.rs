@@ -41,9 +41,9 @@ impl Iterator for JsonLogTupleIterator {
 
             match next {
                 LogLine::Mark => {
-                    if insn.is_some() {
-                        break;
-                    }
+                    // if insn.is_some() {
+                    break;
+                    // }
                 }
                 LogLine::Insn(n) => insn = Some(n),
                 LogLine::State(n) => state = Some(n),
@@ -53,7 +53,7 @@ impl Iterator for JsonLogTupleIterator {
             }
         }
 
-        let insn = insn.expect(&format!("insn. line {}", self.line_it.count));
+        // let insn = insn.expect(&format!("insn. line {}", self.line_it.count));
         let state = state.expect("state");
 
         for line in lines {

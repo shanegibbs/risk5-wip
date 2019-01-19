@@ -138,7 +138,6 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
         csrs.mstatus.move_supervisor_interrupt_enabled_to_prior();
         csrs.mstatus.set_supervisor_interrupt_enabled(0);
         // set xPP to prv
-        error!("here");
         csrs.mstatus.set_supervisor_previous_privilege(1);
 
         csrs.prv = 1;

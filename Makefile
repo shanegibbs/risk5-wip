@@ -9,10 +9,10 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 bbl-test: target/release/logrunner
-	bzcat assets/bbl.bincode.bz2 |env STOP_AT=543900 ./target/release/logrunner
+	cat assets/bbl.bincode |env STOP_AT=595303 ./target/release/logrunner
 
 bbl-run: target/release/logrunner
-	bzcat assets/bbl.bincode.bz2 |RUST_LOG=risk5=warn ./target/release/logrunner
+	cat assets/bbl.bincode |env RUST_LOG=risk5=warn ./target/release/logrunner
 
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
@@ -62,5 +62,11 @@ load:
 	git pull
 	make test
 
-convert: target/release/logrunner
+convert-bz2: target/release/logrunner
 	cat assets/bbl.json.log.bz2 |pv -cN read |bunzip2 |pv -cN uncomp |target/release/convert |pv -cN convert |bzip2 |pv -cN write > assets/bbl.bincode.bz2
+
+convert: target/release/logrunner
+	cat assets/bbl.json.log |pv -cN read |target/release/convert |pv -cN convert > assets/bbl.bincode
+
+perf: target/release/logrunner
+	bzcat assets/bbl.bincode.bz2 |RUST_LOG=risk5=warn STOP_AT=20000 valgrind --tool=callgrind --dump-instr=yes --collect-jumps=yes --simulate-cache=yes ./target/release/logrunner

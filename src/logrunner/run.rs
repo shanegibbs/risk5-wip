@@ -1,14 +1,15 @@
 use super::*;
 use crate::memory::*;
+use log::Level::*;
 
 struct BincodeReader {
-    // reader: BufReader<io::Stdin>,
+    reader: BufReader<io::Stdin>,
 }
 
 impl BincodeReader {
     fn new() -> Self {
-        // let reader = BufReader::new(io::stdin());
-        BincodeReader {} // { reader }
+        let reader = BufReader::new(io::stdin());
+        BincodeReader { reader }
     }
 }
 
@@ -18,7 +19,7 @@ impl Iterator for BincodeReader {
     fn next(&mut self) -> Option<LogTuple> {
         use bincode;
 
-        let val = match bincode::deserialize_from(&mut io::stdin()) {
+        let val = match bincode::deserialize_from(&mut self.reader) {
             Ok(n) => n,
             Err(e) => {
                 match *e {
@@ -33,7 +34,6 @@ impl Iterator for BincodeReader {
                 panic!("Failed to read log tuple");
             }
         };
-        trace!("Read {:?}", val);
 
         Some(val)
     }
@@ -47,35 +47,48 @@ fn format_diff(expected: u64, actual: u64) -> String {
 }
 
 pub fn run() -> Result<(), io::Error> {
-    let matchers = crate::build_matchers::<ByteMap>();
+    super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    internal_run()
+}
 
-    let dtb = crate::load_dtb();
+fn internal_run() -> Result<(), io::Error> {
+    warn!("Loading log");
+
+    let reader = BincodeReader::new();
+
+    use std::env;
+    if let Ok(val) = env::var("STOP_AT") {
+        let stop_at = val.parse::<usize>().expect("parse STOP_AT");
+        return run_log(reader.take(stop_at).collect());
+    }
+
+    run_log(reader.collect())
+}
+
+#[inline(never)]
+fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
+    warn!("Beginning log run");
+
+    let matchers = crate::build_matchers::<ByteMap>();
 
     let mem = ByteMap::new();
     let mut cpu = Processor::new(0x1000, mem);
     let mut last_insn: Option<Insn> = None;
 
-    info!("Initial checks");
+    let dtb = crate::load_dtb();
+    crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
 
-    for (step, log_tuple) in BincodeReader::new().enumerate() {
+    for (step, log_tuple) in logs.into_iter().enumerate() {
         let LogTuple {
             line,
             state,
             insn,
             mems,
         } = log_tuple;
+        // let _guard = flame::start_guard("step");
         // trace!("{:?}", state);
 
-        // stop if required
-        {
-            use std::env;
-            if let Ok(val) = env::var("STOP_AT") {
-                let current_step = format!("{}", step);
-                if val == current_step {
-                    return Ok(());
-                }
-            }
-        }
+        trace!("This insn {:?}", insn);
 
         let mut fail = false;
 
@@ -111,9 +124,16 @@ pub fn run() -> Result<(), io::Error> {
             };
         } */
 
+        if let Some(ref insn) = &insn {
+            if insn.pc != state.pc {
+                error!("Insn and state pc do not match");
+                fail = true;
+            }
+        }
+
         if cpu.pc() != state.pc {
             error!(
-                "Fail pc check. Was: 0x{:016x}, expected: {}",
+                "Fail pc check. Was: 0x{:x}, expected: 0x{:x}",
                 cpu.pc(),
                 state.pc
             );
@@ -151,31 +171,29 @@ pub fn run() -> Result<(), io::Error> {
             }
         }
 
-        // if cpu.fake_mem().queue_size() != 0 {
-        //     // if mem.addr != "0x80009000" && mem.addr != "0x80009008" {}
-        //     warn!("Memory operations still queued");
-        //     // fail = true;
-        // }
-        cpu.mmu_mut().mem_mut().clear();
-        crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
-
         if fail {
             let last_insn = last_insn.expect("last_insn");
-            error!("debug info - step: {}", step - 1);
-            error!("debug info - PC:   {}", last_insn.pc);
-            error!("debug info - Insn: {}", last_insn.desc);
-            error!("debug info - Line: {}", line);
+            error!("debug info - step:     {}", step - 1);
+            error!(
+                "debug info - Insn PC:  0x{:x}",
+                insn.map(|i| i.pc).unwrap_or(0)
+            );
+            error!("debug info - State PC: 0x{:x}", state.pc);
+            error!("debug info - Insn:     {}", last_insn.desc);
+            error!("debug info - Line:     {}", line);
             panic!("Failed checks");
         }
 
-        // load up transactions
+        // reset and begin again
+
+        cpu.mmu_mut().mem_mut().clear();
 
         if step % 10000 == 0 {
             warn!("--- Begin step {} ({}) ---", step, line);
         }
-        info!("--- Begin step {} ({}) ---", step, line);
 
-        debug!("{:?}", insn);
+        debug!("--- Begin step {} ({}) ---", step, line);
+        trace!("{:?}", insn);
 
         // let insn_pc = u64::from_str_radix(&insn.pc[2..], 16).expect("pc");
         // let insn_bits = u32::from_str_radix(&insn.bits[2..], 16).expect("insn bits");
@@ -193,22 +211,27 @@ pub fn run() -> Result<(), io::Error> {
         // cpu.fake_mem()
         //     .push_read(FakeMemoryItem::Word(insn_pc, insn_bits));
 
-        trace!("Have {} mems", mems.len());
         for mem in mems {
-            trace!("{:?}", mem);
             use crate::Memory;
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
         }
 
-        for (addr, value) in &cpu.mmu().mem().data {
-            if *addr >= 0x4096 {
-                trace!("Have 0x{:x}: 0x{:x}", addr, value);
+        if log_enabled!(Trace) {
+            for (addr, value) in &cpu.mmu().mem().data {
+                if *addr >= 0x4096 {
+                    trace!("Have 0x{:x}: 0x{:x}", addr, value);
+                }
             }
         }
 
+        // if step >= 543880 {
+        //     use log::{Level, LevelFilter, Metadata, Record};
+        //     log::set_max_level(LevelFilter::Trace);
+        // }
+
         cpu.step(&matchers);
 
-        last_insn = Some(insn);
+        last_insn = insn;
     }
 
     Ok(())

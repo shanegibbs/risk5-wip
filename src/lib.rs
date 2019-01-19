@@ -2,6 +2,8 @@
 extern crate log;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate lazy_static;
 
 mod bitfield;
 mod csrs;
@@ -124,7 +126,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         ($f:path) => {
             |p, i| {
                 let i = i.into();
-                trace!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
+                debug!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
                 $f(p, i)
             }
         };
