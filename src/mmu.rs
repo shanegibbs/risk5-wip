@@ -58,7 +58,16 @@ macro_rules! mem {
                 return Err(());
             }
         };
-        Ok($self.mem.$func(addr))
+        let val = $self.mem.$func(addr);
+        if addr >= 0x80009000 && addr < 0x80009016 {
+            warn!(
+                "Doing htif {} at 0x{:x}: 0x{:x}",
+                stringify!($func),
+                addr,
+                val
+            );
+        }
+        Ok(val)
     }};
     ($self:expr, $func:ident, $addr:expr, $val:expr) => {{
         let addr = match $self.translate($addr) {
@@ -68,6 +77,14 @@ macro_rules! mem {
                 return Err(());
             }
         };
+        if addr >= 0x80009000 && addr < 0x80009016 {
+            warn!(
+                "Doing htif {} at 0x{:x}: 0x{:x}",
+                stringify!($func),
+                addr,
+                $val
+            );
+        }
         Ok($self.mem.$func(addr, $val))
     }};
 }

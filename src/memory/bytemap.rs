@@ -18,7 +18,7 @@ impl Memory for ByteMap {
     fn read_b(&self, offset: u64) -> u8 {
         for (addr, value) in (&self.data).iter().rev() {
             if *addr == offset {
-                trace!("Loaded 0x{:x} from 0x{:x}", value, offset);
+                trace!("Loaded 0x{:x}: 0x{:x}", offset, value);
                 return *value;
             }
         }
