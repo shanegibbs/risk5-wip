@@ -1,3 +1,5 @@
 bbl
-bbl.bincode
-bbl.json.log
+bbl.log.jsonl
+bbl.log.jsonl.gz
+bbl.log.bincode
+bbl.log.bincode.gz
