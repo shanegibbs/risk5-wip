@@ -150,7 +150,7 @@ impl Into<Itype> for u32 {
 
 impl fmt::Display for Itype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} 0x{:x}", self.rd(), self.rs1(), self.imm())
+        write!(f, "{} {} 0x{2:x} ({2})", self.rd(), self.rs1(), self.imm())
     }
 }
 

@@ -11,6 +11,8 @@ pub fn init() -> Result<(), SetLoggerError> {
     log::set_logger(&LOGGER).map(|()| log::set_max_level(LevelFilter::Trace))
 }
 
+// Keeps a window of all levels of logs. Prints
+// and flushes the buffer on receiving an error.
 struct TracerLogger {
     buffer: RwLock<Vec<(Level, Option<String>, String)>>,
 }

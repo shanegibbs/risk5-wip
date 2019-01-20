@@ -1,5 +1,12 @@
+pub use self::amo::*;
+pub use self::csr::*;
 use crate::itypes::*;
 use crate::*;
+
+mod amo;
+pub mod csr;
+pub mod mem;
+pub mod prv;
 
 pub struct Trap {
     cause: u64,
@@ -12,32 +19,6 @@ impl Trap {
     }
 }
 
-// macro_rules! handle_trap {
-//     ($p:expr, $trap:expr) => {
-//         match $trap {
-//             (Ok(n), _) => n,
-//             (Err(trap), 3) => {
-//                 $p.csrs_mut().mcause = trap.cause;
-//                 $p.csrs_mut().mtval = trap.value;
-//                 do_trap($p, trap.cause, trap.value);
-//                 return;
-//             }
-//             (Err(_trap), _prv) => {
-//                 panic!("Unimplemented trap level");
-//             }
-//         }
-//     };
-// }
-
-pub mod mem;
-pub mod prv;
-
-pub mod csr;
-pub use self::csr::*;
-
-mod amo;
-pub use self::amo::*;
-
 pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
     let old_pc = p.pc();
     let new_pc = (old_pc as i64 + i.imm()) as u64;
@@ -47,8 +28,8 @@ pub fn jal<M: Memory>(p: &mut Processor<M>, i: Jtype) {
 
 pub fn jalr<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let next_pc = p.pc() + 4;
-    p.regs.set(i.rd() as usize, next_pc);
     let target = (p.regs.get(i.rs1() as usize) as i64 + i.imm()) & !1;
+    p.regs.set(i.rd() as usize, next_pc);
     p.set_pc(target as u64);
 }
 
