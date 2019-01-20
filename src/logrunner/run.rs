@@ -1,7 +1,38 @@
 use super::*;
 use crate::memory::*;
-use log::Level::*;
-use std::panic;
+use crate::Memory;
+
+pub fn run() -> Result<(), io::Error> {
+    super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
+    warn!("Loading log");
+
+    let reader = BincodeReader::new();
+
+    use std::env;
+    if let Ok(val) = env::var("STOP_AT") {
+        let stop_at = val.parse::<usize>().expect("parse STOP_AT");
+        return run_log(reader.take(stop_at).collect());
+    }
+
+    run_log(reader.collect())
+}
+
+pub fn convert() -> Result<(), io::Error> {
+    use bincode;
+    use std::io::BufWriter;
+
+    let mut out = BufWriter::new(io::stdout());
+
+    info!("starting");
+
+    for line in JsonLogTupleIterator::new()? {
+        trace!("{:?}", line);
+        let bin = line.to_logtuple();
+        bincode::serialize_into(&mut out, &bin).expect("serialize");
+    }
+
+    Ok(())
+}
 
 struct BincodeReader {
     reader: BufReader<io::Stdin>,
@@ -40,41 +71,32 @@ impl Iterator for BincodeReader {
     }
 }
 
-fn format_diff(expected: u64, actual: u64) -> String {
+fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T) -> String {
+    let hex_width = format!("{:x}", actual)
+        .len()
+        .max(format!("{:x}", actual).len());
+    let binary_width = format!("{:b}", actual)
+        .len()
+        .max(format!("{:b}", actual).len());
+
     format!(
-        "Was:      0x{:016x} {:064b}\nExpected: 0x{:016x} {:064b}",
-        actual, actual, expected, expected
+        "Was:      0x{2:00$x} {2:01$b}\nExpected: 0x{3:00$x} {3:01$b}",
+        hex_width, binary_width, actual, expected
     )
-}
-
-pub fn run() -> Result<(), io::Error> {
-    super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-    internal_run()
-}
-
-fn internal_run() -> Result<(), io::Error> {
-    warn!("Loading log");
-
-    let reader = BincodeReader::new();
-
-    use std::env;
-    if let Ok(val) = env::var("STOP_AT") {
-        let stop_at = val.parse::<usize>().expect("parse STOP_AT");
-        return run_log(reader.take(stop_at).collect());
-    }
-
-    run_log(reader.collect())
 }
 
 #[inline(never)]
 fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
-    warn!("Beginning log run");
+    warn!("Beginning log run with {} logs", logs.len());
+    return Ok(());
 
     let matchers = crate::build_matchers::<ByteMap>();
 
     let mem = ByteMap::new();
     let mut cpu = Processor::new(0x1000, mem);
+
     let mut last_insn: Option<Insn> = None;
+    let mut last_store: Option<MemoryTrace> = None;
 
     let dtb = crate::load_dtb();
     crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
@@ -84,6 +106,7 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             line,
             state,
             insn,
+            store,
             mems,
         } = log_tuple;
 
@@ -157,6 +180,34 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             }
         }
 
+        // check for memory store
+        if let Some(store) = last_store {
+            trace!("Checking store {}", store);
+            if store.addr >= 0x80009000 && store.addr < 0x80009016 {
+                trace!("Ignoring write to HTIF: {}", store);
+            } else {
+                match store.kind.as_str() {
+                    "uint8" => {
+                        let val = cpu.mmu().read_b(store.addr).expect("mmu read");
+                        fail_on!("store", store.value as u8, val);
+                    }
+                    "uint16" => {
+                        let val = cpu.mmu().read_h(store.addr).expect("mmu read");
+                        fail_on!("store", store.value as u16, val);
+                    }
+                    "uint32" => {
+                        let val = cpu.mmu().read_w(store.addr).expect("mmu read");
+                        fail_on!("store", store.value as u32, val);
+                    }
+                    "uint64" => {
+                        let val = cpu.mmu().read_d(store.addr).expect("mmu read");
+                        fail_on!("store", store.value, val);
+                    }
+                    n => unimplemented!("check store type {}", n),
+                }
+            }
+        }
+
         if fail {
             let last_insn = last_insn.expect("last_insn");
             error!("debug info - step:     {}", step - 1);
@@ -170,38 +221,36 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             panic!("Failed checks");
         }
 
-        trace!("State validated OK from: {:?}", last_insn);
+        trace!(
+            "State validated OK from: {}",
+            last_insn
+                .map(|l| format!("{}", l))
+                .unwrap_or(format!("None"))
+        );
 
         // reset and begin again
 
         cpu.mmu_mut().mem_mut().clear();
 
-        if step % 10000 == 0 {
-            warn!("--- Begin step {} ({}) ---", step, line);
-        }
-
-        if let Some(ref insn) = insn {
-            info!("--- Begin step {} ({}) --- {}", step, line, insn);
+        let status_line = if let Some(ref insn) = insn {
+            format!("--- Begin step {} (json line {}) --- {}", step, line, insn)
         } else {
-            info!("--- Begin step {} ({}) --- No insn", step, line);
+            format!("--- Begin step {} (json line {}) --- No insn", step, line)
+        };
+
+        if step % 10000 == 0 {
+            warn!("{}", status_line);
         }
+        info!("{}", status_line);
 
         for mem in mems {
-            use crate::Memory;
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
-        }
-
-        if log_enabled!(Trace) {
-            for (addr, value) in &cpu.mmu().mem().data {
-                if *addr >= 0x4096 {
-                    trace!("Have 0x{:x}: 0x{:x}", addr, value);
-                }
-            }
         }
 
         cpu.step(&matchers);
 
         last_insn = insn;
+        last_store = store;
     }
 
     Ok(())

@@ -27,7 +27,7 @@ impl Memory for ByteMap {
     }
 
     fn write_b(&mut self, offset: u64, value: u8) {
-        // trace!("Saving 0x{:x} to 0x{:x}", value, offset);
+        trace!("Storing 0x{:x}: 0x{:x}", offset, value);
         self.data.push((offset, value));
     }
 }

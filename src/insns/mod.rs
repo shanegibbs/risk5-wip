@@ -189,8 +189,7 @@ pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
 }
 
 pub fn addw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
-    let v =
-        (p.regs.geti(i.rs1() as usize) as i32).wrapping_add(p.regs.geti(i.rs2() as usize) as i32);
+    let v = (p.regs.geti(i.rs1() as usize) as i32) + (p.regs.geti(i.rs2() as usize) as i32);
     p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }

@@ -1,3 +1,4 @@
+use super::json::*;
 use super::loglineiterator::LogLineIterator;
 use super::*;
 
@@ -28,6 +29,7 @@ impl Iterator for JsonLogTupleIterator {
 
         let mut insn = None;
         let mut state = None;
+        let mut store = None;
         let mut mems = vec![];
 
         loop {
@@ -49,7 +51,7 @@ impl Iterator for JsonLogTupleIterator {
                 LogLine::State(n) => state = Some(n),
                 LogLine::Memory(n) => mems.push(n),
                 LogLine::Load(_) => (),
-                LogLine::Store(_) => (),
+                LogLine::Store(n) => store = Some(n),
             }
         }
 
@@ -64,6 +66,7 @@ impl Iterator for JsonLogTupleIterator {
             line: self.line_it.count,
             state: state,
             insn,
+            store,
             mems,
         })
     }

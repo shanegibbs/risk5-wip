@@ -37,7 +37,7 @@ impl Regs {
         if i == 0 {
             return;
         }
-        debug!("Setting reg 0x{:x} 0x{:x}", i, v);
+        debug!("Setting reg {} to 0x{:x}", REG_NAMES[i], v);
         self.regs[i] = v;
     }
 

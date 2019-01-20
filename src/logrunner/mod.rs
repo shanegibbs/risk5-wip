@@ -6,84 +6,28 @@ use std::io::BufReader;
 use std::io::Lines;
 use std::{fmt, io};
 
-mod loglineiterator;
-// mod logtuplededupiterator;
+pub(crate) mod json;
 mod logger;
+mod loglineiterator;
 mod logtupleiterator;
 mod run;
 
+pub use self::run::convert;
 pub use self::run::run;
 
-pub fn convert() -> Result<(), io::Error> {
-    use bincode;
-    use std::io::BufWriter;
-
-    let mut out = BufWriter::new(io::stdout());
-
-    info!("starting");
-
-    for line in JsonLogTupleIterator::new()? {
-        trace!("{:?}", line);
-        let bin = line.to_logtuple();
-        bincode::serialize_into(&mut out, &bin).expect("serialize");
-    }
-
-    Ok(())
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "kind")]
-pub enum LogLine {
-    #[serde(rename = "mark")]
-    Mark,
-    #[serde(rename = "insn")]
-    Insn(JsonInsn),
-    #[serde(rename = "state")]
-    State(JsonState),
-    #[serde(rename = "load")]
-    Load(JsonMemory),
-    #[serde(rename = "store")]
-    Store(JsonMemory),
-    #[serde(rename = "mem")]
-    Memory(JsonMemory),
-}
-
-fn string_to_u64(s: &String) -> u64 {
-    u64::from_str_radix(&s[2..], 16).expect("hex parse")
-}
-
-fn string_to_u32(s: &String) -> u32 {
-    u32::from_str_radix(&s[2..], 16).expect("hex parse")
+pub(crate) struct LogTuple {
+    line: usize,
+    state: State,
+    insn: Option<Insn>,
+    store: Option<MemoryTrace>,
+    mems: Vec<MemoryTrace>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Insn {
     pc: u64,
     bits: u32,
-    desc: String,
-}
-
-impl fmt::Display for Insn {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "pc=0x{:x} bits=0x{:x} {}", self.pc, self.bits, self.desc)
-    }
-}
-
-impl Into<Insn> for JsonInsn {
-    fn into(self) -> Insn {
-        Insn {
-            pc: string_to_u64(&self.pc),
-            bits: string_to_u32(&self.bits),
-            desc: self.desc,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct JsonInsn {
-    core: usize,
-    pc: String,
-    bits: String,
     desc: String,
 }
 
@@ -102,62 +46,26 @@ pub struct State {
     xregs: Vec<u64>,
 }
 
-impl Into<State> for JsonState {
-    fn into(self) -> State {
-        State {
-            id: self.id,
-            pc: string_to_u64(&self.pc),
-            prv: string_to_u64(&self.prv),
-            mstatus: string_to_u64(&self.mstatus),
-            mcause: string_to_u64(&self.mcause),
-            mscratch: string_to_u64(&self.mscratch),
-            mtvec: string_to_u64(&self.mtvec),
-            mepc: string_to_u64(&self.mepc),
-            xregs: self.xregs.iter().map(|n| string_to_u64(n)).collect(),
-        }
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
-pub struct JsonState {
-    id: usize,
-    pc: String,
-    prv: String,
-
-    mstatus: String,
-    mepc: String,
-    mtval: String,
-    mscratch: String,
-    mtvec: String,
-
-    // mideleg: String,
-    mcause: String,
-    xregs: Vec<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Memory {
+pub struct MemoryTrace {
     kind: String,
     addr: u64,
     value: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct JsonMemory {
-    #[serde(rename = "type")]
-    kind: String,
-    addr: String,
-    value: String,
+impl fmt::Display for Insn {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "pc=0x{:x} bits=0x{:x} {}", self.pc, self.bits, self.desc)
+    }
 }
 
-impl Into<Memory> for JsonMemory {
-    fn into(self) -> Memory {
-        let JsonMemory { kind, addr, value } = self;
-        Memory {
-            kind: kind,
-            addr: string_to_u64(&addr),
-            value: string_to_u64(&value),
-        }
+impl fmt::Display for MemoryTrace {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "kind={} addr=0x{:x} value=0x{:x}",
+            self.kind, self.addr, self.value
+        )
     }
 }
 
@@ -177,30 +85,3 @@ impl Into<Memory> for JsonMemory {
 //         }
 //     }
 // }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct JsonLogTuple {
-    line: usize,
-    state: JsonState,
-    insn: Option<JsonInsn>,
-    mems: Vec<JsonMemory>,
-}
-
-impl JsonLogTuple {
-    fn to_logtuple(self) -> LogTuple {
-        LogTuple {
-            line: self.line,
-            state: self.state.into(),
-            insn: self.insn.map(|i| i.into()),
-            mems: self.mems.into_iter().map(|n| n.into()).collect(),
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub(crate) struct LogTuple {
-    line: usize,
-    state: State,
-    insn: Option<Insn>,
-    mems: Vec<Memory>,
-}
