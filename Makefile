@@ -47,23 +47,6 @@ bbl-test: build
 bbl-run: build
 	cat $(ASSETS)/bbl.bincode |env RUST_LOG=risk5=warn $(LOGRUNNER)
 
-compliance-tests: $(COMPLIANCE_TESTS)
-
-%-compliance-test: compliance/logs/%.bincode.log.bz2 build
-	bzcat $< |$(LOGRUNNER)
-
-compliance/logs/%.bincode.log.bz2: build
-	rm -rf work-$*
-	mkdir work-$*
-	cd work-$* && \
-		env LD_LIBRARY_PATH=$(PWD)/compliance/lib \
-			$(SPIKE) $(PWD)/compliance/tests/$*.elf && \
-		cat log.json \
-			|$(CONVERT) \
-			|bzip2 \
-			> $(PWD)/compliance/logs/$*.bincode.log.bz2
-	rm -rf work-$*
-
 build:
 	cargo $(CARGO_BUILD_ARGS)
 
@@ -90,6 +73,23 @@ load:
 	bunzip2 -k $(ASSETS)/bbl.bincode.bz2
 	bunzip2 -k $(ASSETS)/bbl.bincode.bz2
 	make test
+
+compliance-tests: $(COMPLIANCE_TESTS)
+
+%-compliance-test: compliance/logs/%.bincode.log.bz2 build
+	bzcat $< |$(LOGRUNNER)
+
+compliance/logs/%.bincode.log.bz2: build
+	rm -rf work-$*
+	mkdir work-$*
+	cd work-$* && \
+		env LD_LIBRARY_PATH=$(PWD)/compliance/lib \
+			$(SPIKE) $(PWD)/compliance/tests/$*.elf && \
+		cat log.json \
+			|$(CONVERT) \
+			|bzip2 \
+			> $(PWD)/compliance/logs/$*.bincode.log.bz2
+	rm -rf work-$*
 
 # read bbl.log.jsonl compress to gz and bz2, convert
 # to bincode and compress that output to gz and bz2 as well
