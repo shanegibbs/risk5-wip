@@ -19,7 +19,6 @@ pub struct Csrs {
     pub(crate) mie: u64,
     pub(crate) mip: u64,
 
-    pub(crate) sstatus: u64,
     pub(crate) sedeleg: u64,
     pub(crate) sideleg: u64,
     pub(crate) sie: u64,
@@ -106,7 +105,6 @@ impl Csrs {
             mie: 0,
             mip: 0,
 
-            sstatus: 0,
             sedeleg: 0,
             sideleg: 0,
             sie: 0,
@@ -142,7 +140,7 @@ impl Csrs {
             MSCRATCH => self.mscratch = v,
             MCOUNTEREN => self.mcounteren = v,
 
-            SSTATUS => self.sstatus = v,
+            SSTATUS => self.mstatus.set_bits(v),
             SEDELEG => self.sedeleg = v,
             SIDELEG => self.sideleg = v,
             SIE => self.sie = v,
@@ -192,7 +190,7 @@ impl Csrs {
             MSCRATCH => self.mscratch,
             MCAUSE => self.mcause,
 
-            SSTATUS => self.sstatus,
+            SSTATUS => self.mstatus.val(),
             SEDELEG => self.sedeleg,
             SIDELEG => self.sideleg,
             SIE => self.sie,

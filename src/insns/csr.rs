@@ -31,6 +31,13 @@ impl Op for ReadWriteImm {
     }
 }
 
+pub struct ReadClearImm {}
+impl Op for ReadClearImm {
+    fn exec<M>(p: &mut Processor<M>, i: &Itype, old: u64) {
+        p.set_csr(i.imm() as u32, i.rs1() as u64 & !old)
+    }
+}
+
 pub struct ReadSet {}
 impl Op for ReadSet {
     fn exec<M>(p: &mut Processor<M>, i: &Itype, old: u64) {

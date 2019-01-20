@@ -16,6 +16,9 @@ impl Mstatus {
         self.0.val()
     }
 
+    #[inline(always)]
+    pub fn set_bits(&mut self, _v: u64) {}
+
     // mie
 
     #[inline(always)]
