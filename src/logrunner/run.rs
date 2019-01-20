@@ -170,6 +170,8 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             panic!("Failed checks");
         }
 
+        trace!("State validated OK from: {:?}", last_insn);
+
         // reset and begin again
 
         cpu.mmu_mut().mem_mut().clear();
@@ -178,8 +180,11 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             warn!("--- Begin step {} ({}) ---", step, line);
         }
 
-        debug!("--- Begin step {} ({}) ---", step, line);
-        trace!("{:?}", insn);
+        if let Some(ref insn) = insn {
+            info!("--- Begin step {} ({}) --- {}", step, line, insn);
+        } else {
+            info!("--- Begin step {} ({}) --- No insn", step, line);
+        }
 
         for mem in mems {
             use crate::Memory;

@@ -60,7 +60,7 @@ macro_rules! mem {
         };
         let val = $self.mem.$func(addr);
         if addr >= 0x80009000 && addr < 0x80009016 {
-            warn!(
+            debug!(
                 "Doing htif {} at 0x{:x}: 0x{:x}",
                 stringify!($func),
                 addr,
@@ -78,7 +78,7 @@ macro_rules! mem {
             }
         };
         if addr >= 0x80009000 && addr < 0x80009016 {
-            warn!(
+            debug!(
                 "Doing htif {} at 0x{:x}: 0x{:x}",
                 stringify!($func),
                 addr,
@@ -95,6 +95,13 @@ impl<M: Memory> Mmu<M> {
             return Ok(offset);
         }
 
+        trace!(
+            "Translating offset 0x{:x} with asid=0x{:x} and ppn=0x{:x}",
+            offset,
+            self.asid,
+            self.ppn
+        );
+
         let pagesize = 4096;
         let levels = 3;
         let ptesize = 8;
@@ -110,6 +117,7 @@ impl<M: Memory> Mmu<M> {
             let pte_offset = a + (va.virtual_page_number(i) * ptesize);
 
             let pte_val = self.mem.read_d(pte_offset);
+            trace!("Read PTE at level {}: 0x{:x}", i, pte_val);
 
             let pte: PageTableEntry = pte_val.into();
 
@@ -138,19 +146,23 @@ impl<M: Memory> Mmu<M> {
         if i > 0 {
             // superpage translation
             for n in (0..i).rev() {
-                let ppn = va.virtual_page_number(i);
+                let ppn = va.virtual_page_number(n);
                 pa.set_physical_page_number_arr(n, ppn);
+                trace!("Superpage: Set PPN {} on PA from VPN PPN field {}", n, n);
             }
         }
 
         for n in (i..levels).rev() {
             let ppn = pte.physical_page_number_arr(n);
             pa.set_physical_page_number_arr(n, ppn);
+            trace!("Page: Set PPN {} on PA from PTE PPN field {}", n, n);
         }
 
         pa.set_offset(va.offset());
+        let pa = pa.into();
+        trace!("Translated to PA 0x{:x}", pa);
 
-        Ok(pa.into())
+        Ok(pa)
     }
 
     pub fn read_b(&self, offset: u64) -> Result<u8, ()> {
@@ -215,6 +227,24 @@ mod test {
             mem
         });
         mmu.set_page_mode(0, 0x80707);
-        assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80602440);
+        assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80664440);
+
+        let mut mmu = Mmu::new({
+            let mut mem = FakeMemory::new();
+            mem.push_read(FakeMemoryItem::Double(0x80687000, 0x200800cf));
+            mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
+            mem
+        });
+        mmu.set_page_mode(0, 0x80707);
+
+        let expected = 0x80202df8;
+        let actual = mmu.translate(0xffffffe000002df8).expect("ok");
+
+        trace!("Actual   0x{:16x}", actual);
+        trace!("Expected 0x{:16x}", expected);
+        trace!("Actual   {:64b}", actual);
+        trace!("Expected {:64b}", expected);
+
+        assert_eq!(actual, expected);
     }
 }

@@ -2,9 +2,9 @@ use self::logtupleiterator::*;
 use crate::regs;
 use crate::Processor;
 use serde_json;
-use std::io;
 use std::io::BufReader;
 use std::io::Lines;
+use std::{fmt, io};
 
 mod loglineiterator;
 // mod logtuplededupiterator;
@@ -61,6 +61,12 @@ pub struct Insn {
     pc: u64,
     bits: u32,
     desc: String,
+}
+
+impl fmt::Display for Insn {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "pc=0x{:x} bits=0x{:x} {}", self.pc, self.bits, self.desc)
+    }
 }
 
 impl Into<Insn> for JsonInsn {

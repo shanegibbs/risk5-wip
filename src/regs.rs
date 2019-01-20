@@ -37,7 +37,7 @@ impl Regs {
         if i == 0 {
             return;
         }
-        trace!("Setting reg 0x{:x} 0x{:x}", i, v);
+        debug!("Setting reg 0x{:x} 0x{:x}", i, v);
         self.regs[i] = v;
     }
 

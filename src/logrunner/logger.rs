@@ -32,12 +32,12 @@ fn print_line(level: &Level, module: Option<&str>, line: &String) {
     let module = format!("{0}[2m{1: <25}{0}[22m", 27 as char, module);
     writeln!(
         io::stderr(),
-        "{0}[1m{0}[{1}m{2}{0}[0m {3} {0}[{1}m{4}{0}[0m",
+        "{0}[1m{0}[{1}m{2:>5}{0}[0m {3} {0}[{1}m{4}{0}[0m",
         27 as char,
         match level {
-            Level::Error => "31",
-            Level::Warn => "33",
-            Level::Info => "34",
+            Level::Error => "38;5;124",
+            Level::Warn => "38;5;208",
+            Level::Info => "38;5;40",
             Level::Debug => "35",
             Level::Trace => "36",
         },
