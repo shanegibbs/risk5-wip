@@ -9,7 +9,7 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 bbl-test: target/release/logrunner
-	cat assets/bbl.bincode |env STOP_AT=694358 ./target/release/logrunner
+	cat assets/bbl.bincode |env STOP_AT=694689 ./target/release/logrunner
 
 bbl-run: target/release/logrunner
 	cat assets/bbl.bincode |env RUST_LOG=risk5=warn ./target/release/logrunner

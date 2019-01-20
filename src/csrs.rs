@@ -190,7 +190,7 @@ impl Csrs {
             MSCRATCH => self.mscratch,
             MCAUSE => self.mcause,
 
-            SSTATUS => self.mstatus.val(),
+            SSTATUS => self.mstatus.val_for_prv(self.prv),
             SEDELEG => self.sedeleg,
             SIDELEG => self.sideleg,
             SIE => self.sie,

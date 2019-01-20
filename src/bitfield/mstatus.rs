@@ -17,6 +17,18 @@ impl Mstatus {
     }
 
     #[inline(always)]
+    pub fn val_for_prv(&self, prv: u64) -> u64 {
+        match prv {
+            3 => self.val(),
+            1 => self.val() & 0x3000de122,
+            i => {
+                error!("Unimplemented prv level for mstatus val: {}", i);
+                0
+            }
+        }
+    }
+
+    #[inline(always)]
     pub fn set_bits(&mut self, _v: u64) {}
 
     // mie
