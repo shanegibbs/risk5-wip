@@ -70,8 +70,6 @@ save-broken:
 
 load:
 	git pull
-	bunzip2 -k $(ASSETS)/bbl.bincode.bz2
-	bunzip2 -k $(ASSETS)/bbl.bincode.bz2
 	make test
 
 compliance-tests: $(COMPLIANCE_TESTS)
