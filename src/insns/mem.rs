@@ -33,8 +33,16 @@ pub fn lbu<M: Memory>(p: &mut Processor<M>, i: Itype) {
 
 pub fn lb<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let rs1 = p.regs.geti(i.rs1() as usize);
-    let v = mem!(p, read_w, (rs1 + i.imm()) as u64);
-    let sign_extended = ((v as i64) << 32 >> 32) as u64;
+    let v = mem!(p, read_b, (rs1 + i.imm()) as u64);
+    let sign_extended = ((v as i64) << 56 >> 56) as u64;
+    p.regs.set(i.rd() as usize, sign_extended);
+    p.advance_pc();
+}
+
+pub fn lh<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let v = mem!(p, read_h, (rs1 + i.imm()) as u64);
+    let sign_extended = ((v as i64) << 48 >> 48) as u64;
     p.regs.set(i.rd() as usize, sign_extended);
     p.advance_pc();
 }
