@@ -73,20 +73,6 @@ impl Iterator for BincodeReader {
     }
 }
 
-fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T) -> String {
-    let hex_width = format!("{:x}", actual)
-        .len()
-        .max(format!("{:x}", actual).len());
-    let binary_width = format!("{:b}", actual)
-        .len()
-        .max(format!("{:b}", actual).len());
-
-    format!(
-        "Was:      0x{2:00$x} {2:01$b}\nExpected: 0x{3:00$x} {3:01$b}",
-        hex_width, binary_width, actual, expected
-    )
-}
-
 #[inline(never)]
 fn run_log<I>(logs: I) -> Result<(), io::Error>
 where
@@ -134,18 +120,6 @@ where
             };
         }
 
-        /* macro_rules! warn_on {
-            ($name:expr, $expected:expr, $actual:expr) => {
-                let val = u64::from_str_radix(&$expected[2..], 16).expect($name);
-                if val != $actual {
-                    warn!(
-                        "Fail {} check. Was: 0x{:016x}, expected: {}",
-                        $name, $actual, $expected
-                    );
-                }
-            };
-        } */
-
         if let Some(ref insn) = &insn {
             if insn.pc != state.pc {
                 error!("Insn and state pc do not match");
@@ -153,36 +127,8 @@ where
             }
         }
 
-        fail_on!("pc", state.pc, cpu.pc());
-        fail_on!("prv", state.prv, cpu.csrs().prv);
-        fail_on!("mepc", state.mepc, cpu.csrs().mepc);
-        fail_on!("mcause", state.mcause, cpu.csrs().mcause);
-        fail_on!("mscratch", state.mscratch, cpu.csrs().mscratch);
-        fail_on!("mtvec", state.mtvec, cpu.csrs().mtvec);
-        // fail_on!("mideleg", state.mideleg, cpu.csrs().mideleg);
-
-        {
-            if state.mstatus != cpu.csrs().mstatus.val() {
-                use crate::bitfield::Mstatus;
-                let mstatus_expected = Mstatus::new_with_val(state.mstatus);
-                error!(
-                    "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
-                    format_diff(state.mstatus, cpu.csrs().mstatus.val()),
-                    cpu.csrs().mstatus,
-                    mstatus_expected
-                );
-                fail = true;
-            }
-        }
-
-        for (i, reg) in state.xregs.iter().enumerate() {
-            let actual = cpu.regs.get(i);
-            if *reg != actual {
-                let msg = format!("Fail reg check on 0x{:02x} ({})\nWas:      0x{:016x} {:064b} \nExpected: 0x{:016x} {:064b}",
-                    i, regs::REG_NAMES[i], actual, actual, reg, reg);
-                error!("{}", msg);
-                fail = true;
-            }
+        if !state.validate(&cpu) {
+            fail = true;
         }
 
         // check for memory store
@@ -214,14 +160,15 @@ where
         }
 
         if fail {
-            let last_insn = last_insn.expect("last_insn");
-            error!("debug info - step:     {}", step - 1);
+            error!("debug info - step:     {}", step as i64 - 1);
             error!(
                 "debug info - Insn PC:  0x{:x}",
                 insn.map(|i| i.pc).unwrap_or(0)
             );
             error!("debug info - State PC: 0x{:x}", state.pc);
-            error!("debug info - Insn:     {}", last_insn.desc);
+            if let Some(last_insn) = last_insn {
+                error!("debug info - Insn:     {}", last_insn.desc);
+            }
             error!("debug info - Line:     {}", line);
             panic!("Failed checks");
         }

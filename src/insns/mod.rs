@@ -171,10 +171,17 @@ pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
-    if p.csrs().prv != 3 {
-        panic!("Unimplemented prv level");
-    }
-    do_trap(p, 0xb, 0)
+    let prv = p.csrs().prv;
+    do_trap(
+        p,
+        match prv {
+            0 => 8,
+            1 => 9,
+            3 => 11,
+            prv => panic!("Unimplemented prv level for ecall {}", prv),
+        },
+        0,
+    )
 }
 
 // Integer Computational Instructions

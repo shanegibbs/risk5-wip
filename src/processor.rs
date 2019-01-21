@@ -5,8 +5,8 @@ use crate::{Matcher, Memory, Regs};
 #[derive(Debug)]
 pub struct Processor<M> {
     pc: u64,
-    pub(crate) regs: Regs,
     csrs: Csrs,
+    pub(crate) regs: Regs,
     mmu: Mmu<M>,
 }
 
@@ -14,8 +14,8 @@ impl<M> Processor<M> {
     pub fn new(pc: u64, mem: M) -> Self {
         Processor {
             pc: pc,
-            regs: Regs::new(),
             csrs: Csrs::new(),
+            regs: Regs::new(),
             mmu: Mmu::new(mem),
         }
     }
@@ -100,5 +100,35 @@ impl<M> Processor<M> {
     #[inline(always)]
     pub fn pc(&self) -> u64 {
         self.pc
+    }
+}
+
+use crate::logrunner::State;
+impl<M> Into<State> for &Processor<M> {
+    fn into(self) -> State {
+        State {
+            id: 0,
+            pc: self.pc,
+            prv: self.csrs.prv,
+            mstatus: self.csrs.mstatus.val(),
+            mepc: self.csrs.mepc,
+            mtvec: self.csrs.mtvec,
+            mcause: self.csrs.mcause,
+            mscratch: self.csrs.mscratch,
+            minstret: 0, // self.csrs.minstret,
+            mie: self.csrs.mie,
+            mip: self.csrs.mip,
+            medeleg: self.csrs.medeleg,
+            mideleg: self.csrs.mideleg,
+            mcounteren: self.csrs.mcounteren,
+            scounteren: self.csrs.scounteren,
+            sepc: self.csrs.sepc,
+            stval: self.csrs.stval,
+            sscratch: self.csrs.sscratch,
+            stvec: self.csrs.stvec,
+            satp: (&self.csrs.satp).into(),
+            scause: self.csrs.scause,
+            xregs: (&self.regs).into(),
+        }
     }
 }

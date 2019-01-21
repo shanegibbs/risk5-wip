@@ -46,3 +46,9 @@ impl Regs {
         self.set(i, v as u64)
     }
 }
+
+impl Into<Vec<u64>> for &Regs {
+    fn into(self) -> Vec<u64> {
+        (&self.regs).iter().map(|n| *n).collect()
+    }
+}

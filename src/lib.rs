@@ -275,9 +275,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xf800707f, 0x2000302f, |p, _| {
             error!("Unimplemented insn 'amoxor.d' at {:x}", p.pc())
         }),
-        Matcher::new(0xf800707f, 0x4000302f, |p, _| {
-            error!("Unimplemented insn 'amoor.d' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf800707f, 0x4000302f, wrap!(amoord)),
         Matcher::new(0xf800707f, 0x6000302f, |p, _| {
             error!("Unimplemented insn 'amoand.d' at {:x}", p.pc())
         }),
