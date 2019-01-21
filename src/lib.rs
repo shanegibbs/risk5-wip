@@ -171,7 +171,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x7013, wrap!(andi)),
         Matcher::new(0xfe00707f, 0x33, wrap!(add)),
         Matcher::new(0xfe00707f, 0x40000033, wrap!(sub)),
-        Matcher::new(0xfe00707f, 0x1033, noimpl!("sll")),
+        Matcher::new(0xfe00707f, 0x1033, wrap!(sll)),
         Matcher::new(0xfe00707f, 0x2033, noimpl!("slt")),
         Matcher::new(0xfe00707f, 0x3033, noimpl!("sltu")),
         Matcher::new(0xfe00707f, 0x4033, wrap!(xor)),
@@ -207,9 +207,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             trace!("Unimplemented insn 'fence.i' at {:x}", p.pc());
             p.advance_pc();
         }),
-        Matcher::new(0xfe00707f, 0x2000033, |p, _| {
-            error!("Unimplemented insn 'mul' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x2000033, wrap!(mul)),
         Matcher::new(0xfe00707f, 0x2001033, |p, _| {
             error!("Unimplemented insn 'mulh' at {:x}", p.pc())
         }),

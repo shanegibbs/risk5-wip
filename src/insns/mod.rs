@@ -263,6 +263,14 @@ pub fn subw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn sll<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let shmat = p.regs.get(i.rs2() as usize) & 0x1F;
+    let v = p.regs.get(i.rs1() as usize);
+    let v = v << shmat;
+    p.regs.set(i.rd() as usize, v);
+    p.advance_pc();
+}
+
 pub fn sllw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let shmat = p.regs.get(i.rs2() as usize) & 0x1F;
     let v = p.regs.get(i.rs1() as usize) as u32;
