@@ -351,3 +351,9 @@ pub fn divu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }
+
+pub fn remu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.get(i.rs1() as usize) % p.regs.get(i.rs2() as usize);
+    p.regs.set(i.rd() as usize, v);
+    p.advance_pc();
+}
