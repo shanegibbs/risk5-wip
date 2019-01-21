@@ -21,7 +21,7 @@ LOGRUNNER=$(BUILD_DIR)/logrunner
 RISK5=$(BUILD_DIR)/risk5
 
 ASSETS:=$(PWD)/assets
-SPIKE=$(PWD)/compliance/bin/spike
+SPIKE=env LD_LIBRARY_PATH=$(PWD)/compliance/lib $(PWD)/compliance/bin/spike
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
 COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.log.bz2,$(COMPLIANCE_PATHS))
@@ -42,10 +42,10 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 bbl-test: build
-	cat $(ASSETS)/bbl.bincode |env STOP_AT=694689 $(LOGRUNNER)
+	$(SPIKE) --isa rv64ima -c643305 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
 
 bbl-run: build
-	cat $(ASSETS)/bbl.bincode |env RUST_LOG=risk5=warn $(LOGRUNNER)
+	$(SPIKE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
 
 build:
 	cargo $(CARGO_BUILD_ARGS)
@@ -76,20 +76,11 @@ load:
 
 compliance-tests: $(COMPLIANCE_TESTS)
 
-%-compliance-test: compliance/logs/%.bincode.log.bz2 build
-	bzcat $< |$(LOGRUNNER)
+%-compliance-test: build
+	$(SPIKE) --isa rv64ima $(PWD)/compliance/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
 
-compliance/logs/%.bincode.log.bz2: build
-	rm -rf work-$*
-	mkdir work-$*
-	cd work-$* && \
-		env LD_LIBRARY_PATH=$(PWD)/compliance/lib \
-			$(SPIKE) $(PWD)/compliance/tests/$*.elf && \
-		cat log.json \
-			|$(CONVERT) \
-			|bzip2 \
-			> $(PWD)/compliance/logs/$*.bincode.log.bz2
-	rm -rf work-$*
+real-spike:
+	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl
 
 # read bbl.log.jsonl compress to gz and bz2, convert
 # to bincode and compress that output to gz and bz2 as well

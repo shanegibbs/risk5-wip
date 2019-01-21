@@ -4,17 +4,16 @@ use crate::Memory;
 
 pub fn run() -> Result<(), io::Error> {
     super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
-    warn!("Loading log");
 
     let reader = BincodeReader::new();
 
     use std::env;
     if let Ok(val) = env::var("STOP_AT") {
         let stop_at = val.parse::<usize>().expect("parse STOP_AT");
-        return run_log(reader.take(stop_at).collect());
+        return run_log(reader.take(stop_at));
     }
 
-    run_log(reader.collect())
+    run_log(reader)
 }
 
 pub fn convert() -> Result<(), io::Error> {
@@ -28,7 +27,10 @@ pub fn convert() -> Result<(), io::Error> {
     for line in JsonLogTupleIterator::new()? {
         trace!("{:?}", line);
         let bin = line.to_logtuple();
-        bincode::serialize_into(&mut out, &bin).expect("serialize");
+        bincode::serialize_into(&mut out, &bin).map_err(|e| match *e {
+            bincode::ErrorKind::Io(e) => e,
+            e => io::Error::new(io::ErrorKind::Other, format!("{}", e)),
+        })?
     }
 
     Ok(())
@@ -86,10 +88,10 @@ fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T) -> String
 }
 
 #[inline(never)]
-fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
-    warn!("Beginning log run with {} logs", logs.len());
-    return Ok(());
-
+fn run_log<I>(logs: I) -> Result<(), io::Error>
+where
+    I: Iterator<Item = LogTuple>,
+{
     let matchers = crate::build_matchers::<ByteMap>();
 
     let mem = ByteMap::new();
@@ -101,7 +103,9 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
     let dtb = crate::load_dtb();
     crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
 
-    for (step, log_tuple) in logs.into_iter().enumerate() {
+    let mut counter = 0;
+
+    for (step, log_tuple) in logs.enumerate() {
         let LogTuple {
             line,
             state,
@@ -109,6 +113,7 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
             store,
             mems,
         } = log_tuple;
+        counter += 1;
 
         // trace!("This insn {:?}", insn);
 
@@ -253,5 +258,6 @@ fn run_log(logs: Vec<LogTuple>) -> Result<(), io::Error> {
         last_store = store;
     }
 
+    warn!("Retired {} insns", counter);
     Ok(())
 }

@@ -1,7 +1,12 @@
+#[macro_use]
+extern crate log;
 use pretty_env_logger;
 use risk5;
 
-fn main() -> Result<(), Box<std::error::Error>> {
+fn main() {
     pretty_env_logger::init();
-    risk5::logrunner::convert().map_err(|e| e.into())
+    match risk5::logrunner::convert() {
+        Err(e) => error!("{}", e),
+        Ok(()) => (),
+    }
 }

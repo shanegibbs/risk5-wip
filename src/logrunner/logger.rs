@@ -98,7 +98,7 @@ impl log::Log for LOGGER {
             }
         }
 
-        if record.metadata().level() <= Level::Warn {
+        if record.metadata().level() <= Level::Error {
             print_line(
                 &record.metadata().level(),
                 record.module_path(),
