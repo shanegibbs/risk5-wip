@@ -21,7 +21,7 @@ LOGRUNNER=$(BUILD_DIR)/logrunner
 RISK5=$(BUILD_DIR)/risk5
 
 ASSETS:=$(PWD)/assets
-SPIKE=env LD_LIBRARY_PATH=$(PWD)/compliance/lib $(PWD)/compliance/bin/spike
+SPIKE_TRACE=env LD_LIBRARY_PATH=$(PWD)/compliance/lib $(PWD)/compliance/bin/spike
 COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
 COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.log.bz2,$(COMPLIANCE_PATHS))
@@ -33,7 +33,7 @@ COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.l
 .PHONY: build run test
 
 # default target
-test: check unit-tests compliance-tests bbl-test
+test: check unit-tests compliance-tests spike-trace-test
 
 check:
 	cargo check
@@ -41,11 +41,14 @@ check:
 unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
-bbl-test: build
-	$(SPIKE) --isa rv64ima -c643305 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+spike-trace-test: build
+	$(SPIKE_TRACE) --isa rv64ima -c643305 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
 
-bbl-run: build
-	$(SPIKE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+spike-trace: build
+	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+
+spike:
+	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl
 
 build:
 	cargo $(CARGO_BUILD_ARGS)
@@ -75,10 +78,7 @@ load:
 compliance-tests: $(COMPLIANCE_TESTS)
 
 %-compliance-test: build
-	$(SPIKE) --isa rv64ima $(PWD)/compliance/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
-
-real-spike:
-	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl
+	$(SPIKE_TRACE) --isa rv64ima $(PWD)/compliance/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
 
 # read bbl.log.jsonl compress to gz and bz2, convert
 # to bincode and compress that output to gz and bz2 as well

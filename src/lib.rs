@@ -163,7 +163,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x13, wrap!(addi)),
         Matcher::new(0xfc00707f, 0x1013, wrap!(slli)),
         Matcher::new(0x707f, 0x2013, noimpl!("slti")),
-        Matcher::new(0x707f, 0x3013, noimpl!("sltiu")),
+        Matcher::new(0x707f, 0x3013, wrap!(sltiu)),
         Matcher::new(0x707f, 0x4013, wrap!(xori)),
         Matcher::new(0xfc00707f, 0x5013, wrap!(srli)),
         Matcher::new(0xfc00707f, 0x40005013, wrap!(srai)),
