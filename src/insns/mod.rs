@@ -340,3 +340,14 @@ pub fn mul<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }
+
+pub fn divu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let rhs = p.regs.get(i.rs2() as usize);
+    let v = if rhs == 0 {
+        u64::max_value()
+    } else {
+        p.regs.get(i.rs1() as usize) / rhs
+    };
+    p.regs.set(i.rd() as usize, v);
+    p.advance_pc();
+}
