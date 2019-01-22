@@ -84,6 +84,7 @@ where
     let mut cpu = Processor::new(0x1000, mem);
 
     let mut last_insn: Option<Insn> = None;
+    let mut last_state = Option<State> = None;
     let mut last_store: Option<MemoryTrace> = None;
 
     let dtb = crate::load_dtb();
@@ -202,6 +203,7 @@ where
         cpu.step(&matchers);
 
         last_insn = insn;
+        last_state = state;
         last_store = store;
     }
 

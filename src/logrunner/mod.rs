@@ -45,6 +45,11 @@ pub struct Insn {
     desc: String,
 }
 
+pub struct RestorableState<'s, M> {
+    pub state: &'s State,
+    pub memory: M,
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct State {
     pub(crate) id: usize,

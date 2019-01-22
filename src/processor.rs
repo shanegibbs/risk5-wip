@@ -103,18 +103,20 @@ impl<M> Processor<M> {
     }
 }
 
-use crate::logrunner::State;
-impl<M> Into<Processor<M>> for &State {
+use crate::logrunner::RestorableState;
+impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
     fn into(self) -> Processor<M> {
+        let RestorableState { state, memory } = self;
         Processor {
-            pc: self.pc,
-            csrs: self.into(),
-            regs: (self.xregs.as_slice()).into(),
-            mmu: self.into(),
+            pc: state.pc,
+            csrs: state.into(),
+            regs: (state.xregs.as_slice()).into(),
+            mmu: RestorableState { state, memory }.into(),
         }
     }
 }
 
+use crate::logrunner::State;
 impl<M> Into<State> for &Processor<M> {
     fn into(self) -> State {
         State {

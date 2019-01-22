@@ -249,15 +249,14 @@ mod test {
     }
 }
 
-use crate::logrunner::State;
 use crate::bitfield::Satp;
+use crate::logrunner::RestorableState;
 
-impl<M> Into<Mmu<M>> for (&State, M) {
+impl<'a, M> Into<Mmu<M>> for RestorableState<'a, M> {
     fn into(self) -> Mmu<M> {
-        let (state, m) = self;
-        let satp: Satp = state.satp.into();
+        let satp: Satp = self.state.satp.into();
         Mmu {
-            mem: m,
+            mem: self.memory,
             sv39: satp.mode() == 8,
             asid: satp.asid() as u16,
             ppn: satp.ppn() as u64,
