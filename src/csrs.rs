@@ -216,3 +216,35 @@ impl fmt::Debug for Csrs {
         write!(f, "Csrs")
     }
 }
+
+use crate::logrunner::State;
+impl Into<Csrs> for &State {
+    fn into(self) -> Csrs {
+        Csrs {
+            prv: self.prv,
+            mstatus: Mstatus::new_with_val(self.mstatus),
+            medeleg: self.medeleg,
+            mideleg: self.mideleg,
+            mtvec: self.mtvec,
+            mepc: self.mepc,
+            mtval: 0, // self.mtval,
+            mcause: self.mcause,
+            mscratch: self.mscratch,
+            misa: 0, // self.misa,
+            mcounteren: self.mcounteren,
+            mie: self.mie,
+            mip: self.mip,
+            sedeleg: 0, // self.sedeleg,
+            sideleg: 0, // self.sideleg,
+            sie: 0, // self.sie,
+            stvec: self.stvec,
+            scounteren: self.scounteren,
+            sscratch: self.sscratch,
+            sepc: self.sepc,
+            scause: self.scause,
+            stval: self.stval,
+            sip: 0, // self.sip,
+            satp: self.satp.into(),
+        }
+    }
+}

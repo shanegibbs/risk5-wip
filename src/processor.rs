@@ -104,6 +104,17 @@ impl<M> Processor<M> {
 }
 
 use crate::logrunner::State;
+impl<M> Into<Processor<M>> for &State {
+    fn into(self) -> Processor<M> {
+        Processor {
+            pc: self.pc,
+            csrs: self.into(),
+            regs: (self.xregs.as_slice()).into(),
+            mmu: self.into(),
+        }
+    }
+}
+
 impl<M> Into<State> for &Processor<M> {
     fn into(self) -> State {
         State {

@@ -52,3 +52,10 @@ impl Into<Vec<u64>> for &Regs {
         (&self.regs).iter().map(|n| *n).collect()
     }
 }
+
+impl Into<Regs> for &[u64] {
+    fn into(self) -> Regs {
+        let mut regs = [0; 32];
+        Regs { regs }
+    }
+}

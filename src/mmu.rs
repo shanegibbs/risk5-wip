@@ -248,3 +248,19 @@ mod test {
         assert_eq!(actual, expected);
     }
 }
+
+use crate::logrunner::State;
+use crate::bitfield::Satp;
+
+impl<M> Into<Mmu<M>> for (&State, M) {
+    fn into(self) -> Mmu<M> {
+        let (state, m) = self;
+        let satp: Satp = state.satp.into();
+        Mmu {
+            mem: m,
+            sv39: satp.mode() == 8,
+            asid: satp.asid() as u16,
+            ppn: satp.ppn() as u64,
+        }
+    }
+}
