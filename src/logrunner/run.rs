@@ -80,15 +80,16 @@ where
 {
     let matchers = crate::build_matchers::<ByteMap>();
 
-    let mem = ByteMap::new();
+    let mut dtb_mem = ByteMap::new();
+    let dtb = crate::load_dtb();
+    crate::write_reset_vec(&mut dtb_mem, 0x80000000, &dtb);
+
+    let mem = ByteMap::new().with_persistent(dtb_mem.to_data());
     let mut cpu = Processor::new(0x1000, mem);
 
     let mut last_insn: Option<Insn> = None;
-    let mut last_state = Option<State> = None;
+    let mut last_state: Option<State> = None;
     let mut last_store: Option<MemoryTrace> = None;
-
-    let dtb = crate::load_dtb();
-    crate::write_reset_vec(cpu.mmu_mut().mem_mut(), 0x80000000, &dtb);
 
     let mut counter = 0;
 
@@ -203,7 +204,7 @@ where
         cpu.step(&matchers);
 
         last_insn = insn;
-        last_state = state;
+        last_state = Some(state);
         last_store = store;
     }
 

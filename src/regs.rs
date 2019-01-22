@@ -56,6 +56,7 @@ impl Into<Vec<u64>> for &Regs {
 impl Into<Regs> for &[u64] {
     fn into(self) -> Regs {
         let mut regs = [0; 32];
+        regs.copy_from_slice(self);
         Regs { regs }
     }
 }
