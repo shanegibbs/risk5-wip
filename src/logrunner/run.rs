@@ -74,6 +74,10 @@ impl Iterator for BincodeReader {
     }
 }
 
+// TODO test case struct
+// TODO iterator of current and next state
+// TODO multithread
+
 fn test_state<M>(
     matchers: &Vec<Matcher<M>>,
     state: &State,
