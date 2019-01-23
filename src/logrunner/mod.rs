@@ -1,7 +1,10 @@
 use self::logtupleiterator::*;
+use crate::mmu::Mmu;
 use crate::regs;
+use crate::Memory;
 use crate::Processor;
 use serde_json;
+use std::default::Default;
 use std::io::BufReader;
 use std::io::Lines;
 use std::{fmt, io};
@@ -83,6 +86,67 @@ pub struct MemoryTrace {
     kind: String,
     addr: u64,
     value: u64,
+}
+
+trait ToMemory {
+    fn to_memory<M: Memory + Default>(&self) -> M;
+}
+
+impl ToMemory for Vec<MemoryTrace> {
+    fn to_memory<M: Memory + Default>(&self) -> M {
+        let mut memory: M = Default::default();
+        for mem in self {
+            memory.write_b(mem.addr, mem.value as u8);
+        }
+        memory
+    }
+}
+
+impl MemoryTrace {
+    fn validate<M>(&self, m: &Mmu<M>) -> bool
+    where
+        M: Memory,
+    {
+        trace!("Checking store {}", self);
+        if self.addr >= 0x80009000 && self.addr < 0x80009016 {
+            trace!("Ignoring write to HTIF: {}", self);
+            return true;
+        }
+
+        macro_rules! fail_on {
+            ($name:expr, $expected:expr, $actual:expr) => {
+                if $expected != $actual {
+                    error!(
+                        "Fail check on {}.\n{}",
+                        $name,
+                        format_diff($expected, $actual)
+                    );
+                    return false;
+                }
+                return true;
+            };
+        }
+
+        match self.kind.as_str() {
+            "uint8" => {
+                let val = m.read_b(self.addr).expect("mmu read");
+                fail_on!("store", self.value as u8, val);
+            }
+            "uint16" => {
+                let val = m.read_h(self.addr).expect("mmu read");
+                fail_on!("store", self.value as u16, val);
+            }
+            "uint32" => {
+                let val = m.read_w(self.addr).expect("mmu read");
+                fail_on!("store", self.value as u32, val);
+            }
+            "uint64" => {
+                let val = m.read_d(self.addr).expect("mmu read");
+                fail_on!("store", self.value, val);
+            }
+            n => unimplemented!("check store type {}", n),
+        }
+    }
 }
 
 impl fmt::Display for Insn {

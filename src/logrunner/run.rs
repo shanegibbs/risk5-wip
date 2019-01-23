@@ -1,4 +1,5 @@
 use super::*;
+use crate::matcher::Matcher;
 use crate::memory::*;
 use crate::Memory;
 
@@ -73,6 +74,77 @@ impl Iterator for BincodeReader {
     }
 }
 
+fn test_state<M>(
+    matchers: &Vec<Matcher<M>>,
+    state: &State,
+    insn: &Insn,
+    memory: M,
+    after: &State,
+    expected_store: Option<&MemoryTrace>,
+) where
+    M: Memory,
+{
+    let mut cpu: Processor<M> = RestorableState { state, memory }.into();
+    cpu.step(&matchers);
+
+    let mut fail = false;
+
+    if !after.validate(&cpu) {
+        error!("cpu state fail");
+        fail = true;
+    }
+
+    if let Some(store) = expected_store {
+        if !store.validate(cpu.mmu()) {
+            error!("mem store fail");
+            fail = true;
+        }
+    }
+
+    if fail {
+        error!("failed");
+        panic!("new test failed");
+    } else {
+        info!("ok");
+    }
+}
+
+fn maybe_test_state<M>(
+    matchers: &Vec<Matcher<M>>,
+    last_state: &Option<State>,
+    last_insn: &Option<Insn>,
+    last_mems: &Vec<MemoryTrace>,
+    state: &State,
+    last_store: &Option<MemoryTrace>,
+) where
+    M: Memory + Default,
+{
+    if last_mems
+        .iter()
+        .filter(|m| m.addr <= 0x10000)
+        .next()
+        .is_some()
+    {
+        return;
+    }
+
+    let before = if let Some(t) = last_state { t } else { return };
+    let insn = if let Some(t) = last_insn { t } else { return };
+
+    if before.pc < 0x10000 || state.pc < 0x10000 {
+        return;
+    }
+
+    test_state(
+        &matchers,
+        before,
+        insn,
+        last_mems.to_memory(),
+        &state,
+        last_store.as_ref(),
+    )
+}
+
 #[inline(never)]
 fn run_log<I>(logs: I) -> Result<(), io::Error>
 where
@@ -80,16 +152,17 @@ where
 {
     let matchers = crate::build_matchers::<ByteMap>();
 
-    let mut dtb_mem = ByteMap::new();
+    let mut dtb_mem = ByteMap::default();
     let dtb = crate::load_dtb();
     crate::write_reset_vec(&mut dtb_mem, 0x80000000, &dtb);
 
-    let mem = ByteMap::new().with_persistent(dtb_mem.to_data());
+    let mem = ByteMap::default().with_persistent(dtb_mem.to_data());
     let mut cpu = Processor::new(0x1000, mem);
 
     let mut last_insn: Option<Insn> = None;
     let mut last_state: Option<State> = None;
     let mut last_store: Option<MemoryTrace> = None;
+    let mut last_mems = vec![];
 
     let mut counter = 0;
 
@@ -103,24 +176,22 @@ where
         } = log_tuple;
         counter += 1;
 
+        if !cpu.mmu().mem().did_persistent_load() {
+            maybe_test_state(
+                &matchers,
+                &last_state,
+                &last_insn,
+                &last_mems,
+                &state,
+                &last_store,
+            );
+        }
+
         // trace!("This insn {:?}", insn);
 
         let mut fail = false;
 
         // validate current state
-
-        macro_rules! fail_on {
-            ($name:expr, $expected:expr, $actual:expr) => {
-                if $expected != $actual {
-                    error!(
-                        "Fail check on {}.\n{}",
-                        $name,
-                        format_diff($expected, $actual)
-                    );
-                    fail = true;
-                }
-            };
-        }
 
         if let Some(ref insn) = &insn {
             if insn.pc != state.pc {
@@ -135,29 +206,8 @@ where
 
         // check for memory store
         if let Some(store) = last_store {
-            trace!("Checking store {}", store);
-            if store.addr >= 0x80009000 && store.addr < 0x80009016 {
-                trace!("Ignoring write to HTIF: {}", store);
-            } else {
-                match store.kind.as_str() {
-                    "uint8" => {
-                        let val = cpu.mmu().read_b(store.addr).expect("mmu read");
-                        fail_on!("store", store.value as u8, val);
-                    }
-                    "uint16" => {
-                        let val = cpu.mmu().read_h(store.addr).expect("mmu read");
-                        fail_on!("store", store.value as u16, val);
-                    }
-                    "uint32" => {
-                        let val = cpu.mmu().read_w(store.addr).expect("mmu read");
-                        fail_on!("store", store.value as u32, val);
-                    }
-                    "uint64" => {
-                        let val = cpu.mmu().read_d(store.addr).expect("mmu read");
-                        fail_on!("store", store.value, val);
-                    }
-                    n => unimplemented!("check store type {}", n),
-                }
+            if !store.validate(cpu.mmu()) {
+                fail = true;
             }
         }
 
@@ -197,7 +247,7 @@ where
         }
         info!("{}", status_line);
 
-        for mem in mems {
+        for mem in &mems {
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
         }
 
@@ -206,6 +256,7 @@ where
         last_insn = insn;
         last_state = Some(state);
         last_store = store;
+        last_mems = mems;
     }
 
     warn!("Retired {} insns", counter);
