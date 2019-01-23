@@ -9,6 +9,7 @@ use std::io::BufReader;
 use std::io::Lines;
 use std::{fmt, io};
 
+mod bincode;
 pub(crate) mod json;
 mod logger;
 mod loglineiterator;
@@ -41,7 +42,7 @@ pub(crate) struct LogTuple {
     mems: Vec<MemoryTrace>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Insn {
     pc: u64,
     bits: u32,
@@ -53,7 +54,7 @@ pub struct RestorableState<'s, M> {
     pub memory: M,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
     pub(crate) id: usize,
     pub(crate) pc: u64,
@@ -81,7 +82,7 @@ pub struct State {
     pub(crate) xregs: Vec<u64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MemoryTrace {
     kind: String,
     addr: u64,

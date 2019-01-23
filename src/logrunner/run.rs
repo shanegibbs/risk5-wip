@@ -1,4 +1,5 @@
-use super::*;
+use super::bincode::BincodeReader;
+use super::State;
 use crate::matcher::Matcher;
 use crate::memory::*;
 use crate::Memory;
@@ -18,7 +19,7 @@ pub fn run() -> Result<(), io::Error> {
 }
 
 pub fn convert() -> Result<(), io::Error> {
-    use bincode;
+    use bincode as ext_bincode;
     use std::io::BufWriter;
 
     let mut out = BufWriter::new(io::stdout());
@@ -37,92 +38,62 @@ pub fn convert() -> Result<(), io::Error> {
     Ok(())
 }
 
-struct BincodeReader {
-    reader: BufReader<io::Stdin>,
-}
-
-impl BincodeReader {
-    fn new() -> Self {
-        let reader = BufReader::new(io::stdin());
-        BincodeReader { reader }
-    }
-}
-
-impl Iterator for BincodeReader {
-    type Item = LogTuple;
-
-    fn next(&mut self) -> Option<LogTuple> {
-        use bincode;
-
-        let val = match bincode::deserialize_from(&mut self.reader) {
-            Ok(n) => n,
-            Err(e) => {
-                match *e {
-                    bincode::ErrorKind::Io(ref e) => {
-                        if e.kind() == io::ErrorKind::UnexpectedEof {
-                            return None;
-                        }
-                    }
-                    _ => (),
-                }
-                error!("Failed to read log tuple: {}", e);
-                panic!("Failed to read log tuple");
-            }
-        };
-
-        Some(val)
-    }
-}
-
-// TODO test case struct
 // TODO iterator of current and next state
 // TODO multithread
 
-fn test_state<M>(
-    matchers: &Vec<Matcher<M>>,
-    state: &State,
-    insn: &Insn,
-    memory: M,
-    after: &State,
-    expected_store: Option<&MemoryTrace>,
-) where
-    M: Memory,
-{
-    let mut cpu: Processor<M> = RestorableState { state, memory }.into();
-    cpu.step(&matchers);
+impl Transaction {
+    fn validate(&self, matchers: &Vec<Matcher<ByteMap>>) {
+        let cpu = {
+            let memory = self.mems.to_memory();
+            let state = &self.state;
+            let mut cpu: Processor<ByteMap> = RestorableState {
+                state: &self.state,
+                memory: memory,
+            }
+            .into();
+            cpu.step(&matchers);
+            cpu
+        };
 
-    let mut fail = false;
+        let mut fail = false;
 
-    if !after.validate(&cpu) {
-        error!("cpu state fail");
-        fail = true;
-    }
-
-    if let Some(store) = expected_store {
-        if !store.validate(cpu.mmu()) {
-            error!("mem store fail");
+        if !self.after.validate(&cpu) {
+            error!("cpu state transaction fail");
             fail = true;
         }
-    }
 
-    if fail {
-        error!("failed");
-        panic!("new test failed");
-    } else {
-        info!("ok");
+        if let Some(ref store) = self.store {
+            if !store.validate(cpu.mmu()) {
+                error!("mem store transaction fail");
+                fail = true;
+            }
+        }
+
+        if fail {
+            error!("transaction failed");
+            panic!("transaction failed");
+        } else {
+            info!("ok");
+        }
     }
 }
 
-fn maybe_test_state<M>(
-    matchers: &Vec<Matcher<M>>,
+struct Transaction {
+    state: State,
+    insn: Insn,
+    mems: Vec<MemoryTrace>,
+    store: Option<MemoryTrace>,
+    after: State,
+}
+
+fn maybe_test_state(
+    matchers: &Vec<Matcher<ByteMap>>,
     last_state: &Option<State>,
     last_insn: &Option<Insn>,
     last_mems: &Vec<MemoryTrace>,
     state: &State,
     last_store: &Option<MemoryTrace>,
-) where
-    M: Memory + Default,
-{
+) {
     if last_mems
         .iter()
         .filter(|m| m.addr <= 0x10000)
@@ -139,14 +110,15 @@ fn maybe_test_state<M>(
         return;
     }
 
-    test_state(
-        &matchers,
-        before,
-        insn,
-        last_mems.to_memory(),
-        &state,
-        last_store.as_ref(),
-    )
+    let transaction = Transaction {
+        state: before.to_owned(),
+        insn: insn.to_owned(),
+        mems: last_mems.clone(),
+        store: last_store.to_owned(),
+        after: state.to_owned(),
+    };
+
+    transaction.validate(matchers);
 }
 
 #[inline(never)]
@@ -159,8 +131,9 @@ where
     let mut dtb_mem = ByteMap::default();
     let dtb = crate::load_dtb();
     crate::write_reset_vec(&mut dtb_mem, 0x80000000, &dtb);
+    let persistent = dtb_mem.to_data();
 
-    let mem = ByteMap::default().with_persistent(dtb_mem.to_data());
+    let mem = ByteMap::default().with_persistent(persistent.clone());
     let mut cpu = Processor::new(0x1000, mem);
 
     let mut last_insn: Option<Insn> = None;

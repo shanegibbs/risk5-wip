@@ -22,6 +22,10 @@ impl ByteMap {
         *self.did_persistent_load.borrow()
     }
 
+    pub fn set_data(&mut self, data: Vec<(u64, u8)>) {
+        self.data = data;
+    }
+
     pub fn clear(&mut self) {
         self.data.clear();
         *(self.did_persistent_load.borrow_mut()) = false;
