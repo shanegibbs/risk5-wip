@@ -71,6 +71,7 @@ impl Transaction {
 use super::LogTuple;
 
 pub(crate) struct TransactionIterator<I> {
+    last_tuple: LogTuple,
     it: I,
 }
 
@@ -81,6 +82,34 @@ where
     type Item = Transaction;
 
     fn next(&mut self) -> Option<Transaction> {
-        None
+        let tuple = if let Some(t) = self.it.next() {
+            t
+        } else {
+            return None;
+        };
+
+        let after = tuple.state.clone();
+        let this_tuple = self.last_tuple.clone();
+        self.last_tuple = tuple.clone();
+
+        // all values of the next run
+        // clone state is our after
+        let LogTuple {
+            line,
+            state,
+            insn,
+            store,
+            mems,
+        } = this_tuple;
+
+        let insn = insn.expect("transaction insn");
+
+        Some(Transaction {
+            state,
+            insn,
+            mems,
+            store,
+            after,
+        })
     }
 }

@@ -32,7 +32,7 @@ pub(crate) fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T
     )
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub(crate) struct LogTuple {
     line: usize,
     state: State,
