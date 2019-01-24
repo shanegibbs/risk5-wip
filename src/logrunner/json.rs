@@ -1,5 +1,9 @@
 use super::*;
 
+mod lineiterator;
+
+pub(crate) use lineiterator::LineIterator;
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "kind")]
 pub(crate) enum LogLine {

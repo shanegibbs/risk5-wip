@@ -14,7 +14,7 @@ impl ByteMap {
         self
     }
 
-    pub fn to_data(self) -> Vec<(u64, u8)> {
+    pub fn into_data(self) -> Vec<(u64, u8)> {
         self.data
     }
 
@@ -22,7 +22,7 @@ impl ByteMap {
         *self.did_persistent_load.borrow()
     }
 
-    pub fn set_data(&mut self, data: Vec<(u64, u8)>) {
+    pub fn _set_data(&mut self, data: Vec<(u64, u8)>) {
         self.data = data;
     }
 

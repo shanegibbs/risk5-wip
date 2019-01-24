@@ -1,32 +1,37 @@
 use super::json::*;
-use super::loglineiterator::LogLineIterator;
-use super::*;
 
-pub(crate) struct JsonLogTupleIterator {
-    line_it: LogLineIterator,
+pub(crate) struct LogTupleIterator<I> {
+    line_it: I,
 }
 
-impl JsonLogTupleIterator {
-    pub fn new() -> Result<Self, io::Error> {
-        let mut it = LogLineIterator::new()?;
+impl<I> LogTupleIterator<I> {
+    pub fn new(mut it: I) -> Self
+    where
+        I: Iterator<Item = (usize, LogLine, String)>,
+    {
+        // let mut it = LineIterator::new()?;
         loop {
             match it.next() {
                 None => break,
-                Some((LogLine::Mark, _)) => break,
+                Some((_, LogLine::Mark, _)) => break,
                 _ => (),
             }
         }
 
-        Ok(JsonLogTupleIterator { line_it: it })
+        LogTupleIterator { line_it: it }
     }
 }
 
-impl Iterator for JsonLogTupleIterator {
+impl<I> Iterator for LogTupleIterator<I>
+where
+    I: Iterator<Item = (usize, LogLine, String)>,
+{
     type Item = JsonLogTuple;
 
     fn next(&mut self) -> Option<JsonLogTuple> {
         let mut lines = vec![];
 
+        let mut count = None;
         let mut insn = None;
         let mut state = None;
         let mut store = None;
@@ -34,7 +39,10 @@ impl Iterator for JsonLogTupleIterator {
 
         loop {
             let next = match self.line_it.next() {
-                Some((ll, line)) => {
+                Some((c, ll, line)) => {
+                    if count.is_none() {
+                        count = Some(c)
+                    }
                     lines.push(line);
                     ll
                 }
@@ -42,11 +50,7 @@ impl Iterator for JsonLogTupleIterator {
             };
 
             match next {
-                LogLine::Mark => {
-                    // if insn.is_some() {
-                    break;
-                    // }
-                }
+                LogLine::Mark => break,
                 LogLine::Insn(n) => insn = Some(n),
                 LogLine::State(n) => state = Some(n),
                 LogLine::Memory(n) => mems.push(n),
@@ -63,8 +67,8 @@ impl Iterator for JsonLogTupleIterator {
         }
 
         Some(JsonLogTuple {
-            line: self.line_it.count,
-            state: state,
+            line: count.unwrap_or(0),
+            state,
             insn,
             store,
             mems,

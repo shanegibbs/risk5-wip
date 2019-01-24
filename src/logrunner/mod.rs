@@ -1,8 +1,6 @@
-use self::logtupleiterator::*;
 use crate::mmu::Mmu;
 use crate::regs;
 use crate::Memory;
-use crate::Processor;
 use serde_json;
 use std::default::Default;
 use std::io::BufReader;
@@ -12,7 +10,6 @@ use std::{fmt, io};
 mod bincode;
 pub(crate) mod json;
 mod logger;
-mod loglineiterator;
 mod logtupleiterator;
 mod run;
 
@@ -109,7 +106,7 @@ impl MemoryTrace {
         M: Memory,
     {
         trace!("Checking store {}", self);
-        if self.addr >= 0x80009000 && self.addr < 0x80009016 {
+        if self.addr >= 0x8000_9000 && self.addr < 0x8000_9016 {
             trace!("Ignoring write to HTIF: {}", self);
             return true;
         }

@@ -1,14 +1,12 @@
-use std::io;
-use super::{State,LogTuple,MemoryTrace,ToMemory,Insn,RestorableState};
+use super::{json, logtupleiterator, LogTuple};
 use bincode;
-use super::logtupleiterator;
+use std::io;
 
 pub fn convert() -> Result<(), io::Error> {
     let mut out = io::BufWriter::new(io::stdout());
 
-    info!("starting");
-
-    for line in logtupleiterator::JsonLogTupleIterator::new()? {
+    let it = json::LineIterator::new();
+    for line in logtupleiterator::LogTupleIterator::new(it) {
         trace!("{:?}", line);
         let bin = line.to_logtuple();
         bincode::serialize_into(&mut out, &bin).map_err(|e| match *e {
@@ -16,7 +14,6 @@ pub fn convert() -> Result<(), io::Error> {
             e => io::Error::new(io::ErrorKind::Other, format!("{}", e)),
         })?
     }
-
     Ok(())
 }
 

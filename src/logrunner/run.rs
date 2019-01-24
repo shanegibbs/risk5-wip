@@ -1,5 +1,5 @@
 use super::bincode::BincodeReader;
-use super::{State,LogTuple,MemoryTrace,ToMemory,Insn,RestorableState};
+use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
 use crate::matcher::Matcher;
 use crate::memory::*;
 use crate::Processor;
@@ -23,13 +23,13 @@ pub fn run() -> Result<(), io::Error> {
 // TODO multithread
 
 impl Transaction {
-    fn validate(&self, matchers: &Vec<Matcher<ByteMap>>) {
+    fn validate(&self, matchers: &[Matcher<ByteMap>]) {
         let cpu = {
             let memory = self.mems.to_memory();
             let state = &self.state;
             let mut cpu: Processor<ByteMap> = RestorableState {
                 state: &self.state,
-                memory: memory,
+                memory,
             }
             .into();
             cpu.step(&matchers);
@@ -68,19 +68,14 @@ struct Transaction {
 }
 
 fn maybe_test_state(
-    matchers: &Vec<Matcher<ByteMap>>,
+    matchers: &[Matcher<ByteMap>],
     last_state: &Option<State>,
     last_insn: &Option<Insn>,
-    last_mems: &Vec<MemoryTrace>,
+    last_mems: &[MemoryTrace],
     state: &State,
     last_store: &Option<MemoryTrace>,
 ) {
-    if last_mems
-        .iter()
-        .filter(|m| m.addr <= 0x10000)
-        .next()
-        .is_some()
-    {
+    if last_mems.iter().any(|m| m.addr <= 0x10000) {
         return;
     }
 
@@ -94,7 +89,7 @@ fn maybe_test_state(
     let transaction = Transaction {
         state: before.to_owned(),
         insn: insn.to_owned(),
-        mems: last_mems.clone(),
+        mems: Vec::from(last_mems),
         store: last_store.to_owned(),
         after: state.to_owned(),
     };
@@ -111,8 +106,8 @@ where
 
     let mut dtb_mem = ByteMap::default();
     let dtb = crate::load_dtb();
-    crate::write_reset_vec(&mut dtb_mem, 0x80000000, &dtb);
-    let persistent = dtb_mem.to_data();
+    crate::write_reset_vec(&mut dtb_mem, 0x8000_0000, &dtb);
+    let persistent = dtb_mem.into_data();
 
     let mem = ByteMap::default().with_persistent(persistent.clone());
     let mut cpu = Processor::new(0x1000, mem);
@@ -187,7 +182,7 @@ where
             "State validated OK from: {}",
             last_insn
                 .map(|l| format!("{}", l))
-                .unwrap_or(format!("None"))
+                .unwrap_or_else(|| "None".into())
         );
 
         // reset and begin again

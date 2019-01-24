@@ -1,28 +1,27 @@
-use super::json::*;
 use super::*;
 use std::io::BufRead;
 
-pub(crate) struct LogLineIterator {
+pub(crate) struct LineIterator {
     pub(crate) count: usize,
     pub(crate) had_first_state: bool,
     pub(crate) lines: Lines<BufReader<io::Stdin>>,
 }
 
-impl LogLineIterator {
-    pub fn new() -> Result<Self, io::Error> {
+impl LineIterator {
+    pub fn new() -> Self {
         let reader = BufReader::new(io::stdin());
-        Ok(LogLineIterator {
+        LineIterator {
             count: 0,
             had_first_state: false,
             lines: reader.lines(),
-        })
+        }
     }
 }
 
-impl Iterator for LogLineIterator {
-    type Item = (LogLine, String);
+impl Iterator for LineIterator {
+    type Item = (usize, LogLine, String);
 
-    fn next(&mut self) -> Option<(LogLine, String)> {
+    fn next(&mut self) -> Option<(usize, LogLine, String)> {
         loop {
             let line = match self.lines.next() {
                 Some(l) => l,
@@ -48,13 +47,11 @@ impl Iterator for LogLineIterator {
 
             if let LogLine::State(_) = d {
                 self.had_first_state = true;
-            } else {
-                if !self.had_first_state {
-                    continue;
-                }
+            } else if !self.had_first_state {
+                continue;
             }
 
-            return Some((d, l));
+            return Some((self.count, d, l));
         }
     }
 }
