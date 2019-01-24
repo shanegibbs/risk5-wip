@@ -67,3 +67,20 @@ impl Transaction {
         bincode::serialize_into(&mut out, self).expect("save_to");
     }
 }
+
+use super::LogTuple;
+
+pub(crate) struct TransactionIterator<I> {
+    it: I,
+}
+
+impl<I> Iterator for TransactionIterator<I>
+where
+    I: Iterator<Item = LogTuple>,
+{
+    type Item = Transaction;
+
+    fn next(&mut self) -> Option<Transaction> {
+        None
+    }
+}

@@ -1,8 +1,10 @@
 use super::*;
 
 mod lineiterator;
+mod tupleiterator;
 
 pub(crate) use lineiterator::LineIterator;
+pub(crate) use tupleiterator::TupleIterator;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "kind")]

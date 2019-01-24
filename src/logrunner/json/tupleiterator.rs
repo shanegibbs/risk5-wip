@@ -1,10 +1,11 @@
 use super::json::*;
 
-pub(crate) struct LogTupleIterator<I> {
+// Takes batch of log lines until "mark" is reached
+pub(crate) struct TupleIterator<I> {
     line_it: I,
 }
 
-impl<I> LogTupleIterator<I> {
+impl<I> TupleIterator<I> {
     pub fn new(mut it: I) -> Self
     where
         I: Iterator<Item = (usize, LogLine, String)>,
@@ -18,11 +19,11 @@ impl<I> LogTupleIterator<I> {
             }
         }
 
-        LogTupleIterator { line_it: it }
+        TupleIterator { line_it: it }
     }
 }
 
-impl<I> Iterator for LogTupleIterator<I>
+impl<I> Iterator for TupleIterator<I>
 where
     I: Iterator<Item = (usize, LogLine, String)>,
 {

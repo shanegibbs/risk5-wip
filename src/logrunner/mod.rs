@@ -10,7 +10,6 @@ use std::{fmt, io};
 mod bincode;
 pub(crate) mod json;
 mod logger;
-mod logtupleiterator;
 mod run;
 mod transaction;
 

@@ -1,12 +1,11 @@
-use super::{json, logtupleiterator, LogTuple};
+use super::{json, LogTuple};
 use bincode;
 use std::io;
 
 pub fn convert() -> Result<(), io::Error> {
     let mut out = io::BufWriter::new(io::stdout());
 
-    let it = json::LineIterator::new();
-    for line in logtupleiterator::LogTupleIterator::new(it) {
+    for line in json::TupleIterator::new(json::LineIterator::new()) {
         trace!("{:?}", line);
         let bin = line.to_logtuple();
         bincode::serialize_into(&mut out, &bin).map_err(|e| match *e {
