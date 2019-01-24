@@ -1,11 +1,9 @@
-use super::{Insn, MemoryTrace, RestorableState, State, ToMemory};
-use crate::matcher::Matcher;
-use crate::memory::*;
-use crate::Processor;
+use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
+use crate::{build_matchers, matcher::Matcher, memory::ByteMap, Processor};
 use std::io;
 
 pub fn validate() -> Result<(), io::Error> {
-    let matchers = crate::build_matchers::<ByteMap>();
+    let matchers = build_matchers::<ByteMap>();
 
     use bincode;
     let mut reader = io::BufReader::new(io::stdin());
@@ -67,8 +65,6 @@ impl Transaction {
         bincode::serialize_into(&mut out, self).expect("save_to");
     }
 }
-
-use super::LogTuple;
 
 pub(crate) struct TransactionIterator<I> {
     last_tuple: LogTuple,
