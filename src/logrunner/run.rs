@@ -1,5 +1,5 @@
 use super::bincode::BincodeReader;
-use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
+use super::{Insn, LogTuple, MemoryTrace, State, Transaction};
 use crate::matcher::Matcher;
 use crate::memory::*;
 use crate::Processor;
@@ -21,51 +21,6 @@ pub fn run() -> Result<(), io::Error> {
 
 // TODO iterator of current and next state
 // TODO multithread
-
-impl Transaction {
-    fn validate(&self, matchers: &[Matcher<ByteMap>]) {
-        let cpu = {
-            let memory = self.mems.to_memory();
-            let state = &self.state;
-            let mut cpu: Processor<ByteMap> = RestorableState {
-                state: &self.state,
-                memory,
-            }
-            .into();
-            cpu.step(&matchers);
-            cpu
-        };
-
-        let mut fail = false;
-
-        if !self.after.validate(&cpu) {
-            error!("cpu state transaction fail");
-            fail = true;
-        }
-
-        if let Some(ref store) = self.store {
-            if !store.validate(cpu.mmu()) {
-                error!("mem store transaction fail");
-                fail = true;
-            }
-        }
-
-        if fail {
-            error!("transaction failed");
-            panic!("transaction failed");
-        } else {
-            info!("ok");
-        }
-    }
-}
-
-struct Transaction {
-    state: State,
-    insn: Insn,
-    mems: Vec<MemoryTrace>,
-    store: Option<MemoryTrace>,
-    after: State,
-}
 
 fn maybe_test_state(
     matchers: &[Matcher<ByteMap>],

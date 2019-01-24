@@ -35,6 +35,9 @@ COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.l
 # default target
 test: check unit-tests compliance-tests spike-trace-test
 
+test-failed:
+	cat failed.bincode |cargo run --bin validate
+
 check:
 	cargo check
 
@@ -112,7 +115,7 @@ unpack-assets:
 
 perf: build
 	bzcat $(ASSETS)/bbl.bincode.bz2 \
-		|env RUST_LOG=risk5=warn STOP_AT=20000 
+		|env RUST_LOG=risk5=warn STOP_AT=20000
 			valgrind \
 				--tool=callgrind \
 				--dump-instr=yes \

@@ -47,3 +47,7 @@ path = "bin/convert.rs"
 [[bin]]
 name = "logrunner"
 path = "bin/logrunner.rs"
+
+[[bin]]
+name = "validate"
+path = "bin/validate.rs"
