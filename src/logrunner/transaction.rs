@@ -1,3 +1,4 @@
+use super::bincode::BincodeReader;
 use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
 use crate::{build_matchers, matcher::Matcher, memory::ByteMap, Processor};
 use std::io;
@@ -9,6 +10,15 @@ pub fn validate() -> Result<(), io::Error> {
     let mut reader = io::BufReader::new(io::stdin());
     let t: Transaction = bincode::deserialize_from(&mut reader).expect("read transaction");
     t.validate(&matchers);
+    Ok(())
+}
+
+pub fn stream() -> Result<(), io::Error> {
+    let matchers = build_matchers::<ByteMap>();
+    let mut reader = io::BufReader::new(io::stdin());
+    for t in TransactionIterator::default() {
+    t.validate(&matchers);
+    }
     Ok(())
 }
 
@@ -66,9 +76,17 @@ impl Transaction {
     }
 }
 
-pub(crate) struct TransactionIterator<I> {
+pub(crate) struct TransactionIterator<I = BincodeReader> {
     last_tuple: LogTuple,
     it: I,
+}
+
+impl Default for TransactionIterator {
+    fn default() -> Self {
+        let mut it = BincodeReader::new();
+        let last_tuple = it.next().expect("no transaction data");
+        TransactionIterator { last_tuple, it }
+    }
 }
 
 impl<I> Iterator for TransactionIterator<I>

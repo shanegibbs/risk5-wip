@@ -16,6 +16,7 @@ $(error Bad BUILD_MODE value: $(BUILD_MODE))
 endif
 
 BUILD_DIR=$(PWD)/target/$(BUILD_MODE)
+VALIDATE=$(BUILD_DIR)/validate
 CONVERT=$(BUILD_DIR)/convert
 LOGRUNNER=$(BUILD_DIR)/logrunner
 RISK5=$(BUILD_DIR)/risk5
@@ -49,6 +50,9 @@ spike-trace-test: build
 
 spike-trace: build
 	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+
+spike-trace-trans: build
+	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(VALIDATE)
 
 spike:
 	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl

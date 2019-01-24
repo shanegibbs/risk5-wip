@@ -11,11 +11,10 @@ mod bincode;
 pub(crate) mod json;
 mod logger;
 mod run;
-mod transaction;
+pub mod transaction;
 
 pub use self::bincode::convert;
 pub use self::run::run;
-pub use transaction::validate;
 pub(crate) use transaction::Transaction;
 
 pub(crate) fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T) -> String {
