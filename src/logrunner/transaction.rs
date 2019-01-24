@@ -15,9 +15,9 @@ pub fn validate() -> Result<(), io::Error> {
 
 pub fn stream() -> Result<(), io::Error> {
     let matchers = build_matchers::<ByteMap>();
-    let mut reader = io::BufReader::new(io::stdin());
+    let reader = io::BufReader::new(io::stdin());
     for t in TransactionIterator::default() {
-    t.validate(&matchers);
+        t.validate(&matchers);
     }
     Ok(())
 }
@@ -36,11 +36,7 @@ impl Transaction {
         let cpu = {
             let memory = self.mems.to_memory();
             let state = &self.state;
-            let mut cpu: Processor<ByteMap> = RestorableState {
-                state: &self.state,
-                memory,
-            }
-            .into();
+            let mut cpu: Processor<ByteMap> = RestorableState { state, memory }.into();
             cpu.step(&matchers);
             cpu
         };
@@ -62,7 +58,7 @@ impl Transaction {
         if fail {
             error!("transaction failed\n{:?}", self);
             self.save_to("failed.bincode");
-            panic!("transaction failed");
+        // panic!("transaction failed");
         } else {
             info!("ok");
         }

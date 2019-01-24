@@ -22,10 +22,11 @@ LOGRUNNER=$(BUILD_DIR)/logrunner
 RISK5=$(BUILD_DIR)/risk5
 
 ASSETS:=$(PWD)/assets
-SPIKE_TRACE=env LD_LIBRARY_PATH=$(PWD)/compliance/lib $(PWD)/compliance/bin/spike
-COMPLIANCE_PATHS := $(wildcard compliance/tests/*.elf)
-COMPLIANCE_TESTS := $(patsubst compliance/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
-COMPLIANCE_LOGS := $(patsubst compliance/tests/%.elf,compliance/logs/%.bincode.log.bz2,$(COMPLIANCE_PATHS))
+COMPLIANCE_PATH=$(ASSETS)/compliance
+SPIKE_TRACE=env LD_LIBRARY_PATH=$(COMPLIANCE_PATH)/lib $(COMPLIANCE_PATH)/bin/spike
+COMPLIANCE_PATHS := $(wildcard $(COMPLIANCE_PATH)/tests/*.elf)
+COMPLIANCE_TESTS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
+COMPLIANCE_LOGS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,$(COMPLIANCE_PATH)/logs/%.bincode.log.bz2,$(COMPLIANCE_PATHS))
 
 # keep intermediate files. Otherwise make delete
 .SECONDARY: $(COMPLIANCE_LOGS)
@@ -67,13 +68,13 @@ clean:
 	cargo clean
 
 save: test
-	git add Makefile Cargo.* bin src u1 bitcalc
+	git add Makefile Cargo.* bin src
 	git commit -m'save'
 	git push
 	git status
 
 save-broken:
-	git add Makefile Cargo.* bin src u1 bitcalc
+	git add Makefile Cargo.* bin src
 	git commit -m'save broken'
 	git push
 	git status
@@ -85,7 +86,7 @@ load:
 compliance-tests: $(COMPLIANCE_TESTS)
 
 %-compliance-test: build
-	$(SPIKE_TRACE) --isa rv64ima $(PWD)/compliance/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima $(COMPLIANCE_PATH)/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
 
 # read bbl.log.jsonl compress to gz and bz2, convert
 # to bincode and compress that output to gz and bz2 as well
