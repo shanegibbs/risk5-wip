@@ -16,7 +16,7 @@ mod loglineiterator;
 mod logtupleiterator;
 mod run;
 
-pub use self::run::convert;
+pub use self::bincode::convert;
 pub use self::run::run;
 
 pub(crate) fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T) -> String {

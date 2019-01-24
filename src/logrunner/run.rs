@@ -1,8 +1,9 @@
 use super::bincode::BincodeReader;
-use super::State;
+use super::{State,LogTuple,MemoryTrace,ToMemory,Insn,RestorableState};
 use crate::matcher::Matcher;
 use crate::memory::*;
-use crate::Memory;
+use crate::Processor;
+use std::io;
 
 pub fn run() -> Result<(), io::Error> {
     super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
@@ -16,26 +17,6 @@ pub fn run() -> Result<(), io::Error> {
     }
 
     run_log(reader)
-}
-
-pub fn convert() -> Result<(), io::Error> {
-    use bincode as ext_bincode;
-    use std::io::BufWriter;
-
-    let mut out = BufWriter::new(io::stdout());
-
-    info!("starting");
-
-    for line in JsonLogTupleIterator::new()? {
-        trace!("{:?}", line);
-        let bin = line.to_logtuple();
-        bincode::serialize_into(&mut out, &bin).map_err(|e| match *e {
-            bincode::ErrorKind::Io(e) => e,
-            e => io::Error::new(io::ErrorKind::Other, format!("{}", e)),
-        })?
-    }
-
-    Ok(())
 }
 
 // TODO iterator of current and next state
