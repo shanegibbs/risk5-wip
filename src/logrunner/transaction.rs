@@ -3,10 +3,8 @@ use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
 use crate::{build_matchers, matcher::Matcher, memory::ByteMap, Processor};
 use std::io;
 
-pub fn validate() -> Result<(), io::Error> {
+pub fn single() -> Result<(), io::Error> {
     let matchers = build_matchers::<ByteMap>();
-
-    use bincode;
     let mut reader = io::BufReader::new(io::stdin());
     let t: Transaction = bincode::deserialize_from(&mut reader).expect("read transaction");
     t.validate(&matchers);
@@ -15,7 +13,6 @@ pub fn validate() -> Result<(), io::Error> {
 
 pub fn stream() -> Result<(), io::Error> {
     let matchers = build_matchers::<ByteMap>();
-    let reader = io::BufReader::new(io::stdin());
     for t in TransactionIterator::default() {
         t.validate(&matchers);
     }
@@ -25,7 +22,7 @@ pub fn stream() -> Result<(), io::Error> {
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct Transaction {
     pub(crate) state: State,
-    pub(crate) insn: Insn,
+    pub(crate) insn: Option<Insn>,
     pub(crate) mems: Vec<MemoryTrace>,
     pub(crate) store: Option<MemoryTrace>,
     pub(crate) after: State,
@@ -41,7 +38,7 @@ impl Transaction {
             cpu
         };
 
-        let mut fail = if !self.after.validate(&cpu) {
+        let mut fail = if !self.after.validate(&cpu, Some(self.state.clone())) {
             error!("cpu state transaction fail");
             true
         } else {
@@ -56,9 +53,9 @@ impl Transaction {
         }
 
         if fail {
-            error!("transaction failed\n{:?}", self);
             self.save_to("failed.bincode");
-        // panic!("transaction failed");
+            error!("transaction failed\n{:?}", self);
+            panic!("transaction failed");
         } else {
             info!("ok");
         }
@@ -111,8 +108,6 @@ where
             store,
             mems,
         } = this_tuple;
-
-        let insn = insn.expect("transaction insn");
 
         Some(Transaction {
             state,

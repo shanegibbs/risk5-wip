@@ -80,6 +80,17 @@ pub struct State {
     pub(crate) xregs: Vec<u64>,
 }
 
+impl fmt::Display for State {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        // write!(
+        //     f,
+        //     "pc={} addr=0x{:x} value=0x{:x}",
+        //     self.kind, self.addr, self.value
+        // )
+        Ok(())
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MemoryTrace {
     kind: String,
@@ -114,11 +125,17 @@ impl MemoryTrace {
 
         macro_rules! fail_on {
             ($name:expr, $expected:expr, $actual:expr) => {
-                if $expected != $actual {
+                let actual = if let Ok(a) = $actual {
+                    a
+                } else {
+                    warn!("MMU returning nothing");
+                    return false;
+                };
+                if $expected != actual {
                     error!(
                         "Fail check on {}.\n{}",
                         $name,
-                        format_diff($expected, $actual)
+                        format_diff($expected, actual)
                     );
                     return false;
                 }
@@ -128,19 +145,19 @@ impl MemoryTrace {
 
         match self.kind.as_str() {
             "uint8" => {
-                let val = m.read_b(self.addr).expect("mmu read");
+                let val = m.read_b(self.addr);
                 fail_on!("store", self.value as u8, val);
             }
             "uint16" => {
-                let val = m.read_h(self.addr).expect("mmu read");
+                let val = m.read_h(self.addr);
                 fail_on!("store", self.value as u16, val);
             }
             "uint32" => {
-                let val = m.read_w(self.addr).expect("mmu read");
+                let val = m.read_w(self.addr);
                 fail_on!("store", self.value as u32, val);
             }
             "uint64" => {
-                let val = m.read_d(self.addr).expect("mmu read");
+                let val = m.read_d(self.addr);
                 fail_on!("store", self.value, val);
             }
             n => unimplemented!("check store type {}", n),
@@ -165,19 +182,34 @@ impl fmt::Display for MemoryTrace {
 }
 
 impl State {
-    fn validate<S>(&self, other: S) -> bool
+    fn validate<S, T>(&self, other: S, before: Option<T>) -> bool
     where
         S: Into<State>,
+        T: Into<State>,
     {
         let other = other.into();
+        let before = before.map(|b| b.into());
 
         macro_rules! valid {
             ($id:ident) => {{
                 let actual = other.$id;
                 let expected = self.$id;
                 if actual != expected {
+                    let expected_unchanged = if let Some(before) = before.as_ref() {
+                        if expected == before.$id {
+                            true
+                        } else {
+                            false
+                        }
+                    } else {
+                        false
+                    };
                     error!(
-                        "Fail check on {}.\n{}",
+                        "Fail check{} on {}.\n{}",
+                        match expected_unchanged {
+                            false => "",
+                            true => " (unexpected change)",
+                        },
                         stringify!($id),
                         format_diff(expected, actual)
                     );
@@ -193,15 +225,27 @@ impl State {
 
         // TODO add mip mcounteren
         // TODO add supervisor csrs
-        let mut valid =
-            valid!(pc, prv) & valid!(mepc, mtvec, mcause, mscratch, mie, medeleg, mideleg);
+        let mut valid = valid!(pc, prv, mepc, mtvec, mcause, mscratch, mie, medeleg, mideleg);
 
         if self.mstatus != other.mstatus {
             use crate::bitfield::Mstatus;
             let mstatus_expected = Mstatus::new_with_val(self.mstatus);
             let mstatus_actual = Mstatus::new_with_val(other.mstatus);
+            let unexpected_change = if let Some(before) = before {
+                if self.mstatus == before.mstatus {
+                    true
+                } else {
+                    false
+                }
+            } else {
+                false
+            };
             error!(
-                "Fail mstatus check\n{}\nWas:      {:?}\nExpected: {:?}",
+                "Fail mstatus check{}\n{}\nWas:      {:?}\nExpected: {:?}",
+                match unexpected_change {
+                    true => " (unexpected change)",
+                    false => "",
+                },
                 format_diff(self.mstatus, other.mstatus),
                 mstatus_actual,
                 mstatus_expected

@@ -30,20 +30,20 @@ fn maybe_test_state(
     state: &State,
     last_store: &Option<MemoryTrace>,
 ) {
-    if last_mems.iter().any(|m| m.addr <= 0x10000) {
-        return;
-    }
+    // if last_mems.iter().any(|m| m.addr <= 0x10000) {
+    //     return;
+    // }
 
     let before = if let Some(t) = last_state { t } else { return };
-    let insn = if let Some(t) = last_insn { t } else { return };
+    // let insn = if let Some(t) = last_insn { t } else { return };
 
-    if before.pc < 0x10000 || state.pc < 0x10000 {
-        return;
-    }
+    // if before.pc < 0x10000 || state.pc < 0x10000 {
+    //     return;
+    // }
 
     let transaction = Transaction {
         state: before.to_owned(),
-        insn: insn.to_owned(),
+        insn: last_insn.to_owned(),
         mems: Vec::from(last_mems),
         store: last_store.to_owned(),
         after: state.to_owned(),
@@ -108,7 +108,7 @@ where
             }
         }
 
-        if !state.validate(&cpu) {
+        if !state.validate(&cpu, None as Option<State>) {
             fail = true;
         }
 

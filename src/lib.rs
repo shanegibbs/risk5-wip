@@ -5,6 +5,13 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 
+macro_rules! fatal {
+    ($($arg:tt)*) => (
+        error!($($arg)*);
+        panic!($($arg)*);
+    )
+}
+
 mod bitfield;
 mod csrs;
 mod elf_loader;
