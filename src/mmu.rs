@@ -97,7 +97,7 @@ macro_rules! mem {
 
 impl<M: Memory> Mmu<M> {
     fn translate(&self, offset: u64) -> Result<u64, ()> {
-        if !self.sv39 {
+        if !self.sv39 || self.prv == 3 {
             return Ok(offset);
         }
 
@@ -223,6 +223,7 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
             mem
         });
+        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x8021d);
         assert_eq!(mmu.translate(0xffffffe0000000c0).expect("ok"), 0x802000c0);
 
@@ -232,6 +233,7 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
             mem
         });
+        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x80707);
         assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80664440);
 
@@ -241,6 +243,7 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
             mem
         });
+        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x80707);
 
         let expected = 0x80202df8;

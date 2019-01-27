@@ -27,7 +27,8 @@ impl<M> Processor<M> {
     }
 
     pub fn set_prv(&mut self, prv: u64) {
-        self.csrs.set_prv(prv)
+        self.csrs.set_prv(prv);
+        self.mmu.set_prv(prv);
     }
 
     #[inline(always)]
