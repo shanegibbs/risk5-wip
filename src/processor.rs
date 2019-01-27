@@ -1,6 +1,8 @@
-use crate::csrs::{Csrs, PostSetOp, SetMemMode};
 use crate::Mmu;
 use crate::{Matcher, Memory, Regs};
+use csrs::{Csrs, PostSetOp, SetMemMode};
+
+mod csrs;
 
 #[derive(Debug)]
 pub struct Processor<M> {
@@ -18,6 +20,14 @@ impl<M> Processor<M> {
             regs: Regs::new(),
             mmu: Mmu::new(mem),
         }
+    }
+
+    pub fn prv(&self) -> u64 {
+        self.csrs.prv()
+    }
+
+    pub fn set_prv(&mut self, prv: u64) {
+        self.csrs.set_prv(prv)
     }
 
     #[inline(always)]
@@ -122,7 +132,7 @@ impl<M> Into<State> for &Processor<M> {
         State {
             id: 0,
             pc: self.pc,
-            prv: self.csrs.prv,
+            prv: self.csrs.prv(),
             mstatus: self.csrs.mstatus.val(),
             mepc: self.csrs.mepc,
             mtvec: self.csrs.mtvec,

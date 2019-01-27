@@ -4,6 +4,7 @@ use std::fmt;
 
 pub struct Mmu<M> {
     mem: M,
+    prv: u64,
     sv39: bool,
     asid: u16,
     ppn: u64,
@@ -13,6 +14,7 @@ impl<M> Mmu<M> {
     pub fn new(m: M) -> Self {
         Self {
             mem: m,
+            prv: 3,
             sv39: false,
             asid: 0,
             ppn: 0,
@@ -25,6 +27,10 @@ impl<M> Mmu<M> {
 
     pub fn mem_mut(&mut self) -> &mut M {
         &mut self.mem
+    }
+
+    pub fn set_prv(&mut self, prv: u64) {
+        self.prv = prv
     }
 
     pub fn bare(&self) -> &M {
@@ -257,6 +263,7 @@ impl<'a, M> Into<Mmu<M>> for RestorableState<'a, M> {
         let satp: Satp = self.state.satp.into();
         Mmu {
             mem: self.memory,
+            prv: self.state.prv,
             sv39: satp.mode() == 8,
             asid: satp.asid() as u16,
             ppn: satp.ppn() as u64,

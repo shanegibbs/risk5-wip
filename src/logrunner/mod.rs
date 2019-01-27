@@ -82,12 +82,20 @@ pub struct State {
 
 impl fmt::Display for State {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        // write!(
-        //     f,
-        //     "pc={} addr=0x{:x} value=0x{:x}",
-        //     self.kind, self.addr, self.value
-        // )
-        Ok(())
+        let mut out = vec![];
+        macro_rules! add_field {
+            ($id:ident) => {
+                out.push(format!("{}=0x{:x}", stringify!($id), self.$id));
+            };
+            ($id:ident, $($next:ident),+) => {{
+                add_field!($id);
+                add_field!($($next),+);
+            }};
+        }
+
+        add_field!(pc, prv, mepc, mtvec, mcause, mscratch, mie, medeleg, mideleg);
+
+        write!(f, "{}", out.join(" "))
     }
 }
 

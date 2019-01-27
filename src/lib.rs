@@ -13,7 +13,6 @@ macro_rules! fatal {
 }
 
 mod bitfield;
-mod csrs;
 mod elf_loader;
 mod insns;
 mod itypes;

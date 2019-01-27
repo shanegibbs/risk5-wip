@@ -4,7 +4,7 @@ use crate::insns::Trap;
 use std::fmt;
 
 pub struct Csrs {
-    pub(crate) prv: u64,
+    prv: u64,
 
     pub(crate) mstatus: Mstatus,
     pub(crate) medeleg: u64,
@@ -208,6 +208,14 @@ impl Csrs {
                 return Err(Trap::illegal_insn());
             }
         });
+    }
+
+    pub fn prv(&self) -> u64 {
+        self.prv
+    }
+
+    pub(super) fn set_prv(&mut self, prv: u64) {
+        self.prv = prv
     }
 }
 

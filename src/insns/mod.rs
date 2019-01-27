@@ -96,7 +96,7 @@ pub fn lui<M: Memory>(p: &mut Processor<M>, i: Utype) {
  *
  */
 pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
-    let prv = p.csrs().prv;
+    let prv = p.csrs().prv();
     let medeleg = p.csrs().medeleg;
 
     debug!("Doing trap prv={} cause=0x{:x} value={:x}", prv, cause, val);
@@ -121,7 +121,7 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
         // set xPP to prv
         csrs.mstatus.set_supervisor_previous_privilege(1);
 
-        csrs.prv = 1;
+        p.set_prv(1);
     } else {
         // handle in machine mode by default
 
@@ -143,7 +143,7 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
         p.set_pc(mtvec & !0x1);
 
         {
-            let pprv = p.csrs().prv;
+            let pprv = p.prv();
             let m = &mut p.csrs_mut().mstatus;
 
             // move xIE to xPIE and set xIE to 0
@@ -153,7 +153,7 @@ pub fn do_trap<M: Memory>(p: &mut Processor<M>, cause: u64, val: u64) {
             m.set_machine_previous_privilege(pprv);
         }
 
-        p.csrs_mut().prv = 3;
+        p.set_prv(3);
     }
 }
 
@@ -166,12 +166,12 @@ pub fn mret<M: Memory>(p: &mut Processor<M>, _: Itype) {
     p.csrs_mut().mstatus.set_machine_prior_interrupt_enabled(1);
     p.csrs_mut().mstatus.set_machine_previous_privilege(0);
 
-    p.csrs_mut().prv = pprv;
+    p.set_prv(pprv);
     p.set_pc(epc);
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
-    let prv = p.csrs().prv;
+    let prv = p.csrs().prv();
     do_trap(
         p,
         match prv {
