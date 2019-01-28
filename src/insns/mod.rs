@@ -238,6 +238,13 @@ pub fn sltiu<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn sltu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let rs1 = p.regs.get(i.rs1() as usize);
+    let rs2 = p.regs.get(i.rs2() as usize);
+    p.regs.set(i.rd() as usize, if rs1 < rs2 { 1 } else { 0 });
+    p.advance_pc();
+}
+
 pub fn andi<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let v = p.regs.geti(i.rs1() as usize) & i.imm();
     p.regs.seti(i.rd() as usize, v);
