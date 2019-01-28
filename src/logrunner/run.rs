@@ -19,7 +19,6 @@ pub fn run() -> Result<(), io::Error> {
     run_log(reader)
 }
 
-// TODO iterator of current and next state
 // TODO multithread
 
 fn maybe_test_state(
@@ -30,16 +29,7 @@ fn maybe_test_state(
     state: &State,
     last_store: &Option<MemoryTrace>,
 ) {
-    // if last_mems.iter().any(|m| m.addr <= 0x10000) {
-    //     return;
-    // }
-
     let before = if let Some(t) = last_state { t } else { return };
-    // let insn = if let Some(t) = last_insn { t } else { return };
-
-    // if before.pc < 0x10000 || state.pc < 0x10000 {
-    //     return;
-    // }
 
     let transaction = Transaction {
         state: before.to_owned(),

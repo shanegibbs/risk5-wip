@@ -39,6 +39,14 @@ pub fn lhu<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn lwu<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let addr = (rs1 + i.imm()) as u64;
+    let v = mem!(p, read_w, addr);
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
 pub fn lb<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let rs1 = p.regs.geti(i.rs1() as usize);
     let v = mem!(p, read_b, (rs1 + i.imm()) as u64);

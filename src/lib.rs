@@ -200,7 +200,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x3003, wrap!(mem::ld)),
         Matcher::new(0x707f, 0x4003, wrap!(mem::lbu)),
         Matcher::new(0x707f, 0x5003, wrap!(mem::lhu)),
-        Matcher::new(0x707f, 0x6003, noimpl!("lwu")),
+        Matcher::new(0x707f, 0x6003, wrap!(mem::lwu)),
         Matcher::new(0x707f, 0x23, wrap!(mem::sb)),
         Matcher::new(0x707f, 0x1023, wrap!(mem::sh)),
         Matcher::new(0x707f, 0x2023, wrap!(mem::sw)),
