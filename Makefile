@@ -47,7 +47,7 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 spike-trace-test: build
-	$(SPIKE_TRACE) --isa rv64ima -c794809 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima -c1000000 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
 
 spike-trace: build
 	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
