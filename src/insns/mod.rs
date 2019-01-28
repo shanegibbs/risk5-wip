@@ -348,6 +348,12 @@ pub fn mul<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn mulw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.get(i.rs1() as usize) * p.regs.get(i.rs2() as usize);
+    p.regs.set(i.rd() as usize, (v as u32) as u64);
+    p.advance_pc();
+}
+
 pub fn divu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let rhs = p.regs.get(i.rs2() as usize);
     let v = if rhs == 0 {
