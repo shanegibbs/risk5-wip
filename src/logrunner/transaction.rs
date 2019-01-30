@@ -54,7 +54,7 @@ impl Transaction {
 
         if fail {
             self.save_to("failed.bincode");
-            error!("transaction failed\n{:?}", self);
+            // error!("transaction failed\n{:?}", self);
             if let Some(ref insn) = self.insn {
                 error!("Insn: {}", insn.desc);
             } else {

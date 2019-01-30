@@ -267,12 +267,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             error!("Unimplemented insn 'amomaxu.w' at {:x}", p.pc())
         }),
         Matcher::new(0xf800707f, 0x800202f, wrap!(amoswapw)),
-        Matcher::new(0xf9f0707f, 0x1000202f, |p, _| {
-            error!("Unimplemented insn 'lr.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x1800202f, |p, _| {
-            error!("Unimplemented insn 'sc.w' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf9f0707f, 0x1000202f, wrap!(lrw)),
+        Matcher::new(0xf800707f, 0x1800202f, wrap!(scw)),
         Matcher::new(0xf800707f, 0x302f, |p, _| {
             error!("Unimplemented insn 'amoadd.d' at {:x}", p.pc())
         }),
@@ -298,12 +294,8 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xf800707f, 0x800302f, |p, _| {
             error!("Unimplemented insn 'amoswap.d' at {:x}", p.pc())
         }),
-        Matcher::new(0xf9f0707f, 0x1000302f, |p, _| {
-            error!("Unimplemented insn 'lr.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x1800302f, |p, _| {
-            error!("Unimplemented insn 'sc.d' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf9f0707f, 0x1000302f, wrap!(lrd)),
+        Matcher::new(0xf800707f, 0x1800302f, wrap!(scd)),
         Matcher::new(0xffffffff, 0x73, wrap!(ecall)),
         Matcher::new(0xffffffff, 0x100073, |p, _| {
             error!("Unimplemented insn 'ebreak' at {:x}", p.pc())
