@@ -48,7 +48,8 @@ impl BlockMemory {
             }
             c -= 1;
         }
-        panic!("Unable to find memory block for address 0x{:x}", offset)
+        error!("Unable to find memory block for address 0x{:x}", offset);
+        panic!("Unable to find memory block");
     }
 }
 

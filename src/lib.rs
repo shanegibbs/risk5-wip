@@ -71,7 +71,7 @@ pub fn risk5_main() {
 
     let mut mem = BlockMemory::new(15);
 
-    mem.add_block(0x80000000, 100 * 1024 * 1024);
+    mem.add_block(0x80000000, 2048 * 1024 * 1024);
 
     use std::env;
     let filename = env::var("BIN").unwrap_or("assets/bbl".into());
