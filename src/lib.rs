@@ -105,12 +105,21 @@ pub fn risk5_main() {
     // let mut csrs = csrs::Csrs::new();
     let mut cpu = Processor::new(reset_vec_addr, mem);
     let mut counter = 0;
+    let mut bad_count = 0;
     loop {
         cpu.step(&matchers);
         counter += 1;
         trace!("--- Step {} ---", counter);
         if counter % 100000 == 0 {
             warn!("--- Step {} ---", counter);
+        }
+
+        if cpu.pc() == 0xffffffe0003d9af4 {
+            bad_count += 1;
+            if bad_count > 10000 {
+                error!("here");
+                panic!("here");
+            }
         }
 
         let _fromhost = cpu.mmu().bare().read_d(0x80009000);
