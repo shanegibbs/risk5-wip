@@ -67,7 +67,8 @@ pub fn write_reset_vec<M: Memory>(mem: &mut M, entry: u64, dtb: &[u8]) {
 }
 
 pub fn risk5_main() {
-    pretty_env_logger::init();
+    // pretty_env_logger::init();
+    logrunner::logger::init().unwrap();
 
     let mut mem = BlockMemory::new(15);
 
@@ -120,7 +121,8 @@ pub fn risk5_main() {
             // warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
             let ch = tohost as u8;
             output = format!("{}{}", output, ch as char);
-            print!("{}", ch as char);
+            use std::io::{self, Write};
+            write!(io::stderr(), "{}", ch as char);
             info!("tohost '{}'", ch as char);
             cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
         }
@@ -132,7 +134,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         ($f:path) => {
             |p, i| {
                 let i = i.into();
-                debug!("exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
+                debug!("> exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
                 $f(p, i)
             }
         };

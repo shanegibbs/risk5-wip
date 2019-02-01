@@ -1,5 +1,6 @@
 use log::{Level, Metadata, Record};
 use log::{LevelFilter, SetLoggerError};
+use std::collections::VecDeque;
 use std::env;
 use std::io::{self, Write};
 use std::sync::*;
@@ -28,14 +29,14 @@ pub fn init() -> Result<(), SetLoggerError> {
 // and flushes the buffer on receiving an error.
 struct TracerLogger {
     level: Option<LevelFilter>,
-    buffer: RwLock<Vec<(Level, Option<String>, String)>>,
+    buffer: RwLock<VecDeque<(Level, Option<String>, String)>>,
 }
 
 impl TracerLogger {
     fn new() -> Self {
         TracerLogger {
             level: level_override(),
-            buffer: RwLock::new(vec![]),
+            buffer: RwLock::new(VecDeque::new()),
         }
     }
 }
@@ -88,13 +89,13 @@ impl log::Log for LOGGER {
             }
             buffer.clear();
         } else {
-            buffer.push((
+            buffer.push_back((
                 record.metadata().level(),
                 record.module_path().map(|s| s.into()),
                 to_line(record),
             ));
-            if buffer.len() > 200 {
-                buffer.remove(0);
+            if buffer.len() > 1000 {
+                buffer.pop_front();
             }
         }
 
