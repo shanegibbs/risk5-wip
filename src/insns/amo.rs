@@ -42,7 +42,7 @@ pub fn scw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let rs1 = p.regs.get(i.rs1() as usize);
     let rs2 = p.regs.get(i.rs2() as usize);
     mem!(p, write_w, rs1, rs2 as u32);
-    p.regs.set(i.rd() as usize, 1);
+    p.regs.set(i.rd() as usize, 0);
     p.advance_pc();
 }
 
@@ -50,7 +50,7 @@ pub fn scd<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let rs1 = p.regs.get(i.rs1() as usize);
     let rs2 = p.regs.get(i.rs2() as usize);
     mem!(p, write_d, rs1, rs2);
-    p.regs.set(i.rd() as usize, 1);
+    p.regs.set(i.rd() as usize, 0);
     p.advance_pc();
 }
 
