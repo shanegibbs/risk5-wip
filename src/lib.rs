@@ -185,7 +185,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x3033, wrap!(sltu)),
         Matcher::new(0xfe00707f, 0x4033, wrap!(xor)),
         Matcher::new(0xfe00707f, 0x5033, wrap!(srl)),
-        Matcher::new(0xfe00707f, 0x40005033, noimpl!("sra")),
+        Matcher::new(0xfe00707f, 0x40005033, wrap!(sra)),
         Matcher::new(0xfe00707f, 0x6033, wrap!(or)),
         Matcher::new(0xfe00707f, 0x7033, wrap!(and)),
         Matcher::new(0x707f, 0x1b, wrap!(addiw)),
@@ -226,13 +226,9 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x2003033, |p, _| {
             error!("Unimplemented insn 'mulhu' at {:x}", p.pc())
         }),
-        Matcher::new(0xfe00707f, 0x2004033, |p, _| {
-            error!("Unimplemented insn 'div' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x2004033, wrap!(div)),
         Matcher::new(0xfe00707f, 0x2005033, wrap!(divu)),
-        Matcher::new(0xfe00707f, 0x2006033, |p, _| {
-            error!("Unimplemented insn 'rem' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x2006033, wrap!(rem)),
         Matcher::new(0xfe00707f, 0x2007033, wrap!(remu)),
         Matcher::new(0xfe00707f, 0x200003b, wrap!(mulw)),
         Matcher::new(0xfe00707f, 0x200403b, |p, _| {

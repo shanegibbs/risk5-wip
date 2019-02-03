@@ -333,6 +333,14 @@ pub fn srliw<M: Memory>(p: &mut Processor<M>, i: Itype) {
     p.advance_pc();
 }
 
+pub fn sra<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let shmat = p.regs.get(i.rs2() as usize) & 0x3f;
+    let v = p.regs.get(i.rs1() as usize) as i64;
+    let v = v >> shmat;
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
 pub fn srai<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let shmat = i.imm() & 0x3F;
     let v = p.regs.get(i.rs1() as usize) as i64;
@@ -364,6 +372,17 @@ pub fn mulw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn div<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let rhs = p.regs.geti(i.rs2() as usize);
+    let v = if rhs == 0 {
+        i64::max_value()
+    } else {
+        p.regs.geti(i.rs1() as usize) / rhs
+    };
+    p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
 pub fn divu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let rhs = p.regs.get(i.rs2() as usize);
     let v = if rhs == 0 {
@@ -372,6 +391,12 @@ pub fn divu<M: Memory>(p: &mut Processor<M>, i: Rtype) {
         p.regs.get(i.rs1() as usize) / rhs
     };
     p.regs.set(i.rd() as usize, v);
+    p.advance_pc();
+}
+
+pub fn rem<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let v = p.regs.geti(i.rs1() as usize) % p.regs.geti(i.rs2() as usize);
+    p.regs.set(i.rd() as usize, v as u64);
     p.advance_pc();
 }
 

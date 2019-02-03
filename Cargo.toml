@@ -16,8 +16,8 @@ edition = "2018"
 [dependencies]
 
 elf = "0.0.10"
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
-# log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
+# log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_trace"] }
