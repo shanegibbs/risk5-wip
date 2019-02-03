@@ -185,6 +185,13 @@ impl Mstatus {
     pub fn supervisor_user_memory_access(&self) -> u64 {
         self.0.field(18, 1)
     }
+
+    // mprv
+
+    #[inline(always)]
+    pub fn memory_privilege(&self) -> u64 {
+        self.0.field(17, 1)
+    }
 }
 
 use std::fmt;

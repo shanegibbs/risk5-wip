@@ -27,8 +27,19 @@ impl<M> Processor<M> {
     }
 
     pub fn set_prv(&mut self, prv: u64) {
+        debug!("Setting prv to {}", prv);
         self.csrs.set_prv(prv);
-        self.mmu.set_prv(prv);
+        self.update_mmu_prv();
+    }
+
+    pub fn update_mmu_prv(&mut self) {
+        if self.csrs.mstatus.memory_privilege() == 1 {
+            let mpp = self.csrs.mstatus.machine_previous_privilege();
+            self.mmu.set_prv(mpp);
+        } else {
+            let prv = self.csrs.prv();
+            self.mmu.set_prv(prv);
+        }
     }
 
     #[inline(always)]
@@ -52,6 +63,7 @@ impl<M> Processor<M> {
         match self.csrs.set(i as usize, val) {
             PostSetOp::None => (),
             PostSetOp::SetMemMode(m) => self.set_mem_mode(m),
+            PostSetOp::UpdateMmuPrv => self.update_mmu_prv(),
         }
     }
 

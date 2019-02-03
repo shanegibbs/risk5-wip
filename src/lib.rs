@@ -133,8 +133,9 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
     macro_rules! wrap {
         ($f:path) => {
             |p, i| {
+                let a = i;
                 let i = i.into();
-                debug!("> exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
+                debug!("> exec 0x{:x} 0x{:x} {} {}", p.pc(), a, stringify!($f), i);
                 $f(p, i)
             }
         };

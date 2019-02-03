@@ -35,6 +35,7 @@ pub struct Csrs {
 pub enum PostSetOp {
     None,
     SetMemMode(SetMemMode),
+    UpdateMmuPrv,
 }
 
 pub struct SetMemMode {
@@ -131,6 +132,7 @@ impl Csrs {
                 mstatus.set_supervisor_xlen(2);
                 mstatus.set_user_xlen(2);
                 self.mstatus = mstatus;
+                return PostSetOp::UpdateMmuPrv;
             }
             MEPC => self.mepc = v & !0x1,
             MIP => self.mip = v,
