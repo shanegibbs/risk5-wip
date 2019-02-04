@@ -1,4 +1,4 @@
-use super::bincode::BincodeReader;
+use super::bincode::{self, LineToTupleIterator, TupleReader};
 use super::{Insn, LogTuple, MemoryTrace, State, Transaction};
 use crate::matcher::Matcher;
 use crate::memory::*;
@@ -8,7 +8,7 @@ use std::io;
 pub fn run() -> Result<(), io::Error> {
     super::logger::init().map_err(|e| io::Error::new(io::ErrorKind::Other, e))?;
 
-    let reader = BincodeReader::new();
+    let reader = bincode::LogLineReader::new(io::BufReader::new(io::stdin())).to_tuple();
 
     use std::env;
     if let Ok(val) = env::var("STOP_AT") {
@@ -21,7 +21,7 @@ pub fn run() -> Result<(), io::Error> {
 
 // TODO multithread
 
-fn maybe_test_state(
+fn test_state(
     matchers: &[Matcher<ByteMap>],
     last_state: &Option<State>,
     last_insn: &Option<Insn>,
@@ -74,17 +74,16 @@ where
         } = log_tuple;
         counter += 1;
 
-        if !cpu.mmu().mem().did_persistent_load() {
-            maybe_test_state(
-                &matchers,
-                &last_state,
-                &last_insn,
-                &last_mems,
-                &state,
-                &last_store,
-            );
-        }
+        test_state(
+            &matchers,
+            &last_state,
+            &last_insn,
+            &last_mems,
+            &state,
+            &last_store,
+        );
 
+        trace!("Transaction validated OK");
         // trace!("This insn {:?}", insn);
 
         let mut fail = false;

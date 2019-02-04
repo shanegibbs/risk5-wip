@@ -13,6 +13,7 @@ pub(crate) mod logger;
 mod run;
 pub mod transaction;
 
+pub use self::bincode::bincodereader;
 pub use self::bincode::convert;
 pub use self::run::run;
 pub(crate) use transaction::Transaction;
@@ -29,6 +30,16 @@ pub(crate) fn format_diff<T: fmt::Binary + fmt::LowerHex>(expected: T, actual: T
         "Was:      0x{2:00$x} {2:01$b}\nExpected: 0x{3:00$x} {3:01$b}",
         hex_width, binary_width, actual, expected
     )
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub(crate) enum LogLine {
+    Mark,
+    Insn(Insn),
+    State(State),
+    Load(MemoryTrace),
+    Store(MemoryTrace),
+    Memory(MemoryTrace),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -54,7 +65,7 @@ pub struct RestorableState<'s, M> {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct State {
-    pub(crate) id: usize,
+    pub(crate) id: u64,
     pub(crate) pc: u64,
     pub(crate) prv: u64,
 
@@ -77,7 +88,7 @@ pub struct State {
     pub(crate) satp: u64,
     pub(crate) scause: u64,
 
-    pub(crate) xregs: Vec<u64>,
+    pub(crate) xregs: [u64; 32],
 }
 
 impl fmt::Display for State {
@@ -101,9 +112,22 @@ impl fmt::Display for State {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MemoryTrace {
-    kind: String,
+    kind: MemoryTraceKind,
     addr: u64,
     value: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub enum MemoryTraceKind {
+    Uint8,
+    Uint16,
+    Uint32,
+    Uint64,
+    Int8,
+    Int16,
+    Int32,
+    Int64,
+    Read,
 }
 
 trait ToMemory {
@@ -151,24 +175,25 @@ impl MemoryTrace {
             };
         }
 
-        match self.kind.as_str() {
-            "uint8" => {
+        use MemoryTraceKind::*;
+        match &self.kind {
+            Uint8 => {
                 let val = m.read_b(self.addr);
                 fail_on!("store", self.value as u8, val);
             }
-            "uint16" => {
+            Uint16 => {
                 let val = m.read_h(self.addr);
                 fail_on!("store", self.value as u16, val);
             }
-            "uint32" => {
+            Uint32 => {
                 let val = m.read_w(self.addr);
                 fail_on!("store", self.value as u32, val);
             }
-            "uint64" => {
+            Uint64 => {
                 let val = m.read_d(self.addr);
                 fail_on!("store", self.value, val);
             }
-            n => unimplemented!("check store type {}", n),
+            n => unimplemented!("check store type {:?}", n),
         }
     }
 }
@@ -183,7 +208,7 @@ impl fmt::Display for MemoryTrace {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "kind={} addr=0x{:x} value=0x{:x}",
+            "kind={:?} addr=0x{:x} value=0x{:x}",
             self.kind, self.addr, self.value
         )
     }
@@ -239,7 +264,7 @@ impl State {
             use crate::bitfield::Mstatus;
             let mstatus_expected = Mstatus::new_with_val(self.mstatus);
             let mstatus_actual = Mstatus::new_with_val(other.mstatus);
-            let unexpected_change = if let Some(before) = before {
+            let unexpected_change = if let Some(before) = before.as_ref() {
                 if self.mstatus == before.mstatus {
                     true
                 } else {
@@ -249,21 +274,33 @@ impl State {
                 false
             };
             error!(
-                "Fail mstatus check{}\n{}\nWas:      {:?}\nExpected: {:?}",
+                "Fail mstatus check{}\n{}\nWas:      {:?}\nExpected: {:?}{}",
                 match unexpected_change {
                     true => " (unexpected change)",
                     false => "",
                 },
                 format_diff(self.mstatus, other.mstatus),
                 mstatus_actual,
-                mstatus_expected
+                mstatus_expected,
+                if let Some(before) = before.as_ref() {
+                    format!("\nBefore:   {:?}", Mstatus::new_with_val(before.mstatus))
+                } else {
+                    String::new()
+                },
             );
             valid = false;
         }
 
         for (i, reg) in self.xregs.iter().enumerate() {
+            let expected = *reg;
             let actual = other.xregs[i];
-            if *reg != actual {
+            if expected != actual {
+                if let Some(before) = before.as_ref() {
+                    if expected == before.xregs[i] {
+                        error!("Expected was unchanged. Before was 0x{:x}", before.xregs[i]);
+                    }
+                }
+
                 let msg = format!("Fail reg check on 0x{:02x} ({})\nWas:      0x{:016x} {:064b} \nExpected: 0x{:016x} {:064b}",
                     i, regs::REG_NAMES[i], actual, actual, reg, reg);
                 error!("{}", msg);

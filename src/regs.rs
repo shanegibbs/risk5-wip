@@ -60,3 +60,15 @@ impl Into<Regs> for &[u64] {
         Regs { regs }
     }
 }
+
+impl From<[u64; 32]> for Regs {
+    fn from(regs: [u64; 32]) -> Self {
+        Regs { regs }
+    }
+}
+
+impl From<&Regs> for [u64; 32] {
+    fn from(regs: &Regs) -> Self {
+        regs.regs
+    }
+}

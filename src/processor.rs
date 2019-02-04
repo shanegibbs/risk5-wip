@@ -33,8 +33,10 @@ impl<M> Processor<M> {
     }
 
     pub fn update_mmu_prv(&mut self) {
+        // error!("Updating mmu prv");
         if self.csrs.mstatus.memory_privilege() == 1 {
             let mpp = self.csrs.mstatus.machine_previous_privilege();
+            // error!("Setting mmu prv to mpp {}. {:?}", mpp, self.csrs.mstatus);
             self.mmu.set_prv(mpp);
         } else {
             let prv = self.csrs.prv();
@@ -130,12 +132,14 @@ use crate::logrunner::RestorableState;
 impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
     fn into(self) -> Processor<M> {
         let RestorableState { state, memory } = self;
-        Processor {
+        let mut p = Processor {
             pc: state.pc,
             csrs: state.into(),
-            regs: (state.xregs.as_slice()).into(),
+            regs: state.xregs.into(),
             mmu: RestorableState { state, memory }.into(),
-        }
+        };
+        p.update_mmu_prv();
+        p
     }
 }
 

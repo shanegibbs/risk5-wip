@@ -42,7 +42,7 @@ pub(crate) struct JsonInsn {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct JsonState {
-    id: usize,
+    id: u64,
     pc: String,
     prv: String,
 
@@ -101,6 +101,11 @@ impl Into<Insn> for JsonInsn {
 
 impl Into<State> for JsonState {
     fn into(self) -> State {
+        let mut xregs = [0; 32];
+        for (i, v) in self.xregs.iter().enumerate() {
+            xregs[i] = string_to_u64(v);
+        }
+
         State {
             id: self.id,
             pc: string_to_u64(&self.pc),
@@ -123,19 +128,20 @@ impl Into<State> for JsonState {
             stvec: string_to_u64(&self.stvec),
             satp: string_to_u64(&self.satp),
             scause: string_to_u64(&self.scause),
-            xregs: self.xregs.iter().map(|n| string_to_u64(n)).collect(),
+            xregs: xregs,
         }
     }
 }
 
 impl Into<MemoryTrace> for JsonMemory {
     fn into(self) -> MemoryTrace {
-        let JsonMemory { kind, addr, value } = self;
-        MemoryTrace {
-            kind: kind,
-            addr: string_to_u64(&addr),
-            value: string_to_u64(&value),
-        }
+        unimplemented!("Removed for bincode");
+        // let JsonMemory { kind, addr, value } = self;
+        // MemoryTrace {
+        //     kind: kind,
+        //     addr: string_to_u64(&addr),
+        //     value: string_to_u64(&value),
+        // }
     }
 }
 

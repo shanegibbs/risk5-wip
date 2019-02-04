@@ -38,7 +38,7 @@ COMPLIANCE_LOGS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,$(COMPLIANCE_PATH)/
 test: check unit-tests compliance-tests spike-trace-test
 
 test-failed:
-	cat failed.bincode |cargo run --bin validate
+	cat failed.bincode |cargo run --bin validate-single
 
 check:
 	cargo check
@@ -47,13 +47,13 @@ unit-tests:
 	cargo test -- --nocapture --color=always --test-threads=1
 
 spike-trace-test: build
-	$(SPIKE_TRACE) --isa rv64ima -c1000000 $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima -c1000000 $(ASSETS)/bbl |$(LOGRUNNER)
 
 spike-trace: build
-	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(LOGRUNNER)
 
 spike-trace-trans: build
-	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(CONVERT) |$(VALIDATE)
+	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(VALIDATE)
 
 spike:
 	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl
@@ -119,11 +119,18 @@ unpack-assets:
 		|gzip -n > $(ASSETS)/bbl.log.jsonl.gz
 
 perf: build
-	bzcat $(ASSETS)/bbl.bincode.bz2 \
-		|env RUST_LOG=risk5=warn STOP_AT=20000
-			valgrind \
-				--tool=callgrind \
-				--dump-instr=yes \
-				--collect-jumps=yes \
-				--simulate-cache=yes \
-				$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima -c1000000 $(ASSETS)/bbl \
+		|env RUST_LOG=risk5=warn valgrind \
+			--tool=callgrind \
+			--dump-instr=yes \
+			--collect-jumps=yes \
+			--simulate-cache=yes \
+			$(VALIDATE)
+
+perf-run: build
+	env RUST_LOG=risk5=warn valgrind \
+		--tool=callgrind \
+		--dump-instr=yes \
+		--collect-jumps=yes \
+		--simulate-cache=yes \
+		$(RISK5)

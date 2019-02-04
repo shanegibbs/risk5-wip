@@ -197,7 +197,7 @@ impl Mstatus {
 use std::fmt;
 impl fmt::Debug for Mstatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={} mxr={} sum={}",
+        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={} mxr={} sum={} mprv={}",
                self.machine_interrupt_enabled(),
                self.supervisor_interrupt_enabled(),
                self.user_interrupt_enabled(),
@@ -212,6 +212,7 @@ impl fmt::Debug for Mstatus {
                self.user_xlen(),
                self.make_executable_readable(),
                self.supervisor_user_memory_access(),
+               self.memory_privilege(),
                )
     }
 }

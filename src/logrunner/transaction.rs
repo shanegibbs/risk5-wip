@@ -1,4 +1,4 @@
-use super::bincode::BincodeReader;
+use super::bincode::TupleReader;
 use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
 use crate::{build_matchers, matcher::Matcher, memory::ByteMap, Processor};
 use std::io;
@@ -13,7 +13,12 @@ pub fn single() -> Result<(), io::Error> {
 
 pub fn stream() -> Result<(), io::Error> {
     let matchers = build_matchers::<ByteMap>();
-    for t in TransactionIterator::default() {
+
+    let stdin = io::stdin();
+    let handle = stdin.lock();
+    let reader = super::bincode::LogLineReader::new(io::BufReader::new(handle)).to_tuple();
+
+    for t in TransactionIterator::new(reader) {
         t.validate(&matchers);
     }
     Ok(())
@@ -76,14 +81,21 @@ impl Transaction {
     }
 }
 
-pub(crate) struct TransactionIterator<I = BincodeReader> {
+pub(crate) struct TransactionIterator<I = TupleReader> {
     last_tuple: LogTuple,
     it: I,
 }
 
+impl<T: Iterator<Item = LogTuple>> TransactionIterator<T> {
+    fn new(mut it: T) -> Self {
+        let last_tuple = it.next().expect("no transaction data");
+        TransactionIterator { last_tuple, it }
+    }
+}
+
 impl Default for TransactionIterator {
     fn default() -> Self {
-        let mut it = BincodeReader::new();
+        let mut it = TupleReader::new();
         let last_tuple = it.next().expect("no transaction data");
         TransactionIterator { last_tuple, it }
     }
@@ -115,6 +127,7 @@ where
             store,
             mems,
         } = this_tuple;
+        let _line = line;
 
         Some(Transaction {
             state,

@@ -102,10 +102,11 @@ impl<M: Memory> Mmu<M> {
         }
 
         trace!(
-            "Translating offset 0x{:x} with asid=0x{:x} and ppn=0x{:x}",
+            "Translating offset 0x{:x} with asid=0x{:x}, ppn=0x{:x} and prv=0x{:x}",
             offset,
             self.asid,
-            self.ppn
+            self.ppn,
+            self.prv,
         );
 
         let pagesize = 4096;

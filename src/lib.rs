@@ -5,12 +5,12 @@ extern crate serde_derive;
 #[macro_use]
 extern crate lazy_static;
 
-macro_rules! fatal {
-    ($($arg:tt)*) => (
-        error!($($arg)*);
-        panic!($($arg)*);
-    )
-}
+// macro_rules! fatal {
+//     ($($arg:tt)*) => (
+//         error!($($arg)*);
+//         panic!($($arg)*);
+//     )
+// }
 
 mod bitfield;
 mod elf_loader;
@@ -67,8 +67,8 @@ pub fn write_reset_vec<M: Memory>(mem: &mut M, entry: u64, dtb: &[u8]) {
 }
 
 pub fn risk5_main() {
-    // pretty_env_logger::init();
-    logrunner::logger::init().unwrap();
+    pretty_env_logger::init();
+    // logrunner::logger::init().unwrap();
 
     let mut mem = BlockMemory::new(15);
 
@@ -111,7 +111,7 @@ pub fn risk5_main() {
         counter += 1;
         trace!("--- Step {} ---", counter);
         if counter % 100000 == 0 {
-            info!("--- Step {} ---", counter);
+            warn!("--- Step {} ---", counter);
         }
 
         let _fromhost = cpu.mmu().bare().read_d(0x80009000);
@@ -122,7 +122,7 @@ pub fn risk5_main() {
             let ch = tohost as u8;
             output = format!("{}{}", output, ch as char);
             use std::io::{self, Write};
-            write!(io::stderr(), "{}", ch as char);
+            write!(io::stderr(), "{}", ch as char).expect("stderr write");
             info!("tohost '{}'", ch as char);
             cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
         }

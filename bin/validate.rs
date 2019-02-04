@@ -5,7 +5,7 @@ use risk5;
 
 fn main() {
     pretty_env_logger::init();
-    match risk5::logrunner::transaction::single() {
+    match risk5::logrunner::transaction::stream() {
         Err(e) => error!("{}", e),
         Ok(()) => (),
     }

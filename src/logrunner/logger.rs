@@ -89,6 +89,13 @@ impl log::Log for LOGGER {
             }
             buffer.clear();
         } else {
+            if record.metadata().level() == Level::Warn {
+                print_line(
+                    &record.metadata().level(),
+                    record.module_path().map(|s| s.into()),
+                    &to_line(record),
+                );
+            }
             buffer.push_back((
                 record.metadata().level(),
                 record.module_path().map(|s| s.into()),
