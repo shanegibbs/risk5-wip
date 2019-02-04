@@ -64,7 +64,7 @@ impl Btype {
         i |= self.field(25, 6) << 5;
         i |= self.field(7, 1) << 11;
         i |= self.field(31, 1) << 12;
-        sign_extend(i as u64, 12)
+        sign_extend(i as u64, 13)
     }
 
     #[inline(always)]

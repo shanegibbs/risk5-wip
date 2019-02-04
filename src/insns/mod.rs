@@ -191,13 +191,27 @@ pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
         .regs
         .geti(i.rs1() as usize)
         .wrapping_add(p.regs.geti(i.rs2() as usize));
-    p.regs.seti(i.rd() as usize, v);
-    p.advance_pc();
+    target(p, i, v as u64);
 }
 
 pub fn addw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = (p.regs.geti(i.rs1() as usize) as i32) + (p.regs.geti(i.rs2() as usize) as i32);
-    p.regs.set(i.rd() as usize, v as u64);
+    target(p, i, v as u64);
+}
+
+pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
+    target(p, i, v as u64);
+}
+
+pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
+    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
+    let b = a << 32 >> 32;
+    target(p, i, b as u64);
+}
+
+fn target<M: Memory, I: FieldRd>(p: &mut Processor<M>, i: I, v: u64) {
+    p.regs.set(i.rd() as usize, v);
     p.advance_pc();
 }
 
@@ -221,12 +235,6 @@ pub fn or<M: Memory>(p: &mut Processor<M>, i: Rtype) {
 
 pub fn xor<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.geti(i.rs1() as usize) ^ p.regs.geti(i.rs2() as usize);
-    p.regs.seti(i.rd() as usize, v);
-    p.advance_pc();
-}
-
-pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
     p.regs.seti(i.rd() as usize, v);
     p.advance_pc();
 }
@@ -260,13 +268,6 @@ pub fn ori<M: Memory>(p: &mut Processor<M>, i: Itype) {
 pub fn xori<M: Memory>(p: &mut Processor<M>, i: Itype) {
     let v = p.regs.geti(i.rs1() as usize) ^ i.imm();
     p.regs.seti(i.rd() as usize, v);
-    p.advance_pc();
-}
-
-pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
-    let b = a << 32 >> 32;
-    p.regs.set(i.rd() as usize, b as u64);
     p.advance_pc();
 }
 
@@ -338,6 +339,15 @@ pub fn sra<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.get(i.rs1() as usize) as i64;
     let v = v >> shmat;
     p.regs.set(i.rd() as usize, v as u64);
+    p.advance_pc();
+}
+
+pub fn sraw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let shmat = p.regs.get(i.rs2() as usize) & 0x3f;
+    let v = p.regs.get(i.rs1() as usize) as i32;
+    let v = v >> shmat;
+    let sign_extended = ((v as i64) << 32 >> 32) as u64;
+    p.regs.set(i.rd() as usize, sign_extended);
     p.advance_pc();
 }
 
