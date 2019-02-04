@@ -262,8 +262,8 @@ impl State {
 
         if self.mstatus != other.mstatus {
             use crate::bitfield::Mstatus;
-            let mstatus_expected = Mstatus::new_with_val(self.mstatus);
-            let mstatus_actual = Mstatus::new_with_val(other.mstatus);
+            let mstatus_expected: Mstatus = self.mstatus.into();
+            let mstatus_actual: Mstatus = other.mstatus.into();
             let unexpected_change = if let Some(before) = before.as_ref() {
                 if self.mstatus == before.mstatus {
                     true
@@ -283,7 +283,7 @@ impl State {
                 mstatus_actual,
                 mstatus_expected,
                 if let Some(before) = before.as_ref() {
-                    format!("\nBefore:   {:?}", Mstatus::new_with_val(before.mstatus))
+                    format!("\nBefore:   {:?}", Into::<Mstatus>::into(before.mstatus))
                 } else {
                     String::new()
                 },

@@ -3,14 +3,6 @@ use crate::bitfield::BitField;
 pub(crate) struct Mstatus(BitField);
 
 impl Mstatus {
-    pub fn new() -> Self {
-        Mstatus(BitField::new(0))
-    }
-
-    pub fn new_with_val(i: u64) -> Self {
-        Mstatus(BitField::new(i))
-    }
-
     #[inline(always)]
     pub fn val(&self) -> u64 {
         self.0.val()
@@ -191,6 +183,18 @@ impl Mstatus {
     #[inline(always)]
     pub fn memory_privilege(&self) -> u64 {
         self.0.field(17, 1)
+    }
+}
+
+impl Default for Mstatus {
+    fn default() -> Self {
+        Mstatus(BitField::new(0))
+    }
+}
+
+impl From<u64> for Mstatus {
+    fn from(i: u64) -> Mstatus {
+        Mstatus(BitField::new(i))
     }
 }
 

@@ -15,7 +15,7 @@ pub struct Processor<M> {
 impl<M> Processor<M> {
     pub fn new(pc: u64, mem: M) -> Self {
         Processor {
-            pc: pc,
+            pc,
             csrs: Csrs::new(),
             regs: Regs::new(),
             mmu: Mmu::new(mem),
@@ -29,20 +29,20 @@ impl<M> Processor<M> {
     pub fn set_prv(&mut self, prv: u64) {
         debug!("Setting prv to {}", prv);
         self.csrs.set_prv(prv);
-        self.update_mmu_prv();
+        self.mmu.set_prv(prv, &self.csrs.mstatus);
     }
 
-    pub fn update_mmu_prv(&mut self) {
-        // error!("Updating mmu prv");
-        if self.csrs.mstatus.memory_privilege() == 1 {
-            let mpp = self.csrs.mstatus.machine_previous_privilege();
-            // error!("Setting mmu prv to mpp {}. {:?}", mpp, self.csrs.mstatus);
-            self.mmu.set_prv(mpp);
-        } else {
-            let prv = self.csrs.prv();
-            self.mmu.set_prv(prv);
-        }
-    }
+    // pub fn update_mmu_prv(&mut self) {
+    //     error!("Updating mmu prv. Prv is {}", self.csrs.prv());
+    //     if self.csrs.mstatus.memory_privilege() == 1 {
+    //         let mpp = self.csrs.mstatus.machine_previous_privilege();
+    //         error!("Setting mmu prv to mpp {}. {:?}", mpp, self.csrs.mstatus);
+    //         self.mmu.set_prv(mpp);
+    //     } else {
+    //         let prv = self.csrs.prv();
+    //         self.mmu.set_prv(prv);
+    //     }
+    // }
 
     #[inline(always)]
     pub fn set_mem_mode(&mut self, op: SetMemMode) {
@@ -65,7 +65,7 @@ impl<M> Processor<M> {
         match self.csrs.set(i as usize, val) {
             PostSetOp::None => (),
             PostSetOp::SetMemMode(m) => self.set_mem_mode(m),
-            PostSetOp::UpdateMmuPrv => self.update_mmu_prv(),
+            PostSetOp::UpdateMmuPrv => self.mmu.set_prv(self.csrs.prv(), &self.csrs.mstatus),
         }
     }
 
@@ -80,12 +80,12 @@ impl<M> Processor<M> {
     }
 
     #[inline(always)]
-    pub fn mmu(&self) -> &Mmu<M> {
+    pub(crate) fn mmu(&self) -> &Mmu<M> {
         &self.mmu
     }
 
     #[inline(always)]
-    pub fn mmu_mut(&mut self) -> &mut Mmu<M> {
+    pub(crate) fn mmu_mut(&mut self) -> &mut Mmu<M> {
         &mut self.mmu
     }
 
@@ -94,7 +94,7 @@ impl<M> Processor<M> {
     where
         M: Memory,
     {
-        let insn = match self.mmu.read_w(self.pc) {
+        let insn = match self.mmu.read_insn(self.pc) {
             Ok(insn) => insn,
             Err(()) => {
                 crate::insns::do_trap(self, 12, self.pc);
@@ -132,14 +132,12 @@ use crate::logrunner::RestorableState;
 impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
     fn into(self) -> Processor<M> {
         let RestorableState { state, memory } = self;
-        let mut p = Processor {
+        Processor {
             pc: state.pc,
             csrs: state.into(),
             regs: state.xregs.into(),
             mmu: RestorableState { state, memory }.into(),
-        };
-        p.update_mmu_prv();
-        p
+        }
     }
 }
 

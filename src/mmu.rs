@@ -1,10 +1,11 @@
-use crate::bitfield::{PageTableEntry, PhysicalAddress, VirtualAddress};
+use crate::bitfield::{Mstatus, PageTableEntry, PhysicalAddress, VirtualAddress};
 use crate::Memory;
 use std::fmt;
 
-pub struct Mmu<M> {
+pub(crate) struct Mmu<M> {
     mem: M,
     prv: u64,
+    insn_prv: u64,
     sv39: bool,
     asid: u16,
     ppn: u64,
@@ -15,6 +16,7 @@ impl<M> Mmu<M> {
         Self {
             mem: m,
             prv: 3,
+            insn_prv: 3,
             sv39: false,
             asid: 0,
             ppn: 0,
@@ -29,8 +31,14 @@ impl<M> Mmu<M> {
         &mut self.mem
     }
 
-    pub fn set_prv(&mut self, prv: u64) {
-        self.prv = prv
+    pub fn set_prv(&mut self, prv: u64, mstatus: &Mstatus) {
+        self.insn_prv = prv;
+        self.prv = if mstatus.memory_privilege() == 1 {
+            mstatus.machine_previous_privilege()
+        } else {
+            prv
+        };
+        trace!("MMU prv set to {}/{}", self.prv, self.insn_prv);
     }
 
     pub fn bare(&self) -> &M {
@@ -56,8 +64,8 @@ impl<M> Mmu<M> {
 }
 
 macro_rules! mem {
-    ($self:expr, $func:ident, $addr:expr) => {{
-        let addr = match $self.translate($addr) {
+    ($self:expr, $func:ident, $prv:expr, $addr:expr) => {{
+        let addr = match $self.translate($addr, $prv) {
             Ok(a) => a,
             Err(_) => {
                 debug!("Page-fault on load");
@@ -75,8 +83,8 @@ macro_rules! mem {
         }
         Ok(val)
     }};
-    ($self:expr, $func:ident, $addr:expr, $val:expr) => {{
-        let addr = match $self.translate($addr) {
+    ($self:expr, $func:ident, $prv:expr, $addr:expr, $val:expr) => {{
+        let addr = match $self.translate($addr, $prv) {
             Ok(a) => a,
             Err(_) => {
                 debug!("Page-fault on store");
@@ -96,8 +104,8 @@ macro_rules! mem {
 }
 
 impl<M: Memory> Mmu<M> {
-    fn translate(&self, offset: u64) -> Result<u64, ()> {
-        if !self.sv39 || self.prv == 3 {
+    fn translate(&self, offset: u64, prv: u64) -> Result<u64, ()> {
+        if !self.sv39 || prv == 3 {
             return Ok(offset);
         }
 
@@ -106,7 +114,7 @@ impl<M: Memory> Mmu<M> {
             offset,
             self.asid,
             self.ppn,
-            self.prv,
+            prv,
         );
 
         let pagesize = 4096;
@@ -145,7 +153,7 @@ impl<M: Memory> Mmu<M> {
 
             // step down a level
             a = pte.physical_page_number() * pagesize;
-            i = i - 1;
+            i -= 1;
         };
 
         let mut pa: PhysicalAddress = 0.into();
@@ -172,36 +180,40 @@ impl<M: Memory> Mmu<M> {
         Ok(pa)
     }
 
+    pub fn read_insn(&self, offset: u64) -> Result<u32, ()> {
+        mem!(self, read_w, self.insn_prv, offset)
+    }
+
     pub fn read_b(&self, offset: u64) -> Result<u8, ()> {
-        mem!(self, read_b, offset)
+        mem!(self, read_b, self.prv, offset)
     }
 
     pub fn read_h(&self, offset: u64) -> Result<u16, ()> {
-        mem!(self, read_h, offset)
+        mem!(self, read_h, self.prv, offset)
     }
 
     pub fn read_w(&self, offset: u64) -> Result<u32, ()> {
-        mem!(self, read_w, offset)
+        mem!(self, read_w, self.prv, offset)
     }
 
     pub fn read_d(&self, offset: u64) -> Result<u64, ()> {
-        mem!(self, read_d, offset)
+        mem!(self, read_d, self.prv, offset)
     }
 
     pub fn write_b(&mut self, offset: u64, value: u8) -> Result<(), ()> {
-        mem!(self, write_b, offset, value)
+        mem!(self, write_b, self.prv, offset, value)
     }
 
     pub fn write_h(&mut self, offset: u64, value: u16) -> Result<(), ()> {
-        mem!(self, write_h, offset, value)
+        mem!(self, write_h, self.prv, offset, value)
     }
 
     pub fn write_w(&mut self, offset: u64, value: u32) -> Result<(), ()> {
-        mem!(self, write_w, offset, value)
+        mem!(self, write_w, self.prv, offset, value)
     }
 
     pub fn write_d(&mut self, offset: u64, value: u64) -> Result<(), ()> {
-        mem!(self, write_d, offset, value)
+        mem!(self, write_d, self.prv, offset, value)
     }
 }
 
@@ -224,9 +236,11 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x8021dc00, 0x20087001));
             mem
         });
-        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x8021d);
-        assert_eq!(mmu.translate(0xffffffe0000000c0).expect("ok"), 0x802000c0);
+        assert_eq!(
+            mmu.translate(0xffffffe0000000c0, 0).expect("ok"),
+            0x802000c0
+        );
 
         let mut mmu = Mmu::new({
             let mut mem = FakeMemory::new();
@@ -234,9 +248,11 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
             mem
         });
-        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x80707);
-        assert_eq!(mmu.translate(0xffffffe000464440).expect("ok"), 0x80664440);
+        assert_eq!(
+            mmu.translate(0xffffffe000464440, 0).expect("ok"),
+            0x80664440
+        );
 
         let mut mmu = Mmu::new({
             let mut mem = FakeMemory::new();
@@ -244,11 +260,10 @@ mod test {
             mem.push_read(FakeMemoryItem::Double(0x80707c00, 0x201a1c01));
             mem
         });
-        mmu.set_prv(0);
         mmu.set_page_mode(0, 0x80707);
 
         let expected = 0x80202df8;
-        let actual = mmu.translate(0xffffffe000002df8).expect("ok");
+        let actual = mmu.translate(0xffffffe000002df8, 0).expect("ok");
 
         trace!("Actual   0x{:16x}", actual);
         trace!("Expected 0x{:16x}", expected);
@@ -265,12 +280,16 @@ use crate::logrunner::RestorableState;
 impl<'a, M> Into<Mmu<M>> for RestorableState<'a, M> {
     fn into(self) -> Mmu<M> {
         let satp: Satp = self.state.satp.into();
-        Mmu {
+        let mstatus = self.state.mstatus.into();
+        let mut mmu = Mmu {
             mem: self.memory,
-            prv: self.state.prv,
+            prv: 0,
+            insn_prv: 0,
             sv39: satp.mode() == 8,
             asid: satp.asid() as u16,
             ppn: satp.ppn() as u64,
-        }
+        };
+        mmu.set_prv(self.state.prv, &mstatus);
+        mmu
     }
 }

@@ -87,7 +87,7 @@ const MIP: usize = 0x344;
 
 impl Csrs {
     pub fn new() -> Self {
-        let mut mstatus = Mstatus::new();
+        let mut mstatus = Mstatus::default();
         mstatus.set_supervisor_xlen(2);
         mstatus.set_user_xlen(2);
 
@@ -128,7 +128,7 @@ impl Csrs {
             MTVEC => self.mtvec = v,
             MSTATUS => {
                 debug!("Setting mstatus to 0x{:x}", v);
-                let mut mstatus = Mstatus::new_with_val(v);
+                let mut mstatus: Mstatus = v.into();
                 mstatus.set_supervisor_xlen(2);
                 mstatus.set_user_xlen(2);
                 self.mstatus = mstatus;
@@ -232,7 +232,7 @@ impl Into<Csrs> for &State {
     fn into(self) -> Csrs {
         Csrs {
             prv: self.prv,
-            mstatus: Mstatus::new_with_val(self.mstatus),
+            mstatus: self.mstatus.into(),
             medeleg: self.medeleg,
             mideleg: self.mideleg,
             mtvec: self.mtvec,
