@@ -109,6 +109,25 @@ pub fn amoaddd<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn amoandd<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    // load value from addr(rs1)
+    let addr = p.regs.get(i.rs1() as usize);
+    let v = mem!(p, read_d, addr);
+
+    // other value
+    let rs2 = p.regs.get(i.rs2() as usize);
+
+    // do operation
+    let result = v & rs2;
+
+    // write result back to addr
+    mem!(p, write_d, addr, result);
+
+    p.regs.set(i.rd() as usize, v);
+
+    p.advance_pc();
+}
+
 pub fn amoord<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     // load value from addr(rs1)
     let addr = p.regs.get(i.rs1() as usize);

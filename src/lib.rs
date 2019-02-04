@@ -217,92 +217,46 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
             p.advance_pc();
         }),
         Matcher::new(0xfe00707f, 0x2000033, wrap!(mul)),
-        Matcher::new(0xfe00707f, 0x2001033, |p, _| {
-            error!("Unimplemented insn 'mulh' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2002033, |p, _| {
-            error!("Unimplemented insn 'mulhsu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2003033, |p, _| {
-            error!("Unimplemented insn 'mulhu' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x2001033, noimpl!("mulh")),
+        Matcher::new(0xfe00707f, 0x2002033, noimpl!("mulhsu")),
+        Matcher::new(0xfe00707f, 0x2003033, noimpl!("mulhu")),
         Matcher::new(0xfe00707f, 0x2004033, wrap!(div)),
         Matcher::new(0xfe00707f, 0x2005033, wrap!(divu)),
         Matcher::new(0xfe00707f, 0x2006033, wrap!(rem)),
         Matcher::new(0xfe00707f, 0x2007033, wrap!(remu)),
         Matcher::new(0xfe00707f, 0x200003b, wrap!(mulw)),
         Matcher::new(0xfe00707f, 0x200403b, wrap!(divw)),
-        Matcher::new(0xfe00707f, 0x200503b, |p, _| {
-            error!("Unimplemented insn 'divuw' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x200503b, wrap!(divuw)),
         Matcher::new(0xfe00707f, 0x200603b, wrap!(remw)),
-        Matcher::new(0xfe00707f, 0x200703b, |p, _| {
-            error!("Unimplemented insn 'remuw' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x200703b, wrap!(remuw)),
         Matcher::new(0xf800707f, 0x202f, wrap!(amoaddw)),
-        Matcher::new(0xf800707f, 0x2000202f, |p, _| {
-            error!("Unimplemented insn 'amoxor.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x4000202f, |p, _| {
-            error!("Unimplemented insn 'amoor.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x6000202f, |p, _| {
-            error!("Unimplemented insn 'amoand.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x8000202f, |p, _| {
-            error!("Unimplemented insn 'amomin.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xa000202f, |p, _| {
-            error!("Unimplemented insn 'amomax.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xc000202f, |p, _| {
-            error!("Unimplemented insn 'amominu.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xe000202f, |p, _| {
-            error!("Unimplemented insn 'amomaxu.w' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf800707f, 0x2000202f, noimpl!("amoxor.w")),
+        Matcher::new(0xf800707f, 0x4000202f, noimpl!("amoor.w")),
+        Matcher::new(0xf800707f, 0x6000202f, noimpl!("amoand.w")),
+        Matcher::new(0xf800707f, 0x8000202f, noimpl!("amomin.w")),
+        Matcher::new(0xf800707f, 0xa000202f, noimpl!("amomax.w")),
+        Matcher::new(0xf800707f, 0xc000202f, noimpl!("amominu.w")),
+        Matcher::new(0xf800707f, 0xe000202f, noimpl!("amomaxu.w")),
         Matcher::new(0xf800707f, 0x800202f, wrap!(amoswapw)),
         Matcher::new(0xf9f0707f, 0x1000202f, wrap!(lrw)),
         Matcher::new(0xf800707f, 0x1800202f, wrap!(scw)),
         Matcher::new(0xf800707f, 0x302f, wrap!(amoaddd)),
-        Matcher::new(0xf800707f, 0x2000302f, |p, _| {
-            error!("Unimplemented insn 'amoxor.d' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf800707f, 0x2000302f, noimpl!("amoxor.d")),
         Matcher::new(0xf800707f, 0x4000302f, wrap!(amoord)),
-        Matcher::new(0xf800707f, 0x6000302f, |p, _| {
-            error!("Unimplemented insn 'amoand.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x8000302f, |p, _| {
-            error!("Unimplemented insn 'amomin.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xa000302f, |p, _| {
-            error!("Unimplemented insn 'amomax.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xc000302f, |p, _| {
-            error!("Unimplemented insn 'amominu.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0xe000302f, |p, _| {
-            error!("Unimplemented insn 'amomaxu.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xf800707f, 0x800302f, |p, _| {
-            error!("Unimplemented insn 'amoswap.d' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf800707f, 0x6000302f, wrap!(amoandd)),
+        Matcher::new(0xf800707f, 0x8000302f, noimpl!("amomin.d")),
+        Matcher::new(0xf800707f, 0xa000302f, noimpl!("amomax.d")),
+        Matcher::new(0xf800707f, 0xc000302f, noimpl!("amominu.d")),
+        Matcher::new(0xf800707f, 0xe000302f, noimpl!("amomaxu.d")),
+        Matcher::new(0xf800707f, 0x800302f, noimpl!("amoswap.d")),
         Matcher::new(0xf9f0707f, 0x1000302f, wrap!(lrd)),
         Matcher::new(0xf800707f, 0x1800302f, wrap!(scd)),
         Matcher::new(0xffffffff, 0x73, wrap!(ecall)),
-        Matcher::new(0xffffffff, 0x100073, |p, _| {
-            error!("Unimplemented insn 'ebreak' at {:x}", p.pc())
-        }),
-        Matcher::new(0xffffffff, 0x200073, |p, _| {
-            error!("Unimplemented insn 'uret' at {:x}", p.pc())
-        }),
-        Matcher::new(0xffffffff, 0x10200073, |p, _| {
-            error!("Unimplemented insn 'sret' at {:x}", p.pc())
-        }),
+        Matcher::new(0xffffffff, 0x100073, noimpl!("ebreak")),
+        Matcher::new(0xffffffff, 0x200073, noimpl!("uret")),
+        Matcher::new(0xffffffff, 0x10200073, noimpl!("sret")),
         Matcher::new(0xffffffff, 0x30200073, wrap!(mret)),
-        Matcher::new(0xffffffff, 0x7b200073, |p, _| {
-            error!("Unimplemented insn 'dret' at {:x}", p.pc())
-        }),
+        Matcher::new(0xffffffff, 0x7b200073, noimpl!("dret")),
         Matcher::new(0xfe007fff, 0x12000073, |p, _| {
             trace!("Noop insn 'sfence.vma' at {:x}", p.pc());
             p.advance_pc();
