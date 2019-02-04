@@ -86,7 +86,7 @@ load:
 compliance-tests: $(COMPLIANCE_TESTS)
 
 %-compliance-test: build
-	$(SPIKE_TRACE) --isa rv64ima $(COMPLIANCE_PATH)/tests/$*.elf |$(CONVERT) |$(LOGRUNNER)
+	$(SPIKE_TRACE) --isa rv64ima $(COMPLIANCE_PATH)/tests/$*.elf |$(LOGRUNNER)
 
 # read bbl.log.jsonl compress to gz and bz2, convert
 # to bincode and compress that output to gz and bz2 as well
