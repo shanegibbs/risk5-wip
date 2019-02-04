@@ -1,6 +1,8 @@
+mod interrupt;
 mod mstatus;
 mod satp;
 
+pub(crate) use self::interrupt::Interrupt;
 pub(crate) use self::mstatus::Mstatus;
 pub(crate) use self::satp::Satp;
 

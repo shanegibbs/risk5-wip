@@ -244,7 +244,7 @@ impl Jtype {
         i |= self.field(20, 1) << 11;
         i |= self.field(12, 8) << 12;
         i |= self.field(31, 1) << 20;
-        sign_extend(i as u64, 20)
+        sign_extend(i as u64, 21)
     }
 }
 

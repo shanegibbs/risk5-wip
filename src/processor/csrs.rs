@@ -1,5 +1,4 @@
-use crate::bitfield::Mstatus;
-use crate::bitfield::Satp;
+use crate::bitfield::{Interrupt, Mstatus, Satp};
 use crate::insns::Trap;
 use std::fmt;
 
@@ -16,12 +15,11 @@ pub struct Csrs {
     pub(crate) mscratch: u64,
     pub(crate) misa: u64,
     pub(crate) mcounteren: u64,
-    pub(crate) mie: u64,
+    pub(crate) mie: Interrupt,
     pub(crate) mip: u64,
 
     pub(crate) sedeleg: u64,
     pub(crate) sideleg: u64,
-    pub(crate) sie: u64,
     pub(crate) stvec: u64,
     pub(crate) scounteren: u64,
     pub(crate) sscratch: u64,
@@ -103,12 +101,11 @@ impl Csrs {
             mscratch: 0,
             misa: 0x8000000000141101,
             mcounteren: 0,
-            mie: 0,
+            mie: 0.into(),
             mip: 0,
 
             sedeleg: 0,
             sideleg: 0,
-            sie: 0,
             stvec: 0,
             scounteren: 0,
             sscratch: 0,
@@ -136,7 +133,7 @@ impl Csrs {
             }
             MEPC => self.mepc = v & !0x1,
             MIP => self.mip = v,
-            MIE => self.mie = v,
+            MIE => self.mie = v.into(),
             MEDELEG => self.medeleg = v,
             MIDELEG => self.mideleg = v,
             MSCRATCH => self.mscratch = v,
@@ -145,7 +142,7 @@ impl Csrs {
             SSTATUS => self.mstatus.set_bits(v),
             SEDELEG => self.sedeleg = v,
             SIDELEG => self.sideleg = v,
-            SIE => self.sie = v,
+            SIE => self.mie.set_supervisor_vals(v),
             STVEC => self.stvec = v,
             SCOUNTEREN => self.scounteren = v,
             SSCRATCH => self.sscratch = v,
@@ -160,11 +157,7 @@ impl Csrs {
                 let ppn = satp.ppn();
                 self.satp = satp;
 
-                return PostSetOp::SetMemMode(SetMemMode {
-                    mode: mode,
-                    asid: asid,
-                    ppn: ppn,
-                });
+                return PostSetOp::SetMemMode(SetMemMode { mode, asid, ppn });
             }
 
             i => warn!("unimplemented Csrs.set 0x{:x}", i),
@@ -176,13 +169,13 @@ impl Csrs {
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, Trap> {
         let i = i.into();
         trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);
-        return Ok(match i {
+        Ok(match i {
             MHARTID => 0,
 
             MSTATUS => self.mstatus.val(),
             MISA => self.misa,
             MIP => self.mip,
-            MIE => self.mie,
+            MIE => self.mie.val(),
             MEDELEG => self.medeleg,
             MIDELEG => self.mideleg,
             MCOUNTEREN => self.mcounteren,
@@ -195,7 +188,7 @@ impl Csrs {
             SSTATUS => self.mstatus.val_for_prv(self.prv),
             SEDELEG => self.sedeleg,
             SIDELEG => self.sideleg,
-            SIE => self.sie,
+            SIE => self.mie.supervisor_view(),
             STVEC => self.stvec,
             SCOUNTEREN => self.scounteren,
             SSCRATCH => self.sscratch,
@@ -209,7 +202,7 @@ impl Csrs {
                 warn!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
                 return Err(Trap::illegal_insn());
             }
-        });
+        })
     }
 
     pub fn prv(&self) -> u64 {
@@ -242,11 +235,10 @@ impl Into<Csrs> for &State {
             mscratch: self.mscratch,
             misa: 0x8000000000141101,
             mcounteren: self.mcounteren,
-            mie: self.mie,
+            mie: self.mie.into(),
             mip: self.mip,
             sedeleg: 0, // self.sedeleg,
             sideleg: 0, // self.sideleg,
-            sie: 0,     // self.sie,
             stvec: self.stvec,
             scounteren: self.scounteren,
             sscratch: self.sscratch,

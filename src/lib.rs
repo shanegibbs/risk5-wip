@@ -264,9 +264,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xf800707f, 0x800202f, wrap!(amoswapw)),
         Matcher::new(0xf9f0707f, 0x1000202f, wrap!(lrw)),
         Matcher::new(0xf800707f, 0x1800202f, wrap!(scw)),
-        Matcher::new(0xf800707f, 0x302f, |p, _| {
-            error!("Unimplemented insn 'amoadd.d' at {:x}", p.pc())
-        }),
+        Matcher::new(0xf800707f, 0x302f, wrap!(amoaddd)),
         Matcher::new(0xf800707f, 0x2000302f, |p, _| {
             error!("Unimplemented insn 'amoxor.d' at {:x}", p.pc())
         }),
@@ -318,9 +316,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x707f, 0x2073, wrap!(csr::insn<M, csr::ReadSet>)),
         Matcher::new(0x707f, 0x3073, wrap!(csr::insn<M, csr::ReadClear>)),
         Matcher::new(0x707f, 0x5073, wrap!(csr::insn<M, csr::ReadWriteImm>)),
-        Matcher::new(0x707f, 0x6073, |p, _| {
-            error!("Unimplemented insn 'csrrsi' at {:x}", p.pc())
-        }),
+        Matcher::new(0x707f, 0x6073, wrap!(csr::insn<M, csr::ReadSetImm>)),
         Matcher::new(0x707f, 0x7073, wrap!(csr::insn<M, csr::ReadClearImm>)),
         Matcher::new(0xfe00007f, 0x53, |p, _| {
             error!("Unimplemented insn 'fadd.s' at {:x}", p.pc())
