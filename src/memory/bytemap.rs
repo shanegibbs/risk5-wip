@@ -1,11 +1,9 @@
 use crate::Memory;
-use std::cell::RefCell;
 
 #[derive(Clone)]
 pub(crate) struct ByteMap {
     pub persistent: Vec<(u64, u8)>,
     pub data: Vec<(u64, u8)>,
-    pub did_persistent_load: RefCell<bool>,
 }
 
 impl ByteMap {
@@ -18,24 +16,18 @@ impl ByteMap {
         self.data
     }
 
-    pub fn did_persistent_load(&self) -> bool {
-        *self.did_persistent_load.borrow()
-    }
-
     pub fn _set_data(&mut self, data: Vec<(u64, u8)>) {
         self.data = data;
     }
 
     pub fn clear(&mut self) {
         self.data.clear();
-        *(self.did_persistent_load.borrow_mut()) = false;
     }
 }
 
 impl Default for ByteMap {
     fn default() -> Self {
         ByteMap {
-            did_persistent_load: RefCell::new(false),
             persistent: vec![],
             data: vec![],
         }
@@ -53,7 +45,6 @@ impl Memory for ByteMap {
         for (addr, value) in (&self.persistent).iter().rev() {
             if *addr == offset {
                 trace!("Loaded persistent 0x{:x}: 0x{:x}", offset, value);
-                *(self.did_persistent_load.borrow_mut()) = true;
                 return *value;
             }
         }

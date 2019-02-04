@@ -1,4 +1,4 @@
-use super::bincode::{self, LineToTupleIterator, TupleReader};
+use super::bincode;
 use super::{Insn, LogTuple, MemoryTrace, State, Transaction};
 use crate::matcher::Matcher;
 use crate::memory::*;
