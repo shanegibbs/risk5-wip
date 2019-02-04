@@ -231,15 +231,11 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xfe00707f, 0x2006033, wrap!(rem)),
         Matcher::new(0xfe00707f, 0x2007033, wrap!(remu)),
         Matcher::new(0xfe00707f, 0x200003b, wrap!(mulw)),
-        Matcher::new(0xfe00707f, 0x200403b, |p, _| {
-            error!("Unimplemented insn 'divw' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x200403b, wrap!(divw)),
         Matcher::new(0xfe00707f, 0x200503b, |p, _| {
             error!("Unimplemented insn 'divuw' at {:x}", p.pc())
         }),
-        Matcher::new(0xfe00707f, 0x200603b, |p, _| {
-            error!("Unimplemented insn 'remw' at {:x}", p.pc())
-        }),
+        Matcher::new(0xfe00707f, 0x200603b, wrap!(remw)),
         Matcher::new(0xfe00707f, 0x200703b, |p, _| {
             error!("Unimplemented insn 'remuw' at {:x}", p.pc())
         }),

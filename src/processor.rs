@@ -109,6 +109,7 @@ impl<M> Processor<M> {
             }
         }
         error!("Unmatched instruction: 0x{:x}", insn);
+        panic!("Unmatched instruction");
     }
 
     #[inline(always)]
