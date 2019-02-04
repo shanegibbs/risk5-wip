@@ -45,6 +45,11 @@ pub trait FieldRs2: Base {
     }
 }
 
+pub trait FieldImm {
+    #[inline(always)]
+    fn imm(&self) -> i64;
+}
+
 // B Instruction Type
 
 pub struct Btype(u32);
@@ -130,15 +135,17 @@ impl Base for Itype {
 impl FieldRd for Itype {}
 impl FieldRs1 for Itype {}
 
+impl FieldImm for Itype {
+    #[inline(always)]
+    fn imm(&self) -> i64 {
+        self.signed_field(20, 12)
+    }
+}
+
 impl Itype {
     #[inline(always)]
     pub fn immu(&self) -> u64 {
         self.field(20, 12) as u64
-    }
-
-    #[inline(always)]
-    pub fn imm(&self) -> i64 {
-        self.signed_field(20, 12)
     }
 }
 

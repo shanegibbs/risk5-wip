@@ -4,6 +4,7 @@ use crate::itypes::*;
 use crate::*;
 
 mod amo;
+pub mod comp;
 pub mod csr;
 pub mod mem;
 pub mod prv;
@@ -185,35 +186,6 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
 }
 
 // Integer Computational Instructions
-
-pub fn add<M: Memory>(p: &mut Processor<M>, i: Rtype) {
-    let v = p
-        .regs
-        .geti(i.rs1() as usize)
-        .wrapping_add(p.regs.geti(i.rs2() as usize));
-    target(p, i, v as u64);
-}
-
-pub fn addw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
-    let v = (p.regs.geti(i.rs1() as usize) as i32) + (p.regs.geti(i.rs2() as usize) as i32);
-    target(p, i, v as u64);
-}
-
-pub fn addi<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let v = p.regs.geti(i.rs1() as usize).wrapping_add(i.imm());
-    target(p, i, v as u64);
-}
-
-pub fn addiw<M: Memory>(p: &mut Processor<M>, i: Itype) {
-    let a = (p.regs.get(i.rs1() as usize) as i64).wrapping_add(i.imm());
-    let b = a << 32 >> 32;
-    target(p, i, b as u64);
-}
-
-fn target<M: Memory, I: FieldRd>(p: &mut Processor<M>, i: I, v: u64) {
-    p.regs.set(i.rd() as usize, v);
-    p.advance_pc();
-}
 
 pub fn and<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     let v = p.regs.geti(i.rs1() as usize) & p.regs.geti(i.rs2() as usize);
