@@ -19,9 +19,10 @@ impl BlockMemory {
     }
 
     pub fn add_block(&mut self, offset: u64, size: u64) {
-        trace!(
-            "Adding memory block at 0x{:x} of size 0x{:x} as index {}",
+        error!(
+            "Adding memory block at 0x{:x} (to 0x{:x}) of size 0x{:x} as index {}",
             offset,
+            offset + size,
             size,
             self.blocks.len()
         );

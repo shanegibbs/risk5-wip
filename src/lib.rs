@@ -67,8 +67,8 @@ pub fn write_reset_vec<M: Memory>(mem: &mut M, entry: u64, dtb: &[u8]) {
 }
 
 pub fn risk5_main() {
-    pretty_env_logger::init();
-    // logrunner::logger::init().unwrap();
+    // pretty_env_logger::init();
+    logrunner::logger::init().unwrap();
 
     let mut mem = BlockMemory::new(15);
 
