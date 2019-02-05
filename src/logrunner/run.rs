@@ -139,7 +139,7 @@ where
             format!("--- Begin step {} (json line {}) --- No insn", step, line)
         };
 
-        if step % 10000 == 0 {
+        if step % 10_0000 == 0 {
             warn!("{}", status_line);
         }
         info!("{}", status_line);
