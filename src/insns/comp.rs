@@ -225,6 +225,7 @@ impl Operation<u32> for Srl {
 }
 impl Operation<i32> for Srl {
     fn exec(lhs: i32, rhs: i32) -> u64 {
+        let lhs = lhs as u32;
         (lhs >> (rhs & 0x3F)) as u64
     }
 }

@@ -38,7 +38,7 @@ COMPLIANCE_LOGS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,$(COMPLIANCE_PATH)/
 test: check unit-tests compliance-tests spike-trace-test
 
 test-failed:
-	cat failed.bincode |cargo run --bin validate-single
+	cat failed.bincode |RUST_LOG=risk5=trace cargo run --bin validate-single
 
 check:
 	cargo check
