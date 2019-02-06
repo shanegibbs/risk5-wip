@@ -157,6 +157,11 @@ impl Mstatus {
         self.0.field(13, 2)
     }
 
+    #[inline(always)]
+    pub fn set_floating_point_state(&mut self, n: u64) {
+        self.0.set_field(13, 2, n)
+    }
+
     // xs
 
     #[inline(always)]
@@ -171,11 +176,21 @@ impl Mstatus {
         self.0.field(19, 1)
     }
 
+    #[inline(always)]
+    pub fn set_make_executable_readable(&mut self, n: u64) {
+        self.0.set_field(19, 1, n)
+    }
+
     // sum
 
     #[inline(always)]
     pub fn supervisor_user_memory_access(&self) -> u64 {
         self.0.field(18, 1)
+    }
+
+    #[inline(always)]
+    pub fn set_supervisor_user_memory_access(&mut self, n: u64) {
+        self.0.set_field(18, 1, n)
     }
 
     // mprv

@@ -139,7 +139,21 @@ impl Csrs {
             MSCRATCH => self.mscratch = v,
             MCOUNTEREN => self.mcounteren = v,
 
-            SSTATUS => self.mstatus.set_bits(v),
+            SSTATUS => {
+                let n: Mstatus = v.into();
+                self.mstatus
+                    .set_supervisor_interrupt_enabled(n.supervisor_interrupt_enabled());
+                self.mstatus
+                    .set_supervisor_prior_interrupt_enabled(n.supervisor_prior_interrupt_enabled());
+                self.mstatus
+                    .set_supervisor_previous_privilege(n.supervisor_previous_privilege());
+                self.mstatus
+                    .set_floating_point_state(n.floating_point_state());
+                self.mstatus
+                    .set_supervisor_user_memory_access(n.supervisor_user_memory_access());
+                self.mstatus
+                    .set_make_executable_readable(n.make_executable_readable());
+            }
             SEDELEG => self.sedeleg = v,
             SIDELEG => self.sideleg = v,
             SIE => self.mie.set_supervisor_vals(v),

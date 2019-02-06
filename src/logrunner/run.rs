@@ -64,6 +64,9 @@ where
 
     let mut counter = 0;
 
+    use std::time::SystemTime;
+    let mut mark = SystemTime::now();
+
     for (step, log_tuple) in logs.enumerate() {
         let LogTuple {
             line,
@@ -140,7 +143,13 @@ where
         };
 
         if step % 10_0000 == 0 {
-            warn!("{}", status_line);
+            let d = SystemTime::now().duration_since(mark).expect("time");
+            let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+            let insn_per_sec = 10_000f32 / (in_ms as f32 / 1000f32);
+            let insn_per_sec = insn_per_sec as u32;
+
+            warn!("{} - Speed: {:?} hz", status_line, insn_per_sec);
+            mark = SystemTime::now();
         }
         info!("{}", status_line);
 
