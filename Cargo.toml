@@ -55,8 +55,16 @@ name = "validate"
 path = "bin/validate.rs"
 
 [[bin]]
+name = "filter"
+path = "bin/filter.rs"
+
+[[bin]]
 name = "validate-single"
 path = "bin/validatesingle.rs"
+
+[[bin]]
+name = "validate-stream"
+path = "bin/validatestream.rs"
 
 [[bin]]
 name = "bincodereader"

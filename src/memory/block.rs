@@ -19,7 +19,7 @@ impl BlockMemory {
     }
 
     pub fn add_block(&mut self, offset: u64, size: u64) {
-        error!(
+        debug!(
             "Adding memory block at 0x{:x} (to 0x{:x}) of size 0x{:x} as index {}",
             offset,
             offset + size,

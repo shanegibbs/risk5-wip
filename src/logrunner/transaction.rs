@@ -11,6 +11,59 @@ pub fn single() -> Result<(), io::Error> {
     Ok(())
 }
 
+pub fn validatestream() -> Result<(), io::Error> {
+    let matchers = build_matchers::<ByteMap>();
+    let mut reader = io::BufReader::new(io::stdin());
+
+    use std::time::SystemTime;
+    let mark = SystemTime::now();
+    let mut count = 0;
+
+    loop {
+        let t: Transaction = match bincode::deserialize_from(&mut reader) {
+            Ok(t) => t,
+            Err(e) => {
+                if let bincode::ErrorKind::Io(ref e) = *e {
+                    if e.kind() == io::ErrorKind::UnexpectedEof {
+                        break;
+                    }
+                }
+                error!("Failed to read trans: {}", e);
+                panic!("Failed to read trans");
+            }
+        };
+        t.validate(&matchers);
+        count += 1;
+    }
+
+    let d = SystemTime::now().duration_since(mark).expect("time");
+    let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+    let in_sec = (in_ms as f32) / 1000f32;
+    let speed = (count as f32) / in_sec;
+    println!("Validated {} transactions @ {} per/sec", count, speed);
+
+    Ok(())
+}
+
+pub fn filter() -> Result<(), io::Error> {
+    let stdin = io::stdin();
+    let handle = stdin.lock();
+    let reader = super::bincode::LogLineReader::new(io::BufReader::new(handle)).to_tuple();
+
+    let mut out = std::fs::File::create("trans.log").expect("create trans.log");
+
+    for t in TransactionIterator::new(reader) {
+        if let Some(insn) = &t.insn {
+            if insn.bits & 0x7f == 0x2f {
+                warn!("hit on {}", insn.desc);
+                bincode::serialize_into(&mut out, &t).expect("serialize trans");
+                out.sync_all().expect("sync_all");
+            }
+        }
+    }
+    Ok(())
+}
+
 pub fn stream() -> Result<(), io::Error> {
     let matchers = build_matchers::<ByteMap>();
 

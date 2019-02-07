@@ -17,12 +17,14 @@ endif
 
 BUILD_DIR=$(PWD)/target/$(BUILD_MODE)
 VALIDATE=$(BUILD_DIR)/validate
+VALIDATE_STREAM=$(BUILD_DIR)/validate-stream
 CONVERT=$(BUILD_DIR)/convert
 LOGRUNNER=$(BUILD_DIR)/logrunner
 RISK5=$(BUILD_DIR)/risk5
 
 ASSETS:=$(PWD)/assets
 COMPLIANCE_PATH=$(ASSETS)/compliance
+TRANS_LOG_PATH=$(ASSETS)/transactions-logs
 SPIKE_TRACE=env LD_LIBRARY_PATH=$(COMPLIANCE_PATH)/lib $(COMPLIANCE_PATH)/bin/spike
 COMPLIANCE_PATHS := $(wildcard $(COMPLIANCE_PATH)/tests/*.elf)
 COMPLIANCE_TESTS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,%-compliance-test,$(COMPLIANCE_PATHS))
@@ -35,7 +37,7 @@ COMPLIANCE_LOGS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,$(COMPLIANCE_PATH)/
 .PHONY: build run test
 
 # default target
-test: check unit-tests compliance-tests spike-trace-test
+test: check unit-tests compliance-tests validate spike-trace-test
 
 test-failed:
 	cat failed.bincode |RUST_LOG=risk5=trace cargo run --bin validate-single
@@ -54,6 +56,9 @@ spike-trace: build
 
 spike-trace-trans: build
 	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(VALIDATE)
+
+validate: build
+	zcat $(TRANS_LOG_PATH)/amo.trans.log.gz |$(VALIDATE_STREAM)
 
 spike:
 	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl
