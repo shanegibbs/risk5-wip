@@ -248,7 +248,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0xf800707f, 0xa000302f, noimpl!("amomax.d")),
         Matcher::new(0xf800707f, 0xc000302f, noimpl!("amominu.d")),
         Matcher::new(0xf800707f, 0xe000302f, noimpl!("amomaxu.d")),
-        Matcher::new(0xf800707f, 0x800302f, noimpl!("amoswap.d")),
+        Matcher::new(0xf800707f, 0x800302f, wrap!(amoswapd)),
         Matcher::new(0xf9f0707f, 0x1000302f, wrap!(lrd)),
         Matcher::new(0xf800707f, 0x1800302f, wrap!(scd)),
         Matcher::new(0xffffffff, 0x73, wrap!(ecall)),

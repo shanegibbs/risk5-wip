@@ -69,6 +69,19 @@ pub fn amoswapw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     p.advance_pc();
 }
 
+pub fn amoswapd<M: Memory>(p: &mut Processor<M>, i: Rtype) {
+    let rs1 = p.regs.geti(i.rs1() as usize);
+    let v = mem!(p, read_d, rs1 as u64);
+
+    let rs2 = p.regs.get(i.rs2() as usize);
+
+    mem!(p, write_d, rs1 as u64, rs2);
+
+    p.regs.set(i.rd() as usize, v);
+
+    p.advance_pc();
+}
+
 pub fn amoaddw<M: Memory>(p: &mut Processor<M>, i: Rtype) {
     // load value from addr(rs1)
     let addr = p.regs.get(i.rs1() as usize);
