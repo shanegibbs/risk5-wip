@@ -99,7 +99,10 @@ pub fn risk5_main() {
     // dummy clint
     mem.add_block(0x2000000, 0xc000);
 
-    let matchers = build_matchers();
+    use std::collections::VecDeque;
+    let matchers_vec = build_matchers();
+    let mut matchers = VecDeque::new();
+    matchers.extend(matchers_vec);
 
     let mut output = String::new();
 
@@ -107,24 +110,30 @@ pub fn risk5_main() {
     let mut cpu = Processor::new(reset_vec_addr, mem);
     let mut counter = 0;
     loop {
-        cpu.step(&matchers);
+        let idx = cpu.step(matchers.iter());
+        let matcher = matchers.remove(idx).expect("used insn");
+        matchers.push_front(matcher);
+
         counter += 1;
         trace!("--- Step {} ---", counter);
-        if counter % 100000 == 0 {
-            warn!("--- Step {} ---", counter);
-        }
 
-        let _fromhost = cpu.mmu().bare().read_d(0x80009000);
-        let tohost = cpu.mmu().bare().read_d(0x80009008);
+        if counter % 1_000 == 0 {
+            if counter % 1_000_000 == 0 {
+                warn!("--- Step {} ---", counter / 1_000_000);
+            }
 
-        if tohost > 0 {
-            // warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
-            let ch = tohost as u8;
-            output = format!("{}{}", output, ch as char);
-            use std::io::{self, Write};
-            write!(io::stderr(), "{}", ch as char).expect("stderr write");
-            info!("tohost '{}'", ch as char);
-            cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
+            let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
+            let tohost = cpu.mmu_mut().bare_mut().read_d(0x80009008);
+
+            if tohost > 0 {
+                // warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
+                let ch = tohost as u8;
+                output = format!("{}{}", output, ch as char);
+                use std::io::{self, Write};
+                write!(io::stderr(), "{}", ch as char).expect("stderr write");
+                info!("tohost '{}'", ch as char);
+                cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
+            }
         }
     }
 }
@@ -151,6 +160,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
                     p.pc()
                 );
                 p.advance_pc();
+                panic!("no insn impl");
             }
         };
     }

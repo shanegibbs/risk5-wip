@@ -2,7 +2,7 @@ use super::*;
 
 macro_rules! mem {
     ($p:expr, $func:ident, $addr:expr) => {
-        match $p.mmu().$func($addr) {
+        match $p.mmu_mut().$func($addr) {
             Ok(v) => v,
             Err(_) => {
                 debug!("Memory read page-fault");

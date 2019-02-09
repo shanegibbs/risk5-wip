@@ -90,22 +90,24 @@ impl<M> Processor<M> {
     }
 
     #[inline(never)]
-    pub fn step(&mut self, matchers: &[Matcher<M>])
+    pub fn step<'s, 'm, I>(&'s mut self, matchers: I) -> usize
     where
+        's: 'm,
         M: Memory,
+        I: Iterator<Item = &'m Matcher<M>>,
     {
         let insn = match self.mmu.read_insn(self.pc) {
             Ok(insn) => insn,
             Err(()) => {
                 crate::insns::do_trap(self, 12, self.pc);
-                return;
+                return 0;
             }
         };
         trace!("0x{:x} inst 0x{:x}", self.pc, insn);
-        for matcher in matchers {
+        for (i, matcher) in matchers.enumerate() {
             if matcher.matches(insn) {
                 matcher.exec(self, insn);
-                return;
+                return i;
             }
         }
         error!("Unmatched instruction: 0x{:x}", insn);

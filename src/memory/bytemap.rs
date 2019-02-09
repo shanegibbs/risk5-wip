@@ -35,7 +35,7 @@ impl Default for ByteMap {
 }
 
 impl Memory for ByteMap {
-    fn read_b(&self, offset: u64) -> u8 {
+    fn read_b(&mut self, offset: u64) -> u8 {
         for (addr, value) in (&self.data).iter().rev() {
             if *addr == offset {
                 trace!("Loaded 0x{:x}: 0x{:x}", offset, value);

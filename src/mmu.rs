@@ -9,6 +9,13 @@ pub(crate) struct Mmu<M> {
     sv39: bool,
     asid: u16,
     ppn: u64,
+    cache: Vec<(u64, u64)>,
+    hit: u64,
+    miss: u64,
+}
+
+fn new_cache() -> Vec<(u64, u64)> {
+    vec![(0, 0); 4000]
 }
 
 impl<M> Mmu<M> {
@@ -20,6 +27,9 @@ impl<M> Mmu<M> {
             sv39: false,
             asid: 0,
             ppn: 0,
+            cache: new_cache(),
+            hit: 0,
+            miss: 0,
         }
     }
 
@@ -104,10 +114,26 @@ macro_rules! mem {
 }
 
 impl<M: Memory> Mmu<M> {
-    fn translate(&self, offset: u64, prv: u64) -> Result<u64, ()> {
+    fn translate(&mut self, offset: u64, prv: u64) -> Result<u64, ()> {
         if !self.sv39 || prv == 3 {
             return Ok(offset);
         }
+
+        let vpage = offset >> 12;
+        let cache_idx = (vpage as usize) % self.cache.len();
+        let (cache_vpage, cache_ppage) = self.cache[cache_idx];
+        if cache_vpage == vpage {
+            // self.hit += 1;
+            return Ok(cache_ppage + (offset & 0xfff));
+        }
+
+        // self.miss += 1;
+        // error!(
+        //     "{} {}, {}",
+        //     self.hit,
+        //     self.miss,
+        //     self.hit as f32 / (self.hit as f32 + self.miss as f32)
+        // );
 
         trace!(
             "Translating offset 0x{:x} with asid=0x{:x}, ppn=0x{:x} and prv=0x{:x}",
@@ -177,26 +203,28 @@ impl<M: Memory> Mmu<M> {
         let pa = pa.into();
         trace!("Translated to PA 0x{:x}", pa);
 
+        self.cache[cache_idx] = (vpage, pa & !0xfff);
+
         Ok(pa)
     }
 
-    pub fn read_insn(&self, offset: u64) -> Result<u32, ()> {
+    pub fn read_insn(&mut self, offset: u64) -> Result<u32, ()> {
         mem!(self, read_w, self.insn_prv, offset)
     }
 
-    pub fn read_b(&self, offset: u64) -> Result<u8, ()> {
+    pub fn read_b(&mut self, offset: u64) -> Result<u8, ()> {
         mem!(self, read_b, self.prv, offset)
     }
 
-    pub fn read_h(&self, offset: u64) -> Result<u16, ()> {
+    pub fn read_h(&mut self, offset: u64) -> Result<u16, ()> {
         mem!(self, read_h, self.prv, offset)
     }
 
-    pub fn read_w(&self, offset: u64) -> Result<u32, ()> {
+    pub fn read_w(&mut self, offset: u64) -> Result<u32, ()> {
         mem!(self, read_w, self.prv, offset)
     }
 
-    pub fn read_d(&self, offset: u64) -> Result<u64, ()> {
+    pub fn read_d(&mut self, offset: u64) -> Result<u64, ()> {
         mem!(self, read_d, self.prv, offset)
     }
 
@@ -288,6 +316,9 @@ impl<'a, M> Into<Mmu<M>> for RestorableState<'a, M> {
             sv39: satp.mode() == 8,
             asid: satp.asid() as u16,
             ppn: satp.ppn() as u64,
+            cache: vec![(0, 0)],
+            hit: 0,
+            miss: 0,
         };
         mmu.set_prv(self.state.prv, &mstatus);
         mmu

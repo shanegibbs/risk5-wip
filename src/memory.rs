@@ -9,7 +9,7 @@ pub(crate) use self::bytemap::ByteMap;
 pub(crate) use self::fake::*;
 
 pub trait Memory {
-    fn read_b(&self, offset: u64) -> u8;
+    fn read_b(&mut self, offset: u64) -> u8;
     fn write_b(&mut self, offset: u64, value: u8);
 
     fn write_h(&mut self, offset: u64, value: u16) {
@@ -35,13 +35,13 @@ pub trait Memory {
         self.write_b(offset + 7, (value >> 56) as u8);
     }
 
-    fn read_h(&self, offset: u64) -> u16 {
+    fn read_h(&mut self, offset: u64) -> u16 {
         let mut n = self.read_b(offset) as u16;
         n |= (self.read_b(offset + 1) as u16) << 8;
         n
     }
 
-    fn read_w(&self, offset: u64) -> u32 {
+    fn read_w(&mut self, offset: u64) -> u32 {
         let mut n = self.read_b(offset) as u32;
         n |= (self.read_b(offset + 1) as u32) << 8;
         n |= (self.read_b(offset + 2) as u32) << 16;
@@ -49,7 +49,7 @@ pub trait Memory {
         n
     }
 
-    fn read_d(&self, offset: u64) -> u64 {
+    fn read_d(&mut self, offset: u64) -> u64 {
         let mut n = self.read_b(offset) as u64;
         n |= (self.read_b(offset + 1) as u64) << 8;
         n |= (self.read_b(offset + 2) as u64) << 16;

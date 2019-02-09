@@ -20,6 +20,7 @@ VALIDATE=$(BUILD_DIR)/validate
 VALIDATE_STREAM=$(BUILD_DIR)/validate-stream
 CONVERT=$(BUILD_DIR)/convert
 LOGRUNNER=$(BUILD_DIR)/logrunner
+FILTER=$(BUILD_DIR)/filter
 RISK5=$(BUILD_DIR)/risk5
 
 ASSETS:=$(PWD)/assets
@@ -37,7 +38,7 @@ COMPLIANCE_LOGS := $(patsubst $(COMPLIANCE_PATH)/tests/%.elf,$(COMPLIANCE_PATH)/
 .PHONY: build run test
 
 # default target
-test: check unit-tests compliance-tests validate spike-trace-test
+test: check unit-tests compliance-tests spike-trace-test
 
 test-failed:
 	cat failed.bincode |RUST_LOG=risk5=trace cargo run --bin validate-single
@@ -57,8 +58,16 @@ spike-trace: build
 spike-trace-trans: build
 	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |$(VALIDATE)
 
-validate: build
-	zcat $(TRANS_LOG_PATH)/amo.trans.log.gz |$(VALIDATE_STREAM)
+build-logs: build
+	$(SPIKE_TRACE) --isa rv64ima $(ASSETS)/bbl |pv -rbp |$(FILTER)
+
+TRANS_LOG_PATHS := $(wildcard $(TRANS_LOG_PATH)/*.trans.log.gz)
+TRANS_LOG_TESTS := $(patsubst $(TRANS_LOG_PATH)/%.trans.log.gz,%-trans-log-test,$(TRANS_LOG_PATHS))
+
+trans-log-test: $(TRANS_LOG_TESTS)
+
+%-trans-log-test: build
+	zcat $(TRANS_LOG_PATH)/$*.trans.log.gz |$(VALIDATE_STREAM)
 
 spike:
 	env LD_LIBRARY_PATH=$(shell pwd)/assets/spike ./assets/spike/spike -d assets/bbl

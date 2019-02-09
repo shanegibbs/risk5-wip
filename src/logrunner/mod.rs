@@ -145,7 +145,7 @@ impl ToMemory for Vec<MemoryTrace> {
 }
 
 impl MemoryTrace {
-    fn validate<M>(&self, m: &Mmu<M>) -> bool
+    fn validate<M>(&self, m: &mut Mmu<M>) -> bool
     where
         M: Memory,
     {

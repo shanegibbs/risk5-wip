@@ -45,22 +45,114 @@ pub fn validatestream() -> Result<(), io::Error> {
     Ok(())
 }
 
+use flate2::write::GzEncoder;
+use flate2::Compression;
+
+struct TransLogFile {
+    name: String,
+    count: usize,
+    idx: usize,
+    mask: u32,
+    mtch: u32,
+    skip: bool,
+    f: Option<GzEncoder<io::BufWriter<std::fs::File>>>,
+}
+
+impl TransLogFile {
+    fn new(mask: u32, mtch: u32, name: &str) -> Self {
+        let mut t = TransLogFile {
+            name: name.into(),
+            count: 0,
+            idx: 0,
+            mask,
+            mtch,
+            skip: false,
+            f: None,
+        };
+        t.open_file();
+        t
+    }
+    fn open_file(&mut self) {
+        let ord = if self.idx == 0 {
+            String::new()
+        } else {
+            format!(".{}", self.idx)
+        };
+        self.f = Some(GzEncoder::new(
+            io::BufWriter::new(
+                std::fs::File::create(format!(
+                    "assets/transactions-logs/{}{}.trans.log.gz",
+                    self.name, ord
+                ))
+                .expect("create trans.log"),
+            ),
+            Compression::default(),
+        ));
+    }
+    fn rotate_file(&mut self) {
+        self.f.take();
+        self.idx += 1;
+        self.count = 0;
+        self.open_file();
+    }
+    fn store(&mut self, t: &Transaction) -> bool {
+        if let Some(insn) = &t.insn {
+            if insn.bits & self.mask == self.mtch {
+                if self.skip {
+                    return true;
+                }
+                bincode::serialize_into(self.f.as_mut().expect("f"), &t).expect("serialize trans");
+                self.count += 1;
+                if self.count >= 250_000 {
+                    self.rotate_file();
+                }
+                return true;
+            }
+        }
+        false
+    }
+}
+
 pub fn filter() -> Result<(), io::Error> {
     let stdin = io::stdin();
     let handle = stdin.lock();
     let reader = super::bincode::LogLineReader::new(io::BufReader::new(handle)).to_tuple();
 
-    let mut out = std::fs::File::create("trans.log").expect("create trans.log");
+    let mut logs = vec![
+        TransLogFile::new(0x7f, 0b000_0011, "load"),
+        TransLogFile::new(0x7f, 0b010_0011, "store"),
+        TransLogFile::new(0x7f, 0b011_0011, "comp"),
+        TransLogFile::new(0x7f, 0b001_0011, "imm"),
+        TransLogFile::new(0x7f, 0b001_1011, "immw"),
+        TransLogFile::new(0x7f, 0b110_0011, "branch"),
+        TransLogFile::new(0x7f, 0b011_1011, "wide"),
+        TransLogFile::new(0x7f, 0b111_0011, "system"),
+        TransLogFile::new(0x7f, 0b010_1111, "amo"),
+    ];
 
-    for t in TransactionIterator::new(reader) {
-        if let Some(insn) = &t.insn {
-            if insn.bits & 0x7f == 0x2f {
-                warn!("hit on {}", insn.desc);
-                bincode::serialize_into(&mut out, &t).expect("serialize trans");
-                out.sync_all().expect("sync_all");
+    let mut other = TransLogFile::new(0, 0, "other");
+
+    let mut stored = false;
+    for t in TransactionIterator::new(reader)
+        .skip(180_000_000)
+        .take(10_000_000)
+    {
+        stored = false;
+
+        for log in &mut logs {
+            if log.store(&t) {
+                stored = true;
+                break;
             }
         }
+
+        if !stored {
+            other.store(&t);
+        }
     }
+
+    println!("\n\n{}\n", logs[1].count);
+
     Ok(())
 }
 
@@ -88,11 +180,11 @@ pub(crate) struct Transaction {
 
 impl Transaction {
     pub fn validate(&self, matchers: &[Matcher<ByteMap>]) {
-        let cpu = {
+        let mut cpu = {
             let memory = self.mems.to_memory();
             let state = &self.state;
             let mut cpu: Processor<ByteMap> = RestorableState { state, memory }.into();
-            cpu.step(&matchers);
+            cpu.step(matchers.iter());
             cpu
         };
 
@@ -104,7 +196,7 @@ impl Transaction {
         };
 
         if let Some(ref store) = self.store {
-            if !store.validate(cpu.mmu()) {
+            if !store.validate(cpu.mmu_mut()) {
                 error!("mem store transaction fail");
                 fail = true;
             }

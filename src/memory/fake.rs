@@ -145,21 +145,21 @@ impl Memory for FakeMemory {
         }
     }
 
-    fn read_b(&self, offset: u64) -> u8 {
+    fn read_b(&mut self, offset: u64) -> u8 {
         match self.next_read.borrow_mut().pop() {
             Some(FakeMemoryItem::Byte(addr, n)) => check!(n, addr, offset),
             n => panic!("Expected read fake byte, but was: {:?}", n),
         }
     }
 
-    fn read_w(&self, offset: u64) -> u32 {
+    fn read_w(&mut self, offset: u64) -> u32 {
         match self.next_read.borrow_mut().pop() {
             Some(FakeMemoryItem::Word(addr, n)) => check!(n, addr, offset),
             n => panic!("Expected read fake word, but was: {:?}", n),
         }
     }
 
-    fn read_d(&self, offset: u64) -> u64 {
+    fn read_d(&mut self, offset: u64) -> u64 {
         match self.next_read.borrow_mut().pop() {
             Some(FakeMemoryItem::Double(addr, n)) => check!(n, addr, offset),
             n => panic!(

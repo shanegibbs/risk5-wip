@@ -286,17 +286,29 @@ impl Operation<u64> for Div {
 }
 impl Operation<i64> for Div {
     fn exec(lhs: i64, rhs: i64) -> u64 {
-        (lhs / rhs) as u64
+        if rhs == 0 {
+            u64::max_value()
+        } else {
+            (lhs / rhs) as u64
+        }
     }
 }
 impl Operation<u32> for Div {
     fn exec(lhs: u32, rhs: u32) -> u64 {
-        (lhs / rhs) as u64
+        if rhs == 0 {
+            u64::max_value()
+        } else {
+            (lhs / rhs) as u64
+        }
     }
 }
 impl Operation<i32> for Div {
     fn exec(lhs: i32, rhs: i32) -> u64 {
-        sign_extend(lhs / rhs)
+        if rhs == 0 {
+            u64::max_value()
+        } else {
+            sign_extend(lhs / rhs)
+        }
     }
 }
 

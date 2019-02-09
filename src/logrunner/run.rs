@@ -106,7 +106,7 @@ where
 
         // check for memory store
         if let Some(store) = last_store {
-            if !store.validate(cpu.mmu()) {
+            if !store.validate(cpu.mmu_mut()) {
                 fail = true;
             }
         }
@@ -157,7 +157,7 @@ where
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
         }
 
-        cpu.step(&matchers);
+        cpu.step(matchers.iter());
 
         last_insn = insn;
         last_state = Some(state);
