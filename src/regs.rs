@@ -14,7 +14,6 @@ impl Regs {
         Regs { regs: [0; 32] }
     }
 
-    #[inline(always)]
     pub fn get<T: Into<usize>>(&self, i: T) -> u64 {
         let i = i.into();
         let v = self.regs[i];
@@ -22,7 +21,6 @@ impl Regs {
         v
     }
 
-    #[inline(always)]
     pub fn geti<T: Into<usize>>(&self, i: T) -> i64 {
         let i = i.into();
         let v = self.regs[i];
@@ -30,7 +28,6 @@ impl Regs {
         v as i64
     }
 
-    #[inline(always)]
     pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) {
         let i = i.into();
         // reg 0 is a black hole
@@ -41,7 +38,6 @@ impl Regs {
         self.regs[i] = v;
     }
 
-    #[inline(always)]
     pub fn seti<T: Into<usize>>(&mut self, i: T, v: i64) {
         self.set(i, v as u64)
     }

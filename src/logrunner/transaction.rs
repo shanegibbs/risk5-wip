@@ -1,18 +1,18 @@
 use super::bincode::TupleReader;
 use super::{Insn, LogTuple, MemoryTrace, RestorableState, State, ToMemory};
-use crate::{build_matchers, matcher::Matcher, memory::ByteMap, Processor};
+use crate::{build_matchers, matcher::Matchers, memory::ByteMap, Processor};
 use std::io;
 
 pub fn single() -> Result<(), io::Error> {
-    let matchers = build_matchers::<ByteMap>();
+    let matchers = &mut build_matchers::<ByteMap>();
     let mut reader = io::BufReader::new(io::stdin());
     let t: Transaction = bincode::deserialize_from(&mut reader).expect("read transaction");
-    t.validate(&matchers);
+    t.validate(matchers);
     Ok(())
 }
 
 pub fn validatestream() -> Result<(), io::Error> {
-    let matchers = build_matchers::<ByteMap>();
+    let matchers = &mut build_matchers::<ByteMap>();
     let mut reader = io::BufReader::new(io::stdin());
 
     use std::time::SystemTime;
@@ -32,7 +32,7 @@ pub fn validatestream() -> Result<(), io::Error> {
                 panic!("Failed to read trans");
             }
         };
-        t.validate(&matchers);
+        t.validate(matchers);
         count += 1;
     }
 
@@ -157,14 +157,14 @@ pub fn filter() -> Result<(), io::Error> {
 }
 
 pub fn stream() -> Result<(), io::Error> {
-    let matchers = build_matchers::<ByteMap>();
+    let matchers = &mut build_matchers::<ByteMap>();
 
     let stdin = io::stdin();
     let handle = stdin.lock();
     let reader = super::bincode::LogLineReader::new(io::BufReader::new(handle)).to_tuple();
 
     for t in TransactionIterator::new(reader) {
-        t.validate(&matchers);
+        t.validate(matchers);
     }
     Ok(())
 }
@@ -179,12 +179,12 @@ pub(crate) struct Transaction {
 }
 
 impl Transaction {
-    pub fn validate(&self, matchers: &[Matcher<ByteMap>]) {
+    pub fn validate(&self, matchers: &mut Matchers<ByteMap>) {
         let mut cpu = {
             let memory = self.mems.to_memory();
             let state = &self.state;
             let mut cpu: Processor<ByteMap> = RestorableState { state, memory }.into();
-            cpu.step(matchers.iter());
+            cpu.step(matchers);
             cpu
         };
 

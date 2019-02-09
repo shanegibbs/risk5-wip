@@ -16,8 +16,8 @@ lto = false
 [dependencies]
 
 elf = "0.0.10"
-# log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
+# log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_trace"] }
@@ -33,11 +33,18 @@ serde_json = "1.0"
 lazy_static = "1.2.0"
 flate2 = "1.0"
 
-[build-dependencies]
-regex = "1"
+[dev-dependencies]
+criterion = "0.2"
+
+# [build-dependencies]
+# regex = "1"
 
 [features]
 default = []
+
+[[bench]]
+name = "first1mil"
+harness = false
 
 [[bin]]
 name = "risk5"

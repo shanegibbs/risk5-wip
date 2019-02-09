@@ -1,6 +1,6 @@
 use super::bincode;
 use super::{Insn, LogTuple, MemoryTrace, State, Transaction};
-use crate::matcher::Matcher;
+use crate::matcher::Matchers;
 use crate::memory::*;
 use crate::Processor;
 use std::io;
@@ -22,7 +22,7 @@ pub fn run() -> Result<(), io::Error> {
 // TODO multithread
 
 fn test_state(
-    matchers: &[Matcher<ByteMap>],
+    matchers: &mut Matchers<ByteMap>,
     last_state: &Option<State>,
     last_insn: &Option<Insn>,
     last_mems: &[MemoryTrace],
@@ -47,7 +47,7 @@ fn run_log<I>(logs: I) -> Result<(), io::Error>
 where
     I: Iterator<Item = LogTuple>,
 {
-    let matchers = crate::build_matchers::<ByteMap>();
+    let matchers = &mut crate::build_matchers::<ByteMap>();
 
     let mut dtb_mem = ByteMap::default();
     let dtb = crate::load_dtb();
@@ -55,7 +55,7 @@ where
     let persistent = dtb_mem.into_data();
 
     let mem = ByteMap::default().with_persistent(persistent.clone());
-    let mut cpu = Processor::new(0x1000, mem);
+    let mut cpu = Processor::new(mem);
 
     let mut last_insn: Option<Insn> = None;
     let mut last_state: Option<State> = None;
@@ -78,7 +78,7 @@ where
         counter += 1;
 
         test_state(
-            &matchers,
+            matchers,
             &last_state,
             &last_insn,
             &last_mems,
@@ -157,7 +157,7 @@ where
             cpu.mmu_mut().mem_mut().write_b(mem.addr, mem.value as u8);
         }
 
-        cpu.step(matchers.iter());
+        cpu.step(matchers);
 
         last_insn = insn;
         last_state = Some(state);

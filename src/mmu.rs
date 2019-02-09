@@ -83,14 +83,14 @@ macro_rules! mem {
             }
         };
         let val = $self.mem.$func(addr);
-        if addr >= 0x80009000 && addr < 0x80009016 {
-            debug!(
-                "Doing htif {} at 0x{:x}: 0x{:x}",
-                stringify!($func),
-                addr,
-                val
-            );
-        }
+        // if addr >= 0x80009000 && addr < 0x80009016 {
+        //     debug!(
+        //         "Doing htif {} at 0x{:x}: 0x{:x}",
+        //         stringify!($func),
+        //         addr,
+        //         val
+        //     );
+        // }
         Ok(val)
     }};
     ($self:expr, $func:ident, $prv:expr, $addr:expr, $val:expr) => {{
@@ -101,14 +101,14 @@ macro_rules! mem {
                 return Err(());
             }
         };
-        if addr >= 0x80009000 && addr < 0x80009016 {
-            debug!(
-                "Doing htif {} at 0x{:x}: 0x{:x}",
-                stringify!($func),
-                addr,
-                $val
-            );
-        }
+        // if addr >= 0x80009000 && addr < 0x80009016 {
+        //     debug!(
+        //         "Doing htif {} at 0x{:x}: 0x{:x}",
+        //         stringify!($func),
+        //         addr,
+        //         $val
+        //     );
+        // }
         Ok($self.mem.$func(addr, $val))
     }};
 }
@@ -121,11 +121,13 @@ impl<M: Memory> Mmu<M> {
 
         let vpage = offset >> 12;
         let cache_idx = (vpage as usize) % self.cache.len();
-        let (cache_vpage, cache_ppage) = self.cache[cache_idx];
-        if cache_vpage == vpage {
+        let (cache_vpage, cache_ppage) = unsafe { self.cache.get_unchecked_mut(cache_idx) };
+        if *cache_vpage == vpage {
             // self.hit += 1;
-            return Ok(cache_ppage + (offset & 0xfff));
+            info!("Page hit");
+            return Ok(*cache_ppage + (offset & 0xfff));
         }
+        info!("Page miss");
 
         // self.miss += 1;
         // error!(
@@ -203,43 +205,53 @@ impl<M: Memory> Mmu<M> {
         let pa = pa.into();
         trace!("Translated to PA 0x{:x}", pa);
 
-        self.cache[cache_idx] = (vpage, pa & !0xfff);
+        *cache_vpage = vpage;
+        *cache_ppage = pa & !0xfff;
 
         Ok(pa)
     }
 
+    #[inline(never)]
     pub fn read_insn(&mut self, offset: u64) -> Result<u32, ()> {
         mem!(self, read_w, self.insn_prv, offset)
     }
 
+    #[inline(never)]
     pub fn read_b(&mut self, offset: u64) -> Result<u8, ()> {
         mem!(self, read_b, self.prv, offset)
     }
 
+    #[inline(never)]
     pub fn read_h(&mut self, offset: u64) -> Result<u16, ()> {
         mem!(self, read_h, self.prv, offset)
     }
 
+    #[inline(never)]
     pub fn read_w(&mut self, offset: u64) -> Result<u32, ()> {
         mem!(self, read_w, self.prv, offset)
     }
 
+    #[inline(never)]
     pub fn read_d(&mut self, offset: u64) -> Result<u64, ()> {
         mem!(self, read_d, self.prv, offset)
     }
 
+    #[inline(never)]
     pub fn write_b(&mut self, offset: u64, value: u8) -> Result<(), ()> {
         mem!(self, write_b, self.prv, offset, value)
     }
 
+    #[inline(never)]
     pub fn write_h(&mut self, offset: u64, value: u16) -> Result<(), ()> {
         mem!(self, write_h, self.prv, offset, value)
     }
 
+    #[inline(never)]
     pub fn write_w(&mut self, offset: u64, value: u32) -> Result<(), ()> {
         mem!(self, write_w, self.prv, offset, value)
     }
 
+    #[inline(never)]
     pub fn write_d(&mut self, offset: u64, value: u64) -> Result<(), ()> {
         mem!(self, write_d, self.prv, offset, value)
     }

@@ -117,7 +117,6 @@ impl Csrs {
         }
     }
 
-    #[inline(always)]
     pub fn set<T: Into<usize>>(&mut self, i: T, v: u64) -> PostSetOp {
         let i = i.into();
         debug!("Setting CSR 0x{:x} to 0x{:x} with prv {}", i, v, self.prv);
@@ -179,7 +178,6 @@ impl Csrs {
         PostSetOp::None
     }
 
-    #[inline(always)]
     pub fn get<T: Into<usize>>(&self, i: T) -> Result<u64, Trap> {
         let i = i.into();
         trace!("Getting CSR 0x{:x} with prv {}", i, self.prv);

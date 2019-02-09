@@ -15,6 +15,8 @@ else
 $(error Bad BUILD_MODE value: $(BUILD_MODE))
 endif
 
+export RUSTFLAGS=-C target-cpu=native
+
 BUILD_DIR=$(PWD)/target/$(BUILD_MODE)
 VALIDATE=$(BUILD_DIR)/validate
 VALIDATE_STREAM=$(BUILD_DIR)/validate-stream

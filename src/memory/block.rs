@@ -1,8 +1,18 @@
 use super::Memory;
+use core::ptr::copy_nonoverlapping;
 use std::fmt;
 
+#[derive(Clone)]
+struct Block {
+    start: u64,
+    end: u64,
+    size: u64,
+    data: Vec<u8>,
+}
+
+#[derive(Clone)]
 pub struct BlockMemory {
-    blocks: Vec<(u64, Vec<u8>)>,
+    blocks: Vec<Block>,
 }
 
 impl fmt::Debug for BlockMemory {
@@ -27,50 +37,49 @@ impl BlockMemory {
             self.blocks.len()
         );
         let mem = vec![0; size as usize];
-        self.blocks.push((offset, mem));
+        self.blocks.push(Block {
+            start: offset,
+            end: offset + size,
+            size,
+            data: mem,
+        });
     }
 
-    fn find_block_for(&self, offset: u64) -> u64 {
-        let mut c = self.blocks.len();
-        while c != 0 {
-            let i = c - 1;
-            if offset >= self.blocks[i].0
-                && offset < self.blocks[i].0 + (self.blocks[i].1.len() as u64)
-            {
-                /*
-                if offset > self.blocks[i].0 + self.blocks[i].1.len() as u64 {
-                    panic!(
-                        "Memory out of range. Unable to find block for 0x{:x}",
-                        offset
-                    );
-                }
-                */
-                return i as u64;
+    fn get_block(&self, i: usize) -> &Block {
+        unsafe { self.blocks.get_unchecked(i) }
+    }
+
+    fn get_block_mut(&mut self, i: usize) -> &mut Block {
+        unsafe { self.blocks.get_unchecked_mut(i) }
+    }
+
+    #[inline(never)]
+    fn find_block_for(&self, offset: u64) -> usize {
+        for (i, block) in self.blocks.iter().enumerate() {
+            if offset >= block.start {
+                return i;
             }
-            c -= 1;
         }
-        error!("Unable to find memory block for address 0x{:x}", offset);
+        // error!("Unable to find memory block for address 0x{:x}", offset);
         panic!("Unable to find memory block");
     }
 }
 
 impl Memory for BlockMemory {
     fn read_b(&mut self, offset: u64) -> u8 {
-        let block_i = self.find_block_for(offset);
-        let block = &self.blocks[block_i as usize];
-        let offset = (offset - block.0) as usize;
-        block.1[offset]
+        let block = self.get_block(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
+        unsafe { *block.data.get_unchecked(offset) }
     }
 
     fn read_h(&mut self, offset: u64) -> u16 {
-        let block_i = self.find_block_for(offset);
-        let block = &self.blocks[block_i as usize];
-        let offset = (offset - block.0) as usize;
+        let block = self.get_block(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
 
         let mut v: u16 = 0;
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                (&block.1[offset..]).as_ptr(),
+            copy_nonoverlapping(
+                block.data.as_ptr().add(offset),
                 &mut v as *mut u16 as *mut u8,
                 2,
             );
@@ -79,14 +88,13 @@ impl Memory for BlockMemory {
     }
 
     fn read_w(&mut self, offset: u64) -> u32 {
-        let block_i = self.find_block_for(offset);
-        let block = &self.blocks[block_i as usize];
-        let offset = (offset - block.0) as usize;
+        let block = self.get_block(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
 
         let mut v: u32 = 0;
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                (&block.1[offset..]).as_ptr(),
+            copy_nonoverlapping(
+                block.data.as_ptr().add(offset),
                 &mut v as *mut u32 as *mut u8,
                 4,
             );
@@ -99,15 +107,15 @@ impl Memory for BlockMemory {
         //     + ((block.1[(offset + 3) as usize] as u32) << 24)
     }
 
+    #[inline(never)]
     fn read_d(&mut self, offset: u64) -> u64 {
-        let block_i = self.find_block_for(offset);
-        let block = &self.blocks[block_i as usize];
-        let offset = (offset - block.0) as usize;
+        let block = self.get_block(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
 
         let mut v: u64 = 0;
         unsafe {
-            core::ptr::copy_nonoverlapping(
-                (&block.1[offset..]).as_ptr(),
+            copy_nonoverlapping(
+                block.data.as_ptr().add(offset),
                 &mut v as *mut u64 as *mut u8,
                 8,
             );
@@ -125,38 +133,26 @@ impl Memory for BlockMemory {
     }
 
     fn write_b(&mut self, offset: u64, value: u8) {
-        let block = self.find_block_for(offset) as usize;
-        let offset = (offset - self.blocks[block].0) as usize;
-        self.blocks[block].1[offset] = value;
+        let block = self.get_block_mut(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
+        unsafe { *block.data.get_unchecked_mut(offset) = value }
     }
 
     fn write_h(&mut self, offset: u64, value: u16) {
-        let block_i = self.find_block_for(offset) as usize;
-        let block = &mut self.blocks[block_i];
-        let offset = (offset - block.0) as usize;
-
+        let block = self.get_block_mut(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
         unsafe {
             let bytes = *(&value as *const u16 as *const [u8; 2]);
-            core::ptr::copy_nonoverlapping(
-                (&bytes).as_ptr(),
-                (&mut block.1[offset..]).as_mut_ptr(),
-                2,
-            );
+            copy_nonoverlapping(bytes.as_ptr(), block.data.as_mut_ptr().add(offset), 2);
         }
     }
 
     fn write_w(&mut self, offset: u64, value: u32) {
-        let block_i = self.find_block_for(offset) as usize;
-        let block = &mut self.blocks[block_i];
-        let offset = (offset - block.0) as usize;
-
+        let block = self.get_block_mut(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
         unsafe {
             let bytes = *(&value as *const u32 as *const [u8; 4]);
-            core::ptr::copy_nonoverlapping(
-                (&bytes).as_ptr(),
-                (&mut block.1[offset..]).as_mut_ptr(),
-                4,
-            );
+            copy_nonoverlapping(bytes.as_ptr(), block.data.as_mut_ptr().add(offset), 4);
         }
 
         // self.blocks[block].1[offset] = value as u8;
@@ -166,17 +162,11 @@ impl Memory for BlockMemory {
     }
 
     fn write_d(&mut self, offset: u64, value: u64) {
-        let block_i = self.find_block_for(offset) as usize;
-        let block = &mut self.blocks[block_i];
-        let offset = (offset - block.0) as usize;
-
+        let block = self.get_block_mut(self.find_block_for(offset));
+        let offset = (offset - block.start) as usize;
         unsafe {
             let bytes = *(&value as *const u64 as *const [u8; 8]);
-            core::ptr::copy_nonoverlapping(
-                (&bytes).as_ptr(),
-                (&mut block.1[offset..]).as_mut_ptr(),
-                8,
-            );
+            copy_nonoverlapping(bytes.as_ptr(), block.data.as_mut_ptr().add(offset), 8);
         }
 
         // self.blocks[block].1[offset] = value as u8;

@@ -24,11 +24,11 @@ mod processor;
 mod regs;
 
 pub use crate::insns::*;
-pub(crate) use crate::matcher::Matcher;
+pub(crate) use crate::matcher::{Matcher, Matchers};
 use crate::memory::BlockMemory;
 use crate::memory::Memory;
 pub(crate) use crate::mmu::Mmu;
-use crate::processor::Processor;
+pub use crate::processor::Processor;
 pub(crate) use crate::regs::Regs;
 use std::fs::File;
 use std::io::Read;
@@ -52,30 +52,33 @@ pub fn write_reset_vec<M: Memory>(mem: &mut M, entry: u64, dtb: &[u8]) {
     mem.write_w(reset_vec_addr, 0x297);
     mem.write_w(
         reset_vec_addr + 4,
-        0x28593 + (reset_vec_size * 4 << 20) as u32,
+        0x28593 + ((reset_vec_size * 4) << 20) as u32,
     );
-    mem.write_w(reset_vec_addr + 8, 0xf1402573);
-    mem.write_w(reset_vec_addr + 12, 0x0182b283);
+    mem.write_w(reset_vec_addr + 8, 0xf140_2573);
+    mem.write_w(reset_vec_addr + 12, 0x0182_b283);
     mem.write_w(reset_vec_addr + 16, 0x28067);
 
     mem.write_w(reset_vec_addr + 20, 0x0);
     mem.write_w(reset_vec_addr + 24, entry as u32);
     mem.write_w(reset_vec_addr + 28, (entry >> 32) as u32);
-    for (i, b) in dtb.into_iter().enumerate() {
+    for (i, b) in dtb.iter().enumerate() {
         mem.write_b(reset_vec_addr + 32 + i as u64, *b);
     }
 }
 
-pub fn risk5_main() {
-    // pretty_env_logger::init();
-    logrunner::logger::init().unwrap();
-
+pub fn build_memory() -> BlockMemory {
     let mut mem = BlockMemory::new(15);
 
-    mem.add_block(0x80000000, 2048 * 1024 * 1024);
+    mem.add_block(0x8000_0000, 2048 * 1024 * 1024);
+
+    // dummy clint
+    mem.add_block(0x200_0000, 0xc000);
+
+    let reset_vec_addr = 0x1000;
+    mem.add_block(reset_vec_addr, 2048);
 
     use std::env;
-    let filename = env::var("BIN").unwrap_or("assets/bbl".into());
+    let filename = env::var("BIN").unwrap_or_else(|_| "assets/bbl".into());
 
     let (entry, sections) = elf_loader::read_program_segments(&filename);
     let mut elf = File::open(&filename).unwrap();
@@ -85,60 +88,82 @@ pub fn risk5_main() {
     debug!("Loading ELF");
     for (f_offset, m_offset, size) in sections {
         debug!("Loading 0x{:x} bytes @ 0x{:x}", size, m_offset);
-        mem.add_block(m_offset, size);
         for i in 0..size {
             mem.write_b(m_offset + i, file_bytes[(f_offset + i) as usize]);
         }
     }
 
     let dtb = load_dtb();
-    let reset_vec_addr = 0x1000;
-    mem.add_block(reset_vec_addr, 2048);
     write_reset_vec(&mut mem, entry, &dtb);
 
-    // dummy clint
-    mem.add_block(0x2000000, 0xc000);
+    mem
+}
 
-    use std::collections::VecDeque;
-    let matchers_vec = build_matchers();
-    let mut matchers = VecDeque::new();
-    matchers.extend(matchers_vec);
+pub fn risk5_main() {
+    pretty_env_logger::init();
+    // logrunner::logger::init().unwrap();
 
     let mut output = String::new();
 
-    // let mut csrs = csrs::Csrs::new();
-    let mut cpu = Processor::new(reset_vec_addr, mem);
+    let mut cpu = Processor::new(build_memory());
+    let matchers = &mut build_matchers();
+
+    use std::time::SystemTime;
+    let start = SystemTime::now();
+    let mut mark = SystemTime::now();
+
     let mut counter = 0;
     loop {
-        let idx = cpu.step(matchers.iter());
-        let matcher = matchers.remove(idx).expect("used insn");
-        matchers.push_front(matcher);
+        if cpu.pc() == 0xffff_ffe0_0015_2164 {
+            break;
+        }
+
+        cpu.step(matchers);
+        // calls[idx] += 1;
+        // let matcher = matchers.remove(idx).expect("used insn");
+        // matchers.push_front(matcher);
 
         counter += 1;
         trace!("--- Step {} ---", counter);
 
-        if counter % 1_000 == 0 {
-            if counter % 1_000_000 == 0 {
+        if counter % 100 == 0 {
+            if counter % 10_000_000 == 0 {
                 warn!("--- Step {} ---", counter / 1_000_000);
+
+                let d = SystemTime::now().duration_since(mark).expect("time");
+                let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+                let in_sec = (in_ms as f32) / 1000f32;
+                let speed = (10_000_000 as f32) / in_sec;
+                println!("Executed @ {} MHz", speed / 1_000_000.0);
+                mark = SystemTime::now();
             }
 
-            let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
-            let tohost = cpu.mmu_mut().bare_mut().read_d(0x80009008);
+            // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
+            let tohost = cpu.mmu_mut().bare_mut().read_d(0x8000_9008);
 
             if tohost > 0 {
-                // warn!("from=0x{:x} to=0x{:x}", fromhost, tohost);
                 let ch = tohost as u8;
                 output = format!("{}{}", output, ch as char);
                 use std::io::{self, Write};
                 write!(io::stderr(), "{}", ch as char).expect("stderr write");
                 info!("tohost '{}'", ch as char);
-                cpu.mmu_mut().bare_mut().write_d(0x80009008, 0);
+                cpu.mmu_mut().bare_mut().write_d(0x8000_9008, 0);
             }
         }
     }
+
+    let d = SystemTime::now().duration_since(start).expect("time");
+    let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+    let in_sec = (in_ms as f32) / 1000f32;
+    let speed = (counter as f32) / in_sec;
+    println!(
+        "Executed {}m insns @ {} MHz",
+        counter / 1_000_000,
+        speed / 1_000_000.0
+    );
 }
 
-fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
+pub fn build_matchers<M: Memory>() -> Matchers<M> {
     macro_rules! wrap {
         ($f:path) => {
             |p, i| {
@@ -168,7 +193,7 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
     use crate::insns::csr;
     use crate::insns::mem;
 
-    vec![
+    Matchers::new(vec![
         Matcher::new(0x707f, 0x63, wrap!(beq)),
         Matcher::new(0x707f, 0x1063, wrap!(bne)),
         Matcher::new(0x707f, 0x4063, wrap!(blt)),
@@ -570,5 +595,5 @@ fn build_matchers<M: Memory>() -> Vec<Matcher<M>> {
         Matcher::new(0x600007f, 0x600004f, |p, _| {
             error!("Unimplemented insn 'fnmadd.q' at {:x}", p.pc())
         }),
-    ]
+    ])
 }
