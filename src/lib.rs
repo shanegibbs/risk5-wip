@@ -128,14 +128,17 @@ pub fn risk5_main() {
 
         if counter % 100 == 0 {
             if counter % 10_000_000 == 0 {
+                if counter >= 50_000_000 {
+                    // break;
+                }
                 warn!("--- Step {} ---", counter / 1_000_000);
 
-                let d = SystemTime::now().duration_since(mark).expect("time");
-                let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
-                let in_sec = (in_ms as f32) / 1000f32;
-                let speed = (10_000_000 as f32) / in_sec;
-                println!("Executed @ {} MHz", speed / 1_000_000.0);
-                mark = SystemTime::now();
+                // let d = SystemTime::now().duration_since(mark).expect("time");
+                // let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+                // let in_sec = (in_ms as f32) / 1000f32;
+                // let speed = (10_000_000 as f32) / in_sec;
+                // println!("Executed @ {} MHz", speed / 1_000_000.0);
+                // mark = SystemTime::now();
             }
 
             // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
@@ -161,6 +164,8 @@ pub fn risk5_main() {
         counter / 1_000_000,
         speed / 1_000_000.0
     );
+
+    // matchers.print();
 }
 
 pub fn build_matchers<M: Memory>() -> Matchers<M> {
@@ -307,293 +312,293 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         Matcher::new(0x707f, 0x5073, wrap!(csr::insn<M, csr::ReadWriteImm>)),
         Matcher::new(0x707f, 0x6073, wrap!(csr::insn<M, csr::ReadSetImm>)),
         Matcher::new(0x707f, 0x7073, wrap!(csr::insn<M, csr::ReadClearImm>)),
-        Matcher::new(0xfe00007f, 0x53, |p, _| {
-            error!("Unimplemented insn 'fadd.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x8000053, |p, _| {
-            error!("Unimplemented insn 'fsub.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x10000053, |p, _| {
-            error!("Unimplemented insn 'fmul.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x18000053, |p, _| {
-            error!("Unimplemented insn 'fdiv.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x20000053, |p, _| {
-            error!("Unimplemented insn 'fsgnj.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x20001053, |p, _| {
-            error!("Unimplemented insn 'fsgnjn.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x20002053, |p, _| {
-            error!("Unimplemented insn 'fsgnjx.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x28000053, |p, _| {
-            error!("Unimplemented insn 'fmin.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x28001053, |p, _| {
-            error!("Unimplemented insn 'fmax.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x58000053, |p, _| {
-            error!("Unimplemented insn 'fsqrt.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x2000053, |p, _| {
-            error!("Unimplemented insn 'fadd.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0xa000053, |p, _| {
-            error!("Unimplemented insn 'fsub.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x12000053, |p, _| {
-            error!("Unimplemented insn 'fmul.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x1a000053, |p, _| {
-            error!("Unimplemented insn 'fdiv.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x22000053, |p, _| {
-            error!("Unimplemented insn 'fsgnj.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x22001053, |p, _| {
-            error!("Unimplemented insn 'fsgnjn.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x22002053, |p, _| {
-            error!("Unimplemented insn 'fsgnjx.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2a000053, |p, _| {
-            error!("Unimplemented insn 'fmin.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2a001053, |p, _| {
-            error!("Unimplemented insn 'fmax.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x40100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x42000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x5a000053, |p, _| {
-            error!("Unimplemented insn 'fsqrt.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x6000053, |p, _| {
-            error!("Unimplemented insn 'fadd.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0xe000053, |p, _| {
-            error!("Unimplemented insn 'fsub.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x16000053, |p, _| {
-            error!("Unimplemented insn 'fmul.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00007f, 0x1e000053, |p, _| {
-            error!("Unimplemented insn 'fdiv.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x26000053, |p, _| {
-            error!("Unimplemented insn 'fsgnj.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x26001053, |p, _| {
-            error!("Unimplemented insn 'fsgnjn.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x26002053, |p, _| {
-            error!("Unimplemented insn 'fsgnjx.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2e000053, |p, _| {
-            error!("Unimplemented insn 'fmin.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0x2e001053, |p, _| {
-            error!("Unimplemented insn 'fmax.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x40300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x46000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x42300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x46100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0x5e000053, |p, _| {
-            error!("Unimplemented insn 'fsqrt.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa0000053, |p, _| {
-            error!("Unimplemented insn 'fle.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa0001053, |p, _| {
-            error!("Unimplemented insn 'flt.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa0002053, |p, _| {
-            error!("Unimplemented insn 'feq.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa2000053, |p, _| {
-            error!("Unimplemented insn 'fle.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa2001053, |p, _| {
-            error!("Unimplemented insn 'flt.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa2002053, |p, _| {
-            error!("Unimplemented insn 'feq.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa6000053, |p, _| {
-            error!("Unimplemented insn 'fle.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa6001053, |p, _| {
-            error!("Unimplemented insn 'flt.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfe00707f, 0xa6002053, |p, _| {
-            error!("Unimplemented insn 'feq.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc0000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.w.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc0100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.wu.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc0200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.l.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc0300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.lu.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe0000053, |p, _| {
-            error!("Unimplemented insn 'fmv.x.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe0001053, |p, _| {
-            error!("Unimplemented insn 'fclass.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc2000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.w.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc2100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.wu.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc2200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.l.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc2300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.lu.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe2000053, |p, _| {
-            error!("Unimplemented insn 'fmv.x.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe2001053, |p, _| {
-            error!("Unimplemented insn 'fclass.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc6000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.w.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc6100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.wu.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc6200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.l.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xc6300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.lu.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe6000053, |p, _| {
-            error!("Unimplemented insn 'fmv.x.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xe6001053, |p, _| {
-            error!("Unimplemented insn 'fclass.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd0000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd0100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.wu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd0200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.l' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd0300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.s.lu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xf0000053, |p, _| {
-            error!("Unimplemented insn 'fmv.w.x' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd2000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd2100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.wu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd2200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.l' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd2300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.d.lu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xf2000053, |p, _| {
-            error!("Unimplemented insn 'fmv.d.x' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd6000053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.w' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd6100053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.wu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd6200053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.l' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0007f, 0xd6300053, |p, _| {
-            error!("Unimplemented insn 'fcvt.q.lu' at {:x}", p.pc())
-        }),
-        Matcher::new(0xfff0707f, 0xf6000053, |p, _| {
-            error!("Unimplemented insn 'fmv.q.x' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x2007, |p, _| {
-            error!("Unimplemented insn 'flw' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x3007, |p, _| {
-            error!("Unimplemented insn 'fld' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x4007, |p, _| {
-            error!("Unimplemented insn 'flq' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x2027, |p, _| {
-            error!("Unimplemented insn 'fsw' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x3027, |p, _| {
-            error!("Unimplemented insn 'fsd' at {:x}", p.pc())
-        }),
-        Matcher::new(0x707f, 0x4027, |p, _| {
-            error!("Unimplemented insn 'fsq' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x43, |p, _| {
-            error!("Unimplemented insn 'fmadd.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x47, |p, _| {
-            error!("Unimplemented insn 'fmsub.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x4b, |p, _| {
-            error!("Unimplemented insn 'fnmsub.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x4f, |p, _| {
-            error!("Unimplemented insn 'fnmadd.s' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x2000043, |p, _| {
-            error!("Unimplemented insn 'fmadd.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x2000047, |p, _| {
-            error!("Unimplemented insn 'fmsub.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x200004b, |p, _| {
-            error!("Unimplemented insn 'fnmsub.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x200004f, |p, _| {
-            error!("Unimplemented insn 'fnmadd.d' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x6000043, |p, _| {
-            error!("Unimplemented insn 'fmadd.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x6000047, |p, _| {
-            error!("Unimplemented insn 'fmsub.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x600004b, |p, _| {
-            error!("Unimplemented insn 'fnmsub.q' at {:x}", p.pc())
-        }),
-        Matcher::new(0x600007f, 0x600004f, |p, _| {
-            error!("Unimplemented insn 'fnmadd.q' at {:x}", p.pc())
-        }),
+        // Matcher::new(0xfe00007f, 0x53, |p, _| {
+        //     error!("Unimplemented insn 'fadd.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x8000053, |p, _| {
+        //     error!("Unimplemented insn 'fsub.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x10000053, |p, _| {
+        //     error!("Unimplemented insn 'fmul.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x18000053, |p, _| {
+        //     error!("Unimplemented insn 'fdiv.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x20000053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnj.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x20001053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjn.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x20002053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjx.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x28000053, |p, _| {
+        //     error!("Unimplemented insn 'fmin.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x28001053, |p, _| {
+        //     error!("Unimplemented insn 'fmax.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x58000053, |p, _| {
+        //     error!("Unimplemented insn 'fsqrt.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x2000053, |p, _| {
+        //     error!("Unimplemented insn 'fadd.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0xa000053, |p, _| {
+        //     error!("Unimplemented insn 'fsub.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x12000053, |p, _| {
+        //     error!("Unimplemented insn 'fmul.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x1a000053, |p, _| {
+        //     error!("Unimplemented insn 'fdiv.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x22000053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnj.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x22001053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjn.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x22002053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjx.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x2a000053, |p, _| {
+        //     error!("Unimplemented insn 'fmin.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x2a001053, |p, _| {
+        //     error!("Unimplemented insn 'fmax.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x40100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x42000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x5a000053, |p, _| {
+        //     error!("Unimplemented insn 'fsqrt.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x6000053, |p, _| {
+        //     error!("Unimplemented insn 'fadd.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0xe000053, |p, _| {
+        //     error!("Unimplemented insn 'fsub.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x16000053, |p, _| {
+        //     error!("Unimplemented insn 'fmul.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00007f, 0x1e000053, |p, _| {
+        //     error!("Unimplemented insn 'fdiv.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x26000053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnj.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x26001053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjn.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x26002053, |p, _| {
+        //     error!("Unimplemented insn 'fsgnjx.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x2e000053, |p, _| {
+        //     error!("Unimplemented insn 'fmin.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0x2e001053, |p, _| {
+        //     error!("Unimplemented insn 'fmax.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x40300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x46000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x42300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x46100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0x5e000053, |p, _| {
+        //     error!("Unimplemented insn 'fsqrt.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa0000053, |p, _| {
+        //     error!("Unimplemented insn 'fle.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa0001053, |p, _| {
+        //     error!("Unimplemented insn 'flt.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa0002053, |p, _| {
+        //     error!("Unimplemented insn 'feq.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa2000053, |p, _| {
+        //     error!("Unimplemented insn 'fle.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa2001053, |p, _| {
+        //     error!("Unimplemented insn 'flt.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa2002053, |p, _| {
+        //     error!("Unimplemented insn 'feq.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa6000053, |p, _| {
+        //     error!("Unimplemented insn 'fle.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa6001053, |p, _| {
+        //     error!("Unimplemented insn 'flt.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfe00707f, 0xa6002053, |p, _| {
+        //     error!("Unimplemented insn 'feq.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc0000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.w.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc0100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.wu.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc0200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.l.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc0300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.lu.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe0000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.x.w' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe0001053, |p, _| {
+        //     error!("Unimplemented insn 'fclass.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc2000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.w.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc2100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.wu.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc2200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.l.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc2300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.lu.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe2000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.x.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe2001053, |p, _| {
+        //     error!("Unimplemented insn 'fclass.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc6000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.w.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc6100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.wu.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc6200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.l.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xc6300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.lu.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe6000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.x.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xe6001053, |p, _| {
+        //     error!("Unimplemented insn 'fclass.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd0000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.w' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd0100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.wu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd0200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.l' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd0300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.s.lu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xf0000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.w.x' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd2000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.w' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd2100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.wu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd2200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.l' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd2300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.d.lu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xf2000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.d.x' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd6000053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.w' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd6100053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.wu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd6200053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.l' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0007f, 0xd6300053, |p, _| {
+        //     error!("Unimplemented insn 'fcvt.q.lu' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0xfff0707f, 0xf6000053, |p, _| {
+        //     error!("Unimplemented insn 'fmv.q.x' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x2007, |p, _| {
+        //     error!("Unimplemented insn 'flw' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x3007, |p, _| {
+        //     error!("Unimplemented insn 'fld' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x4007, |p, _| {
+        //     error!("Unimplemented insn 'flq' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x2027, |p, _| {
+        //     error!("Unimplemented insn 'fsw' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x3027, |p, _| {
+        //     error!("Unimplemented insn 'fsd' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x707f, 0x4027, |p, _| {
+        //     error!("Unimplemented insn 'fsq' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x43, |p, _| {
+        //     error!("Unimplemented insn 'fmadd.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x47, |p, _| {
+        //     error!("Unimplemented insn 'fmsub.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x4b, |p, _| {
+        //     error!("Unimplemented insn 'fnmsub.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x4f, |p, _| {
+        //     error!("Unimplemented insn 'fnmadd.s' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x2000043, |p, _| {
+        //     error!("Unimplemented insn 'fmadd.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x2000047, |p, _| {
+        //     error!("Unimplemented insn 'fmsub.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x200004b, |p, _| {
+        //     error!("Unimplemented insn 'fnmsub.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x200004f, |p, _| {
+        //     error!("Unimplemented insn 'fnmadd.d' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x6000043, |p, _| {
+        //     error!("Unimplemented insn 'fmadd.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x6000047, |p, _| {
+        //     error!("Unimplemented insn 'fmsub.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x600004b, |p, _| {
+        //     error!("Unimplemented insn 'fnmsub.q' at {:x}", p.pc())
+        // }),
+        // Matcher::new(0x600007f, 0x600004f, |p, _| {
+        //     error!("Unimplemented insn 'fnmadd.q' at {:x}", p.pc())
+        // }),
     ])
 }

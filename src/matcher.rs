@@ -1,9 +1,13 @@
 use crate::Processor;
 use std::fmt;
 
+const CACHE_SIZE: usize = 100_000;
+
 pub struct Matchers<M> {
     matchers: Vec<Matcher<M>>,
-    matcher_cache: Vec<(u32, usize)>,
+    hit: Vec<usize>,
+    miss: Vec<usize>,
+    matcher_cache: [(u32, usize); CACHE_SIZE],
 }
 
 /*
@@ -13,11 +17,28 @@ pub struct Matchers<M> {
  * - marcher cache stats
  *
  */
+
 impl<M> Matchers<M> {
     pub fn new(matchers: Vec<Matcher<M>>) -> Self {
+        let len = matchers.len();
         Matchers {
             matchers,
-            matcher_cache: vec![(0, 0); 10000],
+            hit: vec![0; len],
+            miss: vec![0; len],
+            matcher_cache: [(0, 0); CACHE_SIZE],
+        }
+    }
+
+    pub fn print(&self) {
+        let mut results: Vec<_> = self.hit.iter().zip(&self.miss).enumerate().collect();
+        results.sort_by(|a, b| {
+            let a = (a.1).0 + (a.1).1;
+            let b = (b.1).0 + (b.1).1;
+            a.partial_cmp(&b).unwrap()
+        });
+
+        for (i, (hit, miss)) in results {
+            println!("{:6} {:9} {:9} {:12}", i, hit, miss, hit + miss);
         }
     }
 
@@ -27,9 +48,11 @@ impl<M> Matchers<M> {
         let (cinsn, cmatcher) = unsafe { self.matcher_cache.get_unchecked_mut(cache_idx) };
         if *cinsn == insn {
             info!("Insn hit");
+            self.hit[*cmatcher] += 1;
             return unsafe { self.matchers.get_unchecked(*cmatcher) };
         }
 
+        self.miss[*cmatcher] += 1;
         info!("Insn miss");
 
         // for (i, matcher) in self.matchers.iter().enumerate() {

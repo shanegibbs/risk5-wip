@@ -33,18 +33,6 @@ impl<M> Processor<M> {
         self.mmu.set_prv(prv, &self.csrs.mstatus);
     }
 
-    // pub fn update_mmu_prv(&mut self) {
-    //     error!("Updating mmu prv. Prv is {}", self.csrs.prv());
-    //     if self.csrs.mstatus.memory_privilege() == 1 {
-    //         let mpp = self.csrs.mstatus.machine_previous_privilege();
-    //         error!("Setting mmu prv to mpp {}. {:?}", mpp, self.csrs.mstatus);
-    //         self.mmu.set_prv(mpp);
-    //     } else {
-    //         let prv = self.csrs.prv();
-    //         self.mmu.set_prv(prv);
-    //     }
-    // }
-
     pub fn set_mem_mode(&mut self, op: SetMemMode) {
         if op.mode == 0 {
             self.mmu.set_bare_mode();
@@ -83,7 +71,6 @@ impl<M> Processor<M> {
         &mut self.mmu
     }
 
-    #[inline(never)]
     fn execute(&mut self, insn: u32, matcher: &Matcher<M>)
     where
         M: Memory,

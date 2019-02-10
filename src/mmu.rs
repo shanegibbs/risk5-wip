@@ -2,6 +2,8 @@ use crate::bitfield::{Mstatus, PageTableEntry, PhysicalAddress, VirtualAddress};
 use crate::Memory;
 use std::fmt;
 
+const INSN_CACHE_SIZE: usize = 10_000;
+
 pub(crate) struct Mmu<M> {
     mem: M,
     prv: u64,
@@ -10,6 +12,7 @@ pub(crate) struct Mmu<M> {
     asid: u16,
     ppn: u64,
     cache: Vec<(u64, u64)>,
+    insn_cache: [(u64, u32); INSN_CACHE_SIZE],
     hit: u64,
     miss: u64,
 }
@@ -28,6 +31,7 @@ impl<M> Mmu<M> {
             asid: 0,
             ppn: 0,
             cache: new_cache(),
+            insn_cache: [(0, 0); INSN_CACHE_SIZE],
             hit: 0,
             miss: 0,
         }
@@ -41,7 +45,12 @@ impl<M> Mmu<M> {
         &mut self.mem
     }
 
+    pub fn flush_cache(&mut self) {
+        self.insn_cache = [(0, 0); INSN_CACHE_SIZE];
+    }
+
     pub fn set_prv(&mut self, prv: u64, mstatus: &Mstatus) {
+        self.flush_cache();
         self.insn_prv = prv;
         self.prv = if mstatus.memory_privilege() == 1 {
             mstatus.machine_previous_privilege()
@@ -60,6 +69,7 @@ impl<M> Mmu<M> {
 
     pub fn set_bare_mode(&mut self) {
         trace!("Setting bare mode");
+        self.flush_cache();
         self.sv39 = false;
         self.asid = 0;
         self.ppn = 0;
@@ -67,6 +77,7 @@ impl<M> Mmu<M> {
 
     pub fn set_page_mode(&mut self, asid: u16, ppn: u64) {
         trace!("Setting sv39 mode asid=0x{:x} ppn={:x}", asid, ppn);
+        self.flush_cache();
         self.sv39 = true;
         self.asid = asid;
         self.ppn = ppn;
@@ -125,7 +136,7 @@ impl<M: Memory> Mmu<M> {
         if *cache_vpage == vpage {
             // self.hit += 1;
             info!("Page hit");
-            return Ok(*cache_ppage + (offset & 0xfff));
+            // return Ok(*cache_ppage + (offset & 0xfff));
         }
         info!("Page miss");
 
@@ -212,8 +223,30 @@ impl<M: Memory> Mmu<M> {
     }
 
     #[inline(never)]
-    pub fn read_insn(&mut self, offset: u64) -> Result<u32, ()> {
-        mem!(self, read_w, self.insn_prv, offset)
+    pub fn read_insn(&mut self, pc: u64) -> Result<u32, ()> {
+        let cache_idx = ((pc >> 2) as usize) % INSN_CACHE_SIZE;
+        {
+            let (cpc, cinsn) = unsafe { self.insn_cache.get_unchecked(cache_idx) };
+            if *cpc == pc {
+                info!("pc hit");
+                return Ok(*cinsn);
+            }
+        }
+        info!("pc miss");
+
+        let addr = match self.translate(pc, self.insn_prv) {
+            Ok(a) => a,
+            Err(_) => {
+                debug!("Page-fault on load");
+                return Err(());
+            }
+        };
+        let val = self.mem.read_w(addr);
+
+        let (cpc, cinsn) = unsafe { self.insn_cache.get_unchecked_mut(cache_idx) };
+        *cpc = pc;
+        *cinsn = val;
+        Ok(val)
     }
 
     #[inline(never)]
@@ -329,6 +362,7 @@ impl<'a, M> Into<Mmu<M>> for RestorableState<'a, M> {
             asid: satp.asid() as u16,
             ppn: satp.ppn() as u64,
             cache: vec![(0, 0)],
+            insn_cache: [(0, 0); INSN_CACHE_SIZE],
             hit: 0,
             miss: 0,
         };
