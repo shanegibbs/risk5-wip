@@ -100,8 +100,8 @@ pub fn build_memory() -> BlockMemory {
 }
 
 pub fn risk5_main() {
-    pretty_env_logger::init();
-    // logrunner::logger::init().unwrap();
+    // pretty_env_logger::init();
+    logrunner::logger::init().unwrap();
 
     let mut output = String::new();
 
@@ -112,10 +112,61 @@ pub fn risk5_main() {
     let start = SystemTime::now();
     let mut mark = SystemTime::now();
 
+    use std::sync::{Arc, RwLock};
+    let trigger = Arc::new(RwLock::new(false));
+
+    {
+        use std::io::{stdin, Read};
+        use std::thread::spawn;
+        let trigger = trigger.clone();
+
+        spawn(move || {
+            let mut buf = String::new();
+            loop {
+                stdin().read_line(&mut buf).expect("stdin");
+                let line = buf.trim_end();
+                println!("{}", line);
+
+                if line == "" {
+                    let mut i = trigger.write().expect("write lock");
+                    *i = !*i;
+                    warn!("trigger={}", i);
+                }
+
+                buf.clear();
+            }
+        });
+    }
+
+    const STEP_SIZE: usize = 10_000_000;
+
     let mut counter = 0;
+    let mut real_trigger = false;
+
     loop {
-        if cpu.pc() == 0xffff_ffe0_0015_2164 {
-            break;
+        if cpu.pc() == 0xffffffe000151048 {
+            warn!("entering try_to_run_init_process()");
+        }
+        if cpu.pc() == 0xffffffe000151000 {
+            warn!("entering run_init_process()");
+        }
+        if cpu.pc() == 0xffffffe0003d9d24 {
+            warn!("entering kernel_init()");
+        }
+        if cpu.pc() == 0xffffffe0003d9c74 {
+            warn!("entering rest_init()");
+        }
+        if cpu.pc() == 0xffffffe00017dc24 {
+            warn!("entering cpu_startup_entry()");
+        }
+        // if cpu.pc() == 0xffffffe000151f48 {
+        //     error!("here");
+        //     break;
+        // }
+
+        if counter % 1000 == 0 {
+            real_trigger = *trigger.read().expect("read lock");
+            cpu.trigger = real_trigger;
         }
 
         cpu.step(matchers);
@@ -126,32 +177,39 @@ pub fn risk5_main() {
         counter += 1;
         trace!("--- Step {} ---", counter);
 
-        if counter % 100 == 0 {
-            if counter % 10_000_000 == 0 {
-                if counter >= 50_000_000 {
-                    // break;
-                }
-                warn!("--- Step {} ---", counter / 1_000_000);
+        if counter % STEP_SIZE == 0 {
+            // if counter >= 50_000_000 {
+            //     break;
+            // }
 
-                // let d = SystemTime::now().duration_since(mark).expect("time");
-                // let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
-                // let in_sec = (in_ms as f32) / 1000f32;
-                // let speed = (10_000_000 as f32) / in_sec;
-                // println!("Executed @ {} MHz", speed / 1_000_000.0);
-                // mark = SystemTime::now();
-            }
+            let d = SystemTime::now().duration_since(mark).expect("time");
+            let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+            let in_sec = (in_ms as f32) / 1000f32;
+            let speed = (STEP_SIZE as f32) / in_sec;
+            warn!(
+                "--- Step {}mil --- pc=0x{:x} @ {} MHz",
+                counter / 1_000_000,
+                cpu.pc(),
+                speed / 1_000_000.0
+            );
+            mark = SystemTime::now();
 
-            // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
-            let tohost = cpu.mmu_mut().bare_mut().read_d(0x8000_9008);
+            // if counter == 180_000_000 {
+            //     error!("too slow");
+            //     panic!("too slow");
+            // }
+        }
 
-            if tohost > 0 {
-                let ch = tohost as u8;
-                output = format!("{}{}", output, ch as char);
-                use std::io::{self, Write};
-                write!(io::stderr(), "{}", ch as char).expect("stderr write");
-                info!("tohost '{}'", ch as char);
-                cpu.mmu_mut().bare_mut().write_d(0x8000_9008, 0);
-            }
+        // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
+        let tohost = cpu.mmu_mut().bare_mut().read_d(0x8000_9008);
+
+        if tohost > 0 {
+            let ch = tohost as u8;
+            output = format!("{}{}", output, ch as char);
+            use std::io::{self, Write};
+            write!(io::stderr(), "{}", ch as char).expect("stderr write");
+            info!("tohost '{}'", ch as char);
+            cpu.mmu_mut().bare_mut().write_d(0x8000_9008, 0);
         }
     }
 
@@ -174,7 +232,7 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
             |p, i| {
                 let a = i;
                 let i = i.into();
-                debug!("> exec 0x{:x} 0x{:x} {} {}", p.pc(), a, stringify!($f), i);
+                debug!("> exec 0x{:x} 0x{:08x} {} {}", p.pc(), a, stringify!($f), i);
                 $f(p, i)
             }
         };
@@ -250,10 +308,12 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         Matcher::new(0x707f, 0x3023, wrap!(mem::sd)),
         Matcher::new(0x707f, 0xf, |p, _| {
             trace!("Unimplemented insn 'fence' at {:x}", p.pc());
+            p.mmu_mut().flush_cache();
             p.advance_pc();
         }),
         Matcher::new(0x707f, 0x100f, |p, _| {
             trace!("Unimplemented insn 'fence.i' at {:x}", p.pc());
+            p.mmu_mut().flush_cache();
             p.advance_pc();
         }),
         Matcher::new(0xfe00707f, 0x2000033, wrap!(comp::reg<M, comp::Mul>)),
@@ -294,7 +354,7 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         Matcher::new(0xffffffff, 0x73, wrap!(ecall)),
         Matcher::new(0xffffffff, 0x100073, noimpl!("ebreak")),
         Matcher::new(0xffffffff, 0x200073, noimpl!("uret")),
-        Matcher::new(0xffffffff, 0x10200073, noimpl!("sret")),
+        Matcher::new(0xffffffff, 0x10200073, wrap!(sret)),
         Matcher::new(0xffffffff, 0x30200073, wrap!(mret)),
         Matcher::new(0xffffffff, 0x7b200073, noimpl!("dret")),
         Matcher::new(0xfe007fff, 0x12000073, |p, _| {

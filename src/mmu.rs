@@ -50,6 +50,9 @@ impl<M> Mmu<M> {
     }
 
     pub fn set_prv(&mut self, prv: u64, mstatus: &Mstatus) {
+        // if mstatus.supervisor_user_memory_access() == 1 {
+        //     warn!("SUM");
+        // }
         self.flush_cache();
         self.insn_prv = prv;
         self.prv = if mstatus.memory_privilege() == 1 {
@@ -135,10 +138,10 @@ impl<M: Memory> Mmu<M> {
         let (cache_vpage, cache_ppage) = unsafe { self.cache.get_unchecked_mut(cache_idx) };
         if *cache_vpage == vpage {
             // self.hit += 1;
-            info!("Page hit");
+            trace!("Page hit");
             // return Ok(*cache_ppage + (offset & 0xfff));
         }
-        info!("Page miss");
+        trace!("Page miss");
 
         // self.miss += 1;
         // error!(
@@ -162,30 +165,61 @@ impl<M: Memory> Mmu<M> {
 
         let va: VirtualAddress = offset.into();
 
-        // step 1
+        /*
+         * 1. Let a be satp.ppn × PAGESIZE, and let i = LEVELS − 1. (For Sv32,
+         *    PAGESIZE=212 and LEVELS=2.)
+         */
         let mut a = self.ppn * pagesize;
+        // trace!("a = 0x{:x}", a);
         let mut i = levels - 1;
 
         let pte = loop {
-            // step 2
+            /*
+             * 2. Let pte be the value of the PTE at address
+             *    a+va.vpn[i]×PTESIZE. (For Sv32, PTESIZE=4.) If accessing pte
+             *    violates a PMA or PMP check, raise an access exception.
+             */
             let pte_offset = a + (va.virtual_page_number(i) * ptesize);
-
             let pte_val = self.mem.read_d(pte_offset);
-            trace!("Read PTE at level {}: 0x{:x}", i, pte_val);
-
             let pte: PageTableEntry = pte_val.into();
 
+            // trace!("idx=0x{:x}", va.virtual_page_number(i));
+
+            trace!(
+                "Read PTE at level {}, 0x{:x}: 0x{:x}",
+                i,
+                pte_offset,
+                pte_val
+            );
+
+            /*
+             * 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and
+             *    raise a page-fault exception.
+             */
             if !pte.v() || (!pte.r() && pte.w()) {
-                // step 3. page-fault exception
                 return Err(());
             }
 
+            /*
+             * 5. A leaf PTE has been found.
+             *    Determine if the requested memory access is allowed by
+             *    the pte.r, pte.w, pte.x, and pte.u bits, given the
+             *    current privilege mode and the value of the SUM and MXR
+             *    fields of the mstatus register. If not, stop and raise a
+             *    page-fault exception.
+             */
             if pte.r() || pte.x() {
-                // step 5
                 break pte;
             }
 
-            // pte is a pointer to the next page
+            /*
+             * 4. Otherwise, the PTE is valid. If pte.r = 1 or pte.x = 1, go to
+             *    step 5. Otherwise, this PTE is a pointer to the next level of
+             *    the page table. Let i = i − 1. If i < 0, stop and raise a
+             *    page-fault exception. Otherwise, let a = pte.ppn × PAGESIZE
+             *    and go to step 2.
+             */
+
             if i == 0 {
                 panic!("sv39 step 4 page-fault")
             }
@@ -228,11 +262,11 @@ impl<M: Memory> Mmu<M> {
         {
             let (cpc, cinsn) = unsafe { self.insn_cache.get_unchecked(cache_idx) };
             if *cpc == pc {
-                info!("pc hit");
+                trace!("pc hit");
                 return Ok(*cinsn);
             }
         }
-        info!("pc miss");
+        trace!("pc miss");
 
         let addr = match self.translate(pc, self.insn_prv) {
             Ok(a) => a,

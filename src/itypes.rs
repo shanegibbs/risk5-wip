@@ -1,4 +1,4 @@
-use crate::Processor;
+use crate::{regs, Processor};
 use std::fmt;
 
 pub type Regi = u32;
@@ -90,7 +90,13 @@ impl Into<Btype> for u32 {
 
 impl fmt::Display for Btype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} 0x{:x}", self.rs1(), self.rs2(), self.imm())
+        write!(
+            f,
+            "{} {} 0x{:x}",
+            regs::name(self.rs1()),
+            regs::name(self.rs2()),
+            self.imm()
+        )
     }
 }
 
@@ -117,7 +123,13 @@ impl Into<Rtype> for u32 {
 
 impl fmt::Display for Rtype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.rd(), self.rs1(), self.rs2())
+        write!(
+            f,
+            "{} {} {}",
+            regs::name(self.rd()),
+            regs::name(self.rs1()),
+            regs::name(self.rs2())
+        )
     }
 }
 
@@ -157,7 +169,13 @@ impl Into<Itype> for u32 {
 
 impl fmt::Display for Itype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} 0x{2:x} ({2})", self.rd(), self.rs1(), self.imm())
+        write!(
+            f,
+            "{} {} 0x{2:x} ({2})",
+            regs::name(self.rd()),
+            regs::name(self.rs1()),
+            self.imm()
+        )
     }
 }
 
@@ -193,7 +211,13 @@ impl Into<Stype> for u32 {
 
 impl fmt::Display for Stype {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} 0x{:x}", self.rs1(), self.rs2(), self.imm())
+        write!(
+            f,
+            "{} {} 0x{:x}",
+            regs::name(self.rs1()),
+            regs::name(self.rs2()),
+            self.imm()
+        )
     }
 }
 

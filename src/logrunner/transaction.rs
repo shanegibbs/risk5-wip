@@ -196,8 +196,9 @@ impl Transaction {
         };
 
         if let Some(ref store) = self.store {
+            trace!("Validating store");
             if !store.validate(cpu.mmu_mut()) {
-                error!("mem store transaction fail");
+                error!("mem store transaction fail. Expected {}", store);
                 fail = true;
             }
         }

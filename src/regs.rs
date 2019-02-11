@@ -4,6 +4,10 @@ pub(crate) static REG_NAMES: &'static [&str] = &[
     "t6",
 ];
 
+pub(crate) fn name(i: u32) -> &'static str {
+    REG_NAMES[i as usize]
+}
+
 #[derive(Debug)]
 pub(crate) struct Regs {
     regs: [u64; 32],

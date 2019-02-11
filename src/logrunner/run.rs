@@ -77,14 +77,14 @@ where
         } = log_tuple;
         counter += 1;
 
-        // test_state(
-        //     matchers,
-        //     &last_state,
-        //     &last_insn,
-        //     &last_mems,
-        //     &state,
-        //     &last_store,
-        // );
+        test_state(
+            matchers,
+            &last_state,
+            &last_insn,
+            &last_mems,
+            &state,
+            &last_store,
+        );
 
         trace!("Transaction validated OK");
         // trace!("This insn {:?}", insn);

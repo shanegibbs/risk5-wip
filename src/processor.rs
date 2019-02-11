@@ -11,6 +11,7 @@ pub struct Processor<M> {
     csrs: Csrs,
     pub(crate) regs: Regs,
     mmu: Mmu<M>,
+    pub(crate) trigger: bool,
 }
 
 impl<M> Processor<M> {
@@ -20,6 +21,7 @@ impl<M> Processor<M> {
             csrs: Csrs::new(),
             regs: Regs::new(),
             mmu: Mmu::new(mem),
+            trigger: false,
         }
     }
 
@@ -111,7 +113,11 @@ impl<M> Processor<M> {
     }
 
     pub fn set_pc(&mut self, pc: u64) {
-        info!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
+        if self.trigger {
+            warn!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
+        } else {
+            info!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
+        }
         self.pc = pc;
     }
 
@@ -129,6 +135,7 @@ impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
             csrs: state.into(),
             regs: state.xregs.into(),
             mmu: RestorableState { state, memory }.into(),
+            trigger: false,
         }
     }
 }

@@ -47,13 +47,13 @@ impl<M> Matchers<M> {
         let cache_idx = (insn as usize) % self.matcher_cache.len();
         let (cinsn, cmatcher) = unsafe { self.matcher_cache.get_unchecked_mut(cache_idx) };
         if *cinsn == insn {
-            info!("Insn hit");
+            trace!("Insn hit");
             self.hit[*cmatcher] += 1;
             return unsafe { self.matchers.get_unchecked(*cmatcher) };
         }
 
         self.miss[*cmatcher] += 1;
-        info!("Insn miss");
+        trace!("Insn miss");
 
         // for (i, matcher) in self.matchers.iter().enumerate() {
         //     if matcher.matches(insn) {
@@ -80,6 +80,7 @@ impl<M> Matchers<M> {
                 return matcher;
             }
         }
+        error!("no matched insn: 0x{:x}", insn);
         unreachable!("no matched insn");
     }
 }

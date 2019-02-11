@@ -10,16 +10,16 @@ edition = "2018"
 
 [profile.release]
 # panic = "abort"
-debug = true
-lto = false
+# debug = true
+# lto = false
 
 [dependencies]
 
 elf = "0.0.10"
-log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
+# log = { version = "0.4", features = ["max_level_trace", "release_max_level_error"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_warn"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_info"] }
-# log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
+log = { version = "0.4", features = ["max_level_trace", "release_max_level_debug"] }
 # log = { version = "0.4", features = ["max_level_trace", "release_max_level_trace"] }
 pretty_env_logger = "0.2"
 # wasm-bindgen = "0.2"

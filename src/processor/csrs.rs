@@ -152,6 +152,7 @@ impl Csrs {
                     .set_supervisor_user_memory_access(n.supervisor_user_memory_access());
                 self.mstatus
                     .set_make_executable_readable(n.make_executable_readable());
+                return PostSetOp::UpdateMmuPrv;
             }
             SEDELEG => self.sedeleg = v,
             SIDELEG => self.sideleg = v,
@@ -211,7 +212,7 @@ impl Csrs {
             SATP => (&self.satp).into(),
 
             i => {
-                warn!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
+                info!("unimplemented Csrs.get 0x{:x}. Triggering trap", i);
                 return Err(Trap::illegal_insn());
             }
         })
