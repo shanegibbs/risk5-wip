@@ -359,12 +359,17 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         Matcher::new(0xffffffff, 0x7b200073, noimpl!("dret")),
         Matcher::new(0xfe007fff, 0x12000073, |p, _| {
             trace!("Noop insn 'sfence.vma' at {:x}", p.pc());
+            p.mmu_mut().flush_cache();
             p.advance_pc();
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             trace!("Noop insn 'wfi' at {:x}", p.pc());
+            warn!("Wanting to wait for interrupt...");
             p.advance_pc();
-            unreachable!();
+
+            use std::{thread, time};
+            let foo = time::Duration::from_millis(250);
+            thread::sleep(foo);
         }),
         Matcher::new(0x707f, 0x1073, wrap!(csr::insn<M, csr::ReadWrite>)),
         Matcher::new(0x707f, 0x2073, wrap!(csr::insn<M, csr::ReadSet>)),
