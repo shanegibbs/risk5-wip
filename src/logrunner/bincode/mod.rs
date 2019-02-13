@@ -39,14 +39,51 @@ pub fn convert() -> Result<(), io::Error> {
     Ok(())
 }
 
+use std::io::{Cursor, Read};
+
 pub(crate) struct LogLineReader<T> {
+    buf: Cursor<Vec<u8>>,
+    sz: usize,
     reader: T,
 }
 
-impl<T> LogLineReader<T> {
-    pub fn new(t: T) -> Self {
+impl<T: Read> LogLineReader<T> {
+    pub fn new(reader: T) -> Self {
         // let reader = io::BufReader::new(io::stdin());
-        LogLineReader { reader: t }
+        let buf = Cursor::new(vec![0; 0]);
+        let mut lr = LogLineReader { buf, sz: 0, reader };
+        // lr.skip_lines(100_000_000);
+        lr
+    }
+
+    fn skip_lines(&mut self, n: usize) {
+        for _ in 0..n {
+            let mut buf = [0; 2];
+            self.reader.read_exact(&mut buf).expect("read sz");
+            let p1 = (buf[1] as usize) << 8;
+            let sz = (buf[0] as usize) + p1;
+            io::copy(&mut self.reader.by_ref().take(sz as u64), &mut io::sink());
+        }
+        self.sz = 0;
+        self.buf = Cursor::new(vec![0; 0]);
+    }
+
+    fn fill_buffer(&mut self) -> bool {
+        let mut buf = [0; 2];
+        if let Err(e) = self.reader.read_exact(&mut buf) {
+            warn!("failed to read: {}", e);
+            return false;
+        }
+        let p1 = (buf[1] as usize) << 8;
+        let sz = (buf[0] as usize) + p1;
+        self.sz = sz;
+
+        let mut buf = vec![0; sz];
+        self.reader
+            .read_exact(buf.as_mut_slice())
+            .expect("read buf");
+        self.buf = Cursor::new(buf);
+        true
     }
 }
 
@@ -60,7 +97,13 @@ impl<T: io::Read> Iterator for LogLineReader<T> {
     type Item = LogLine;
 
     fn next(&mut self) -> Option<LogLine> {
-        let val = match bincode::deserialize_from(&mut self.reader) {
+        if self.sz == self.buf.position() as usize {
+            if !self.fill_buffer() {
+                return None;
+            }
+        }
+
+        let val = match bincode::deserialize_from(&mut self.buf) {
             Ok(n) => n,
             Err(e) => {
                 match *e {

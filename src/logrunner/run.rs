@@ -89,6 +89,12 @@ where
         trace!("Transaction validated OK");
         // trace!("This insn {:?}", insn);
 
+        if step % 10_0000 == 0 {
+            warn!("step {}", step);
+        }
+
+        continue;
+
         let mut fail = false;
 
         // validate current state

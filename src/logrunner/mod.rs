@@ -262,7 +262,10 @@ impl State {
 
         // TODO add mip mcounteren
         // TODO add supervisor csrs
-        let mut valid = valid!(pc, prv, mepc, mtvec, mcause, mscratch, mie, medeleg, mideleg);
+        let mut valid = valid!(
+            pc, prv, mepc, mtvec, mcause, mscratch, mie, medeleg, mideleg, sepc, stval, sscratch,
+            stvec, satp, scause
+        );
 
         if self.mstatus != other.mstatus {
             use crate::bitfield::Mstatus;

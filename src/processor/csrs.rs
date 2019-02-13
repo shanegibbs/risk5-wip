@@ -16,7 +16,7 @@ pub struct Csrs {
     pub(crate) misa: u64,
     pub(crate) mcounteren: u64,
     pub(crate) mie: Interrupt,
-    pub(crate) mip: u64,
+    pub(crate) mip: Interrupt,
 
     pub(crate) sedeleg: u64,
     pub(crate) sideleg: u64,
@@ -102,7 +102,7 @@ impl Csrs {
             misa: 0x8000000000141101,
             mcounteren: 0,
             mie: 0.into(),
-            mip: 0,
+            mip: 0.into(),
 
             sedeleg: 0,
             sideleg: 0,
@@ -131,7 +131,7 @@ impl Csrs {
                 return PostSetOp::UpdateMmuPrv;
             }
             MEPC => self.mepc = v & !0x1,
-            MIP => self.mip = v,
+            MIP => self.mip = v.into(),
             MIE => self.mie = v.into(),
             MEDELEG => self.medeleg = v,
             MIDELEG => self.mideleg = v,
@@ -187,7 +187,7 @@ impl Csrs {
 
             MSTATUS => self.mstatus.val(),
             MISA => self.misa,
-            MIP => self.mip,
+            MIP => self.mip.val(),
             MIE => self.mie.val(),
             MEDELEG => self.medeleg,
             MIDELEG => self.mideleg,
@@ -249,7 +249,7 @@ impl Into<Csrs> for &State {
             misa: 0x8000000000141101,
             mcounteren: self.mcounteren,
             mie: self.mie.into(),
-            mip: self.mip,
+            mip: self.mip.into(),
             sedeleg: 0, // self.sedeleg,
             sideleg: 0, // self.sideleg,
             stvec: self.stvec,

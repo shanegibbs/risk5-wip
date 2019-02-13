@@ -364,7 +364,7 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             trace!("Noop insn 'wfi' at {:x}", p.pc());
-            warn!("Wanting to wait for interrupt...");
+            warn!("Waiting for interrupt...");
             p.advance_pc();
 
             use std::{thread, time};

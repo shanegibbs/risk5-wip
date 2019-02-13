@@ -154,7 +154,7 @@ impl<M> Into<State> for &Processor<M> {
             mscratch: self.csrs.mscratch,
             minstret: 0, // self.csrs.minstret,
             mie: (&self.csrs.mie).into(),
-            mip: self.csrs.mip,
+            mip: (&self.csrs.mip).into(),
             medeleg: self.csrs.medeleg,
             mideleg: self.csrs.mideleg,
             mcounteren: self.csrs.mcounteren,

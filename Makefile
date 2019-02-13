@@ -144,7 +144,7 @@ perf: build
 			$(VALIDATE)
 
 perf-run: build
-	env RUST_LOG=risk5=warn valgrind \
+	env RUST_LOG=risk5=warn nice valgrind \
 		--tool=callgrind \
 		--dump-instr=yes \
 		--collect-jumps=yes \
