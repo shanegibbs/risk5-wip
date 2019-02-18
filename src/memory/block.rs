@@ -55,12 +55,18 @@ impl BlockMemory {
 
     #[inline(never)]
     fn find_block_for(&self, offset: u64) -> usize {
+        if offset >= 0x2000000 && offset < 0x20c0000 {
+            info!("clint 0x{:x}", offset);
+        }
+        // if offset >= 0x50000000 && offset < 0x50000100 {
+        //     error!("serial 0x{:x}", offset);
+        // }
         for (i, block) in self.blocks.iter().enumerate() {
             if offset >= block.start {
+                assert!(offset < block.end);
                 return i;
             }
         }
-        // error!("Unable to find memory block for address 0x{:x}", offset);
         panic!("Unable to find memory block");
     }
 }

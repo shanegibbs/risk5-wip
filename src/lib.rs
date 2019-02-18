@@ -100,8 +100,8 @@ pub fn build_memory() -> BlockMemory {
 }
 
 pub fn risk5_main() {
-    // pretty_env_logger::init();
-    logrunner::logger::init().unwrap();
+    pretty_env_logger::init();
+    // logrunner::logger::init().unwrap();
 
     let mut output = String::new();
 
@@ -159,6 +159,9 @@ pub fn risk5_main() {
         if cpu.pc() == 0xffffffe00017dc24 {
             warn!("entering cpu_startup_entry()");
         }
+        if cpu.pc() == 0xffffffe0001524b0 {
+            warn!("entering arch_cpu_idle()");
+        }
         // if cpu.pc() == 0xffffffe000151f48 {
         //     error!("here");
         //     break;
@@ -200,17 +203,17 @@ pub fn risk5_main() {
             // }
         }
 
-        // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
-        let tohost = cpu.mmu_mut().bare_mut().read_d(0x8000_9008);
+        // // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);
+        // let tohost = cpu.mmu_mut().bare_mut().read_d(0x8000_9008);
 
-        if tohost > 0 {
-            let ch = tohost as u8;
-            output = format!("{}{}", output, ch as char);
-            use std::io::{self, Write};
-            write!(io::stderr(), "{}", ch as char).expect("stderr write");
-            info!("tohost '{}'", ch as char);
-            cpu.mmu_mut().bare_mut().write_d(0x8000_9008, 0);
-        }
+        // if tohost > 0 {
+        //     let ch = tohost as u8;
+        //     output = format!("{}{}", output, ch as char);
+        //     use std::io::{self, Write};
+        //     write!(io::stderr(), "{}", ch as char).expect("stderr write");
+        //     info!("tohost '{}'", ch as char);
+        //     cpu.mmu_mut().bare_mut().write_d(0x8000_9008, 0);
+        // }
     }
 
     let d = SystemTime::now().duration_since(start).expect("time");
@@ -364,7 +367,7 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             trace!("Noop insn 'wfi' at {:x}", p.pc());
-            warn!("Waiting for interrupt...");
+            warn!("wfi");
             p.advance_pc();
 
             use std::{thread, time};

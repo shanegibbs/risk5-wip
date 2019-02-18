@@ -263,7 +263,7 @@ impl<M: Memory> Mmu<M> {
             let (cpc, cinsn) = unsafe { self.insn_cache.get_unchecked(cache_idx) };
             if *cpc == pc {
                 trace!("pc hit");
-                return Ok(*cinsn);
+                // return Ok(*cinsn);
             }
         }
         trace!("pc miss");

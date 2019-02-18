@@ -39,7 +39,22 @@
       reg = <0x0 0x2000000 0x0 0xc0000>;
     };
   };
-  htif {
+  /* htif {
     compatible = "ucb,htif0";
+  }; */
+  /* uart@50000000 {
+    compatible = "ns8250";
+    reg = <0x0 0x50000000 0x0 0x100>;
+    clock-frequency = <3686400>;
+    interrupt-parent = <&CPU0_intc>;
+    interrupts = <10>;
+    reg-shift = <2>;
+  }; */
+  chosen {
+    /*
+    bootargs = "console=ttyS0,115200 loglevel=8";
+    */
+    // bootargs = "console=hvc0";
+    bootargs = "console=hvc0 loglevel=8";
   };
 };

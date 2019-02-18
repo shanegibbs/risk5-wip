@@ -51,7 +51,7 @@ pub(crate) struct LogTuple {
     mems: Vec<MemoryTrace>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct Insn {
     pc: u64,
     bits: u32,
@@ -63,7 +63,7 @@ pub struct RestorableState<'s, M> {
     pub memory: M,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, PartialEq, Clone, Debug)]
 pub struct State {
     pub(crate) id: u64,
     pub(crate) pc: u64,

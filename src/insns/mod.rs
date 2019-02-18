@@ -187,6 +187,18 @@ pub fn sret<M: Memory>(p: &mut Processor<M>, _: Itype) {
 }
 
 pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
+    let a7 = p.regs.get(17 as usize);
+    if a7 <= 8 {
+        use std::io::{self, Write};
+
+        let a0 = p.regs.get(10 as usize);
+        if a7 == 1 {
+            trace!("ecall 0x{:x} {}", a7, a0 as u8 as char);
+            write!(io::stderr(), "{}", a0 as u8 as char);
+        } else {
+            warn!("ecall 0x{:x} {}", a7, a0);
+        }
+    }
     let prv = p.csrs().prv();
     do_trap(
         p,

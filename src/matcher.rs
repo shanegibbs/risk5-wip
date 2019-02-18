@@ -48,8 +48,8 @@ impl<M> Matchers<M> {
         let (cinsn, cmatcher) = unsafe { self.matcher_cache.get_unchecked_mut(cache_idx) };
         if *cinsn == insn {
             trace!("Insn hit");
-            self.hit[*cmatcher] += 1;
-            return unsafe { self.matchers.get_unchecked(*cmatcher) };
+            // self.hit[*cmatcher] += 1;
+            // return unsafe { self.matchers.get_unchecked(*cmatcher) };
         }
 
         self.miss[*cmatcher] += 1;

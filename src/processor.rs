@@ -94,6 +94,10 @@ impl<M> Processor<M> {
         };
         trace!("0x{:x} inst 0x{:x}", self.pc, insn);
 
+        if self.pc == 0x132088 && insn == 0x00843783 {
+            error!("here");
+        }
+
         let matcher = matchers.find_for(insn);
         self.execute(insn, matcher);
 

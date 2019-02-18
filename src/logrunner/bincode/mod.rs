@@ -62,7 +62,8 @@ impl<T: Read> LogLineReader<T> {
             self.reader.read_exact(&mut buf).expect("read sz");
             let p1 = (buf[1] as usize) << 8;
             let sz = (buf[0] as usize) + p1;
-            io::copy(&mut self.reader.by_ref().take(sz as u64), &mut io::sink());
+            io::copy(&mut self.reader.by_ref().take(sz as u64), &mut io::sink())
+                .expect("copy skip_lines");
         }
         self.sz = 0;
         self.buf = Cursor::new(vec![0; 0]);
@@ -78,6 +79,7 @@ impl<T: Read> LogLineReader<T> {
         let sz = (buf[0] as usize) + p1;
         self.sz = sz;
 
+        trace!("Reading {} bytes to buffer", sz);
         let mut buf = vec![0; sz];
         self.reader
             .read_exact(buf.as_mut_slice())
@@ -119,6 +121,7 @@ impl<T: io::Read> Iterator for LogLineReader<T> {
             }
         };
 
+        trace!("Read: {:?}", val);
         Some(val)
     }
 }

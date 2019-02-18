@@ -77,6 +77,14 @@ where
         } = log_tuple;
         counter += 1;
 
+        if Some(&state) == last_state.as_ref() {
+            debug!("Last state and this state are the same");
+            continue;
+        }
+        if insn.as_ref() == last_insn.as_ref() {
+            warn!("Last insn and this insn are the same");
+        }
+
         test_state(
             matchers,
             &last_state,
@@ -85,14 +93,18 @@ where
             &state,
             &last_store,
         );
-
         trace!("Transaction validated OK");
+
         // trace!("This insn {:?}", insn);
 
-        if step % 10_0000 == 0 {
-            warn!("step {}", step);
+        if step % 100_0000 == 0 {
+            warn!("Step {}mil ({})", (step as f32) / 1_000_000.0, step);
         }
 
+        last_insn = insn;
+        last_state = Some(state);
+        last_store = store;
+        last_mems = mems;
         continue;
 
         let mut fail = false;
