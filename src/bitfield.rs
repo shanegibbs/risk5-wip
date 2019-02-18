@@ -62,20 +62,24 @@ impl Into<VirtualAddress> for u64 {
 
 pub(crate) struct PageTableEntry(BitField);
 impl PageTableEntry {
-    pub fn v(&self) -> bool {
+    pub fn valid(&self) -> bool {
         self.0.bool_field(0)
     }
 
-    pub fn r(&self) -> bool {
+    pub fn read(&self) -> bool {
         self.0.bool_field(1)
     }
 
-    pub fn w(&self) -> bool {
-        self.0.bool_field(2)
+    pub fn write(&self) -> bool {
+        self.0.field(1, 2) == 0x3 // R and W are 1
     }
 
-    pub fn x(&self) -> bool {
+    pub fn execute(&self) -> bool {
         self.0.bool_field(3)
+    }
+
+    pub fn user(&self) -> bool {
+        self.0.bool_field(4)
     }
 
     pub fn physical_page_number_arr(&self, i: u8) -> u64 {

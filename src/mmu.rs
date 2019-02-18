@@ -89,7 +89,7 @@ impl<M> Mmu<M> {
 
 macro_rules! mem {
     ($self:expr, $func:ident, $prv:expr, $addr:expr) => {{
-        let addr = match $self.translate($addr, $prv) {
+        let addr = match $self.translate($addr, MemoryOp::Load, $prv) {
             Ok(a) => a,
             Err(_) => {
                 debug!("Page-fault on load");
@@ -108,7 +108,7 @@ macro_rules! mem {
         Ok(val)
     }};
     ($self:expr, $func:ident, $prv:expr, $addr:expr, $val:expr) => {{
-        let addr = match $self.translate($addr, $prv) {
+        let addr = match $self.translate($addr, MemoryOp::Store, $prv) {
             Ok(a) => a,
             Err(_) => {
                 debug!("Page-fault on store");
@@ -127,8 +127,14 @@ macro_rules! mem {
     }};
 }
 
+enum MemoryOp {
+    Fetch,
+    Load,
+    Store,
+}
+
 impl<M: Memory> Mmu<M> {
-    fn translate(&mut self, offset: u64, prv: u64) -> Result<u64, ()> {
+    fn translate(&mut self, offset: u64, op: MemoryOp, prv: u64) -> Result<u64, ()> {
         if !self.sv39 || prv == 3 {
             return Ok(offset);
         }
@@ -196,7 +202,8 @@ impl<M: Memory> Mmu<M> {
              * 3. If pte.v = 0, or if pte.r = 0 and pte.w = 1, stop and
              *    raise a page-fault exception.
              */
-            if !pte.v() || (!pte.r() && pte.w()) {
+            if !pte.valid() || !pte.read() && pte.write() {
+                debug!("Invalid PTE (step 3)");
                 return Err(());
             }
 
@@ -208,7 +215,17 @@ impl<M: Memory> Mmu<M> {
              *    fields of the mstatus register. If not, stop and raise a
              *    page-fault exception.
              */
-            if pte.r() || pte.x() {
+            use MemoryOp::*;
+            if (match op {
+                Fetch => pte.execute(),
+                Load => pte.read(),
+                Store => pte.write(),
+            }) {
+                if prv == 0 && !pte.user() {
+                    debug!("No user access to PTE (step 5)");
+                    return Err(());
+                }
+                // TODO: look at SUM and MXR. Probably need to add it to MMU
                 break pte;
             }
 
@@ -221,7 +238,8 @@ impl<M: Memory> Mmu<M> {
              */
 
             if i == 0 {
-                panic!("sv39 step 4 page-fault")
+                debug!("i<0 PTE page-fault (step 4)");
+                return Err(());
             }
 
             // step down a level
@@ -268,7 +286,7 @@ impl<M: Memory> Mmu<M> {
         }
         trace!("pc miss");
 
-        let addr = match self.translate(pc, self.insn_prv) {
+        let addr = match self.translate(pc, MemoryOp::Fetch, self.insn_prv) {
             Ok(a) => a,
             Err(_) => {
                 debug!("Page-fault on load");
