@@ -103,8 +103,6 @@ pub fn risk5_main() {
     pretty_env_logger::init();
     // logrunner::logger::init().unwrap();
 
-    let mut output = String::new();
-
     let mut cpu = Processor::new(build_memory());
     let matchers = &mut build_matchers();
 
@@ -116,7 +114,7 @@ pub fn risk5_main() {
     let trigger = Arc::new(RwLock::new(false));
 
     {
-        use std::io::{stdin, Read};
+        use std::io::stdin;
         use std::thread::spawn;
         let trigger = trigger.clone();
 
@@ -201,15 +199,15 @@ pub fn risk5_main() {
         // }
     }
 
-    let d = SystemTime::now().duration_since(start).expect("time");
-    let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
-    let in_sec = (in_ms as f32) / 1000f32;
-    let speed = (counter as f32) / in_sec;
-    println!(
-        "Executed {}m insns @ {} MHz",
-        counter / 1_000_000,
-        speed / 1_000_000.0
-    );
+    // let d = SystemTime::now().duration_since(start).expect("time");
+    // let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+    // let in_sec = (in_ms as f32) / 1000f32;
+    // let speed = (counter as f32) / in_sec;
+    // println!(
+    //     "Executed {}m insns @ {} MHz",
+    //     counter / 1_000_000,
+    //     speed / 1_000_000.0
+    // );
 
     // matchers.print();
 }

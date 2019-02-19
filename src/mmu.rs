@@ -216,11 +216,11 @@ impl<M: Memory> Mmu<M> {
              *    page-fault exception.
              */
             use MemoryOp::*;
-            if (match op {
+            if match op {
                 Fetch => pte.execute(),
                 Load => pte.read(),
                 Store => pte.write(),
-            }) {
+            } {
                 if prv == 0 && !pte.user() {
                     debug!("No user access to PTE (step 5)");
                     return Err(());
