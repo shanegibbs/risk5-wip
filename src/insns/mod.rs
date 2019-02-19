@@ -196,20 +196,15 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
             trace!("putchar ecall 0x{:x} {}", a7, a0 as u8 as char);
             write!(io::stderr(), "{}", a0 as u8 as char).expect("ecall write");
         } else if a7 == 2 {
-            trace!("getchar ecall 0x{:x} {}", a7, a0 as u8 as char);
-            let cmd = (p.pc() >> 4) % 3;
-            if cmd == 0 {
-                p.regs.set(10 as usize, 'l' as u64);
-            } else if cmd == 1 {
-                p.regs.set(10 as usize, 's' as u64);
-            } else if cmd == 2 {
-                p.regs.set(10 as usize, '\n' as u64);
-            }
+            warn!("getchar ecall 0x{:x} {}", a7, a0 as u8 as char);
+            let val = p.getchar();
+            p.regs.set(10 as usize, val);
         } else if a7 == 0 {
             error!("unimpl ecall set timer {}", a0);
         } else {
             error!("ecall 0x{:x} {}", a7, a0);
         }
+
         p.advance_pc();
         return;
     }

@@ -144,21 +144,6 @@ pub fn risk5_main() {
     let mut real_trigger = false;
 
     loop {
-        if cpu.pc() == 0xffffffe000151048 {
-            warn!("entering try_to_run_init_process()");
-        }
-        if cpu.pc() == 0xffffffe000151000 {
-            warn!("entering run_init_process()");
-        }
-        if cpu.pc() == 0xffffffe0003d9d24 {
-            warn!("entering kernel_init()");
-        }
-        if cpu.pc() == 0xffffffe0003d9c74 {
-            warn!("entering rest_init()");
-        }
-        if cpu.pc() == 0xffffffe00017dc24 {
-            warn!("entering cpu_startup_entry()");
-        }
         if cpu.pc() == 0xffffffe0001524b0 {
             warn!("entering arch_cpu_idle()");
         }
@@ -189,12 +174,12 @@ pub fn risk5_main() {
             let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
             let in_sec = (in_ms as f32) / 1000f32;
             let speed = (STEP_SIZE as f32) / in_sec;
-            warn!(
-                "--- Step {}mil --- pc=0x{:x} @ {} MHz",
-                counter / 1_000_000,
-                cpu.pc(),
-                speed / 1_000_000.0
-            );
+            // warn!(
+            //     "--- Step {}mil --- pc=0x{:x} @ {} MHz",
+            //     counter / 1_000_000,
+            //     cpu.pc(),
+            //     speed / 1_000_000.0
+            // );
             mark = SystemTime::now();
 
             // if counter == 180_000_000 {

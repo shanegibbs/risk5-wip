@@ -12,6 +12,7 @@ pub struct Processor<M> {
     pub(crate) regs: Regs,
     mmu: Mmu<M>,
     pub(crate) trigger: bool,
+    ecall_counter: usize,
 }
 
 impl<M> Processor<M> {
@@ -22,7 +23,39 @@ impl<M> Processor<M> {
             regs: Regs::new(),
             mmu: Mmu::new(mem),
             trigger: false,
+            ecall_counter: 0,
         }
+    }
+
+    pub fn getchar(&mut self) -> u64 {
+        let counter = self.ecall_counter;
+        self.ecall_counter += 1;
+
+        let val = match counter {
+            0 => 'l' as isize,
+            1 => 's' as isize,
+            2 => ' ' as isize,
+            3 => '-' as isize,
+            4 => 'a' as isize,
+            5 => 'l' as isize,
+            6 => 13 as isize,
+
+            // 7 => 'l' as isize,
+            // 8 => 's' as isize,
+            // 9 => ' ' as isize,
+            // 10 => '-' as isize,
+            // 11 => 'a' as isize,
+            // 12 => 'l' as isize,
+            // 13 => ' ' as isize,
+            // 14 => '/' as isize,
+            // 15 => 'd' as isize,
+            // 16 => 'e' as isize,
+            // 17 => 'v' as isize,
+            // 18 => 13 as isize,
+            _ => -1 as isize,
+        };
+
+        val as u64
     }
 
     pub fn prv(&self) -> u64 {
@@ -140,6 +173,7 @@ impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
             regs: state.xregs.into(),
             mmu: RestorableState { state, memory }.into(),
             trigger: false,
+            ecall_counter: 0,
         }
     }
 }
