@@ -12,6 +12,8 @@ pub struct Processor<M> {
     pub(crate) regs: Regs,
     mmu: Mmu<M>,
     pub(crate) trigger: bool,
+    insn_counter: u64,
+    timer: u64,
     ecall_counter: usize,
 }
 
@@ -23,6 +25,8 @@ impl<M> Processor<M> {
             regs: Regs::new(),
             mmu: Mmu::new(mem),
             trigger: false,
+            insn_counter: 0,
+            timer: 0,
             ecall_counter: 0,
         }
     }
@@ -106,6 +110,18 @@ impl<M> Processor<M> {
         &mut self.mmu
     }
 
+    pub fn set_timer(&mut self, delta: u64) {
+        self.timer = self.insn_counter + delta;
+        error!("Settings timer for {} ({})", delta, self.timer);
+    }
+
+    pub fn handle_interrupt(&mut self) {
+        if self.timer > self.insn_counter {
+            error!("DING");
+            self.timer = 0;
+        }
+    }
+
     fn execute(&mut self, insn: u32, matcher: &Matcher<M>)
     where
         M: Memory,
@@ -133,6 +149,8 @@ impl<M> Processor<M> {
 
         let matcher = matchers.find_for(insn);
         self.execute(insn, matcher);
+
+        self.insn_counter += 1;
 
         // for (i, matcher) in matchers.enumerate() {
         //     if matcher.matches(insn) {
@@ -173,6 +191,8 @@ impl<'a, M> Into<Processor<M>> for RestorableState<'a, M> {
             regs: state.xregs.into(),
             mmu: RestorableState { state, memory }.into(),
             trigger: false,
+            timer: 0,        // TODO: store timer in state
+            insn_counter: 0, // TODO: store insn_counter in state
             ecall_counter: 0,
         }
     }

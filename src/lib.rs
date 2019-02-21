@@ -150,11 +150,6 @@ pub fn risk5_main() {
         //     break;
         // }
 
-        if counter % 1000 == 0 {
-            real_trigger = *trigger.read().expect("read lock");
-            cpu.trigger = real_trigger;
-        }
-
         cpu.step(matchers);
         // calls[idx] += 1;
         // let matcher = matchers.remove(idx).expect("used insn");
@@ -163,27 +158,34 @@ pub fn risk5_main() {
         counter += 1;
         trace!("--- Step {} ---", counter);
 
-        if counter % STEP_SIZE == 0 {
-            // if counter >= 50_000_000 {
-            //     break;
-            // }
+        if counter % 1000 == 0 {
+            cpu.handle_interrupt();
 
-            let d = SystemTime::now().duration_since(mark).expect("time");
-            let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
-            let in_sec = (in_ms as f32) / 1000f32;
-            let speed = (STEP_SIZE as f32) / in_sec;
-            // warn!(
-            //     "--- Step {}mil --- pc=0x{:x} @ {} MHz",
-            //     counter / 1_000_000,
-            //     cpu.pc(),
-            //     speed / 1_000_000.0
-            // );
-            mark = SystemTime::now();
+            real_trigger = *trigger.read().expect("read lock");
+            cpu.trigger = real_trigger;
 
-            // if counter == 180_000_000 {
-            //     error!("too slow");
-            //     panic!("too slow");
-            // }
+            if counter % STEP_SIZE == 0 {
+                // if counter >= 50_000_000 {
+                //     break;
+                // }
+
+                let d = SystemTime::now().duration_since(mark).expect("time");
+                let in_ms = d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1_000_000;
+                let in_sec = (in_ms as f32) / 1000f32;
+                let speed = (STEP_SIZE as f32) / in_sec;
+                // warn!(
+                //     "--- Step {}mil --- pc=0x{:x} @ {} MHz",
+                //     counter / 1_000_000,
+                //     cpu.pc(),
+                //     speed / 1_000_000.0
+                // );
+                mark = SystemTime::now();
+
+                // if counter == 180_000_000 {
+                //     error!("too slow");
+                //     panic!("too slow");
+                // }
+            }
         }
 
         // // let _fromhost = cpu.mmu_mut().bare_mut().read_d(0x80009000);

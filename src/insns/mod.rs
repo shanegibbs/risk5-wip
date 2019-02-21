@@ -200,7 +200,8 @@ pub fn ecall<M: Memory>(p: &mut Processor<M>, _: Itype) {
             let val = p.getchar();
             p.regs.set(10 as usize, val);
         } else if a7 == 0 {
-            error!("unimpl ecall set timer {}", a0);
+            trace!("ecall set timer {}", a0);
+            p.set_timer(a0);
         } else {
             error!("ecall 0x{:x} {}", a7, a0);
         }
