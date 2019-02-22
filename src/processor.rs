@@ -1,3 +1,4 @@
+use crate::bitfield::{Interrupt, Mstatus};
 use crate::matcher::{Matcher, Matchers};
 use crate::Mmu;
 use crate::{Memory, Regs};
@@ -26,7 +27,7 @@ impl<M> Processor<M> {
             mmu: Mmu::new(mem),
             trigger: false,
             insn_counter: 0,
-            timer: 0,
+            timer: u64::max_value(),
             ecall_counter: 0,
         }
     }
@@ -110,15 +111,36 @@ impl<M> Processor<M> {
         &mut self.mmu
     }
 
+    pub(crate) fn machine_status(&self) -> &Mstatus {
+        &self.csrs.mstatus
+    }
+
+    pub(crate) fn enabled_interrupts(&self) -> &Interrupt {
+        &self.csrs.mie
+    }
+
     pub fn set_timer(&mut self, delta: u64) {
         self.timer = self.insn_counter + delta;
         error!("Settings timer for {} ({})", delta, self.timer);
     }
 
-    pub fn handle_interrupt(&mut self) {
-        if self.timer > self.insn_counter {
+    pub fn check_clock(&mut self) {
+        if self.timer < self.insn_counter {
             error!("DING");
-            self.timer = 0;
+            self.timer = u64::max_value();
+            self.csrs.mip.set_machine_timer_interrupt(1);
+            error!("mip {:?}", self.csrs.mip);
+            error!("mie {:?}", self.csrs.mie);
+
+            error!("mideleg: 0x{:x}", self.csrs().mideleg);
+            error!("mstatus: {:?}", self.machine_status());
+        }
+    }
+
+    pub fn handle_interrupt(&mut self) {
+        let interrupts: Interrupt = (self.csrs.mip.val() & self.csrs.mie.val()).into();
+        if interrupts.val() > 0 {
+            error!("{:?}", interrupts);
         }
     }
 
@@ -151,6 +173,9 @@ impl<M> Processor<M> {
         self.execute(insn, matcher);
 
         self.insn_counter += 1;
+
+        self.check_clock();
+        self.handle_interrupt();
 
         // for (i, matcher) in matchers.enumerate() {
         //     if matcher.matches(insn) {

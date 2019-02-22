@@ -199,6 +199,13 @@ impl Mstatus {
     pub fn memory_privilege(&self) -> u64 {
         self.0.field(17, 1)
     }
+
+    // tw
+
+    #[inline(always)]
+    pub fn timeout_wait(&self) -> u64 {
+        self.0.field(21, 1)
+    }
 }
 
 impl Default for Mstatus {
@@ -216,7 +223,7 @@ impl From<u64> for Mstatus {
 use std::fmt;
 impl fmt::Debug for Mstatus {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={} mxr={} sum={} mprv={}",
+        write!(f, "mstatus mie={} sie={} uie={} mpie={} spie={} upie={} mpp={} spp={} fs={} xs={} sxl={} uxl={} mxr={} sum={} mprv={} tw={}",
                self.machine_interrupt_enabled(),
                self.supervisor_interrupt_enabled(),
                self.user_interrupt_enabled(),
@@ -232,6 +239,7 @@ impl fmt::Debug for Mstatus {
                self.make_executable_readable(),
                self.supervisor_user_memory_access(),
                self.memory_privilege(),
+               self.timeout_wait(),
                )
     }
 }

@@ -352,7 +352,10 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         }),
         Matcher::new(0xffffffff, 0x10500073, |p, _| {
             trace!("Noop insn 'wfi' at {:x}", p.pc());
-            warn!("wfi");
+            use crate::bitfield::Interrupt;
+            warn!("wfi enabled: {:?}", p.enabled_interrupts());
+            warn!("mideleg: 0x{:x}", p.csrs().mideleg);
+            warn!("mstatus: {:?}", p.machine_status());
             p.advance_pc();
 
             use std::{thread, time};
