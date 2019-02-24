@@ -36,31 +36,20 @@ impl<M> Processor<M> {
         let counter = self.ecall_counter;
         self.ecall_counter += 1;
 
-        let val = match counter {
-            0 => 'l' as isize,
-            1 => 's' as isize,
-            2 => ' ' as isize,
-            3 => '-' as isize,
-            4 => 'a' as isize,
-            5 => 'l' as isize,
-            6 => 13 as isize,
+        let cmd = "uname -a; cat /proc/cpuinfo; cat /proc/meminfo";
+        let n: Vec<_> = cmd.chars().map(|i| i as u64).collect();
 
-            // 7 => 'l' as isize,
-            // 8 => 's' as isize,
-            // 9 => ' ' as isize,
-            // 10 => '-' as isize,
-            // 11 => 'a' as isize,
-            // 12 => 'l' as isize,
-            // 13 => ' ' as isize,
-            // 14 => '/' as isize,
-            // 15 => 'd' as isize,
-            // 16 => 'e' as isize,
-            // 17 => 'v' as isize,
-            // 18 => 13 as isize,
-            _ => -1 as isize,
-        };
+        if counter == n.len() {
+            return 13;
+        }
+        if counter > n.len() {
+            return -1 as isize as u64;
+        }
+        n[counter]
+    }
 
-        val as u64
+    pub fn insn_counter(&self) -> u64 {
+        self.insn_counter
     }
 
     pub fn prv(&self) -> u64 {
@@ -115,33 +104,35 @@ impl<M> Processor<M> {
         &self.csrs.mstatus
     }
 
-    pub(crate) fn enabled_interrupts(&self) -> &Interrupt {
-        &self.csrs.mie
+    pub(crate) fn pending_interrupts(&self) -> Interrupt {
+        (self.csrs.mip.val() & self.csrs.mie.val()).into()
     }
 
     pub fn set_timer(&mut self, delta: u64) {
         self.timer = self.insn_counter + delta;
-        error!("Settings timer for {} ({})", delta, self.timer);
+        debug!("Setting timer for {} ({})", delta, self.timer);
+        if self.prv() != 1 {
+            // TODO need different timers for different prv?
+            unimplemented!("set timer for {}", self.prv());
+        }
     }
 
     pub fn check_clock(&mut self) {
-        if self.timer < self.insn_counter {
-            error!("DING");
-            self.timer = u64::max_value();
-            self.csrs.mip.set_machine_timer_interrupt(1);
-            error!("mip {:?}", self.csrs.mip);
-            error!("mie {:?}", self.csrs.mie);
-
-            error!("mideleg: 0x{:x}", self.csrs().mideleg);
-            error!("mstatus: {:?}", self.machine_status());
+        if self.insn_counter > self.timer {
+            // self.timer = u64::max_value();
+            self.csrs.mip.set_supervisor_timer_interrupt(1);
+            // error!("mip {:?}", self.csrs.mip);
+            // error!("mie {:?}", self.csrs.mie);
+            // error!("mideleg: 0x{:x}", self.csrs().mideleg);
+            // error!("mstatus: {:?}", self.machine_status());
         }
     }
 
     pub fn handle_interrupt(&mut self) {
-        let interrupts: Interrupt = (self.csrs.mip.val() & self.csrs.mie.val()).into();
-        if interrupts.val() > 0 {
-            error!("{:?}", interrupts);
-        }
+        // let interrupts = self.pending_interrupts();
+        // if interrupts.val() > 0 {
+        //     error!("should handle {:?}", interrupts);
+        // }
     }
 
     fn execute(&mut self, insn: u32, matcher: &Matcher<M>)
@@ -174,8 +165,10 @@ impl<M> Processor<M> {
 
         self.insn_counter += 1;
 
-        self.check_clock();
-        self.handle_interrupt();
+        if self.insn_counter % 5000 == 0 {
+            self.check_clock();
+            self.handle_interrupt();
+        }
 
         // for (i, matcher) in matchers.enumerate() {
         //     if matcher.matches(insn) {
@@ -193,6 +186,10 @@ impl<M> Processor<M> {
     }
 
     pub fn set_pc(&mut self, pc: u64) {
+        if pc == 0 {
+            panic!("setting pc = 0 at 0x{:x}", self.pc());
+        }
+
         if self.trigger {
             warn!("0x{:x} > Setting pc to 0x{:x}", self.pc, pc);
         } else {
@@ -242,7 +239,7 @@ impl<M> Into<State> for &Processor<M> {
             mideleg: self.csrs.mideleg,
             mcounteren: self.csrs.mcounteren,
             scounteren: self.csrs.scounteren,
-            sepc: self.csrs.sepc,
+            sepc: self.csrs.sepc(),
             stval: self.csrs.stval,
             sscratch: self.csrs.sscratch,
             stvec: self.csrs.stvec,

@@ -23,7 +23,7 @@ pub struct Csrs {
     pub(crate) stvec: u64,
     pub(crate) scounteren: u64,
     pub(crate) sscratch: u64,
-    pub(crate) sepc: u64,
+    sepc: u64,
     pub(crate) scause: u64,
     pub(crate) stval: u64,
     pub(crate) sip: u64,
@@ -216,6 +216,14 @@ impl Csrs {
                 return Err(Trap::illegal_insn());
             }
         })
+    }
+
+    pub(crate) fn sepc(&self) -> u64 {
+        self.sepc
+    }
+
+    pub(crate) fn set_sepc(&mut self, n: u64) {
+        self.sepc = n;
     }
 
     pub fn prv(&self) -> u64 {

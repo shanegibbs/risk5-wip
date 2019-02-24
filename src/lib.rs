@@ -226,6 +226,15 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
         };
     }
 
+    macro_rules! wrap_no_arg {
+        ($f:path) => {
+            |p, i| {
+                debug!("> exec 0x{:x} {} {}", p.pc(), stringify!($f), i);
+                $f(p)
+            }
+        };
+    }
+
     macro_rules! noimpl {
         ($insn:expr) => {
             |p, i| {
@@ -350,18 +359,7 @@ pub fn build_matchers<M: Memory>() -> Matchers<M> {
             p.mmu_mut().flush_cache();
             p.advance_pc();
         }),
-        Matcher::new(0xffffffff, 0x10500073, |p, _| {
-            trace!("Noop insn 'wfi' at {:x}", p.pc());
-            use crate::bitfield::Interrupt;
-            warn!("wfi enabled: {:?}", p.enabled_interrupts());
-            warn!("mideleg: 0x{:x}", p.csrs().mideleg);
-            warn!("mstatus: {:?}", p.machine_status());
-            p.advance_pc();
-
-            use std::{thread, time};
-            let foo = time::Duration::from_millis(250);
-            thread::sleep(foo);
-        }),
+        Matcher::new(0xffffffff, 0x10500073, wrap_no_arg!(wfi)),
         Matcher::new(0x707f, 0x1073, wrap!(csr::insn<M, csr::ReadWrite>)),
         Matcher::new(0x707f, 0x2073, wrap!(csr::insn<M, csr::ReadSet>)),
         Matcher::new(0x707f, 0x3073, wrap!(csr::insn<M, csr::ReadClear>)),
