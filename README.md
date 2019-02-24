@@ -1,5 +1,10 @@
 # Risk5
 
+## U53-MC
+
+* [u54-mc](https://www.sifive.com/cores/u54-mc)
+* [U54-MC-RVCoreIP.pdf](https://static.dev.sifive.com/U54-MC-RVCoreIP.pdf)
+
 ## Device Tree
 
 * [Device Tree Usage](https://elinux.org/Device_Tree_Usage)
