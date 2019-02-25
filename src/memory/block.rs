@@ -56,7 +56,7 @@ impl BlockMemory {
     #[inline(never)]
     fn find_block_for(&self, offset: u64) -> usize {
         if offset >= 0x2000000 && offset < 0x20c0000 {
-            info!("clint 0x{:x}", offset);
+            warn!("clint 0x{:x}", offset);
         }
         // if offset >= 0x50000000 && offset < 0x50000100 {
         //     error!("serial 0x{:x}", offset);

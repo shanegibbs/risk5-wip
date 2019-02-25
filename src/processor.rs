@@ -119,7 +119,7 @@ impl<M> Processor<M> {
 
     pub fn check_clock(&mut self) {
         if self.insn_counter > self.timer {
-            // self.timer = u64::max_value();
+            self.timer = u64::max_value();
             self.csrs.mip.set_supervisor_timer_interrupt(1);
             // error!("mip {:?}", self.csrs.mip);
             // error!("mie {:?}", self.csrs.mie);
@@ -128,10 +128,14 @@ impl<M> Processor<M> {
         }
     }
 
-    pub fn handle_interrupt(&mut self) {
+    pub fn handle_interrupt(&mut self)
+    where
+        M: Memory,
+    {
         // let interrupts = self.pending_interrupts();
         // if interrupts.val() > 0 {
-        //     error!("should handle {:?}", interrupts);
+        //     warn!("should handle {:?}", interrupts);
+        //     crate::insns::do_trap(self, 0x8000_0000_0000_0007, self.pc);
         // }
     }
 

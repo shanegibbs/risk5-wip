@@ -132,7 +132,12 @@ impl Csrs {
             }
             MEPC => self.mepc = v & !0x1,
             MIP => self.mip = v.into(),
-            MIE => self.mie = v.into(),
+            MIE => {
+                self.mie = v.into();
+                if self.mie.machine_timer_interrupt() == 1 {
+                    error!("mt enabled");
+                }
+            }
             MEDELEG => self.medeleg = v,
             MIDELEG => self.mideleg = v,
             MSCRATCH => self.mscratch = v,
